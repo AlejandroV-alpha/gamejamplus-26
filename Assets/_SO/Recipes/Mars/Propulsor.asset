@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fcc1bed800aa8474e9cccaf1f5c7ee33, type: 3}
+  m_Name: Propulsor
+  m_EditorClassIdentifier: Assembly-CSharp::GameJam.Crafting.RecipeData
+  id: mars_propulsor
+  recipeName: Propulsor
+  description: Propulsor auxiliar de la nave.
+  planet: 2
+  icon: {fileID: 0}
+  ingredients:
+  - material: {fileID: 11400000, guid: 8dd30e445ddc45a68953ca9ff2a2f1ef, type: 2}
+    amount: 2
+  - material: {fileID: 11400000, guid: 7ec212f3fbb1eef4f9d6494a2b8d86a0, type: 2}
+    amount: 2
