@@ -114,6 +114,8 @@ El archivo cifrado no es portable a otro usuario de Windows. Cada compañero nec
 
 ## Alcance de la migración
 
+La integración de `feature/mars-environment` conserva su historial mediante el merge 53. El commit 54 lleva a `j_MarsFusion` el rover, su ruta de cuatro puntos, ambas antenas y el polvo ambiental. El asset de terreno compartido incorpora los cambios de esa rama. Las referencias del rover y del polvo apuntan al terreno y a los objetos de la escena Fusion; no se copian los managers NGO. El polvo es visual local y el rover conserva su patrulla local original: su movimiento todavía no se replica por Fusion.
+
 Se importó el SDK Fusion **2.1.1 Stable 2177**, Simple KCC y los scripts necesarios del proyecto local `Photon Fusion Starter - Multiplayer`. Se conserva la estructura y los metadatos del SDK. No se copiaron Library, Temp, ProjectSettings, los escenarios de demostración ni sus modelos y texturas.
 
 `Player.cs`, `PlayerInput.cs`, `InputActions.cs`, `AnimatorId.cs` y el prefab Runner proceden de Photon Fusion Starter. Las adaptaciones del juego están en `MarsFusionSession`, `MarsFusionSpawner` y `MarsFusionAvatar`. La instalación añade las definiciones del SDK, habilita unsafe y declara Mono.Cecil para su generador de código.
