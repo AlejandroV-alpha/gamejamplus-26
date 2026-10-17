@@ -16,6 +16,7 @@ namespace GameJam.Mars
             public int submesh;
             public Matrix4x4[] matrices;
             public Bounds bounds;
+            [NonSerialized] public Matrix4x4[] drawMatrices;
         }
 
         public Batch[] batches = Array.Empty<Batch>();
@@ -53,13 +54,37 @@ namespace GameJam.Mars
                     lightProbeUsage = LightProbeUsage.Off,
                     motionVectorMode = MotionVectorGenerationMode.ForceNoMotion
                 };
+                var matrices = batch.matrices;
+                int count = matrices.Length;
+                if (camera.cameraType == CameraType.Game)
+                {
+                    if (batch.drawMatrices == null || batch.drawMatrices.Length != matrices.Length)
+                        batch.drawMatrices = new Matrix4x4[matrices.Length];
+                    count = 0;
+                    float fadeWidth = Mathf.Max(5f, drawDistance * 0.2f);
+                    for (int i = 0; i < matrices.Length; i++)
+                    {
+                        var matrix = matrices[i];
+                        float distance = Vector3.Distance(camera.transform.position, matrix.GetColumn(3));
+                        if (distance >= drawDistance)
+                            continue;
+                        float scale = Mathf.SmoothStep(0f, 1f, (drawDistance - distance) / fadeWidth);
+                        // Shrink the final distance band without alpha blending or extra draw calls.
+                        for (int axis = 0; axis < 3; axis++)
+                            matrix.SetColumn(axis, matrix.GetColumn(axis) * scale);
+                        batch.drawMatrices[count++] = matrix;
+                    }
+                    matrices = batch.drawMatrices;
+                }
+                if (count == 0)
+                    continue;
                 if (SystemInfo.supportsInstancing)
-                    Graphics.RenderMeshInstanced(parameters, batch.mesh, batch.submesh, batch.matrices);
+                    Graphics.RenderMeshInstanced(parameters, batch.mesh, batch.submesh, matrices, count);
                 else
-                    foreach (var matrix in batch.matrices)
-                        Graphics.RenderMesh(parameters, batch.mesh, batch.submesh, matrix);
+                    for (int i = 0; i < count; i++)
+                        Graphics.RenderMesh(parameters, batch.mesh, batch.submesh, matrices[i]);
                 visibleBatches++;
-                visibleInstances += batch.matrices.Length;
+                visibleInstances += count;
             }
             if (camera.cameraType == CameraType.Game)
             {
