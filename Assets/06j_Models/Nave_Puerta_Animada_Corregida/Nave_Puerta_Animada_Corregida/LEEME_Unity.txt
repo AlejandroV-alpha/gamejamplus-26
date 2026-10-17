@@ -1,0 +1,4 @@
+FBX CORREGIDO: normales exteriores recalculadas y triangulacion explicita.
+Reemplaza el archivo FBX anterior en la misma carpeta de Assets conservando su archivo .meta. No borres el .meta: mantiene las referencias de materiales y escenas.
+En el importador de Unity, Normals: Import. Reimporta el archivo.
+Se conserva la jerarquia, los nombres de objetos y la apertura de la puerta.

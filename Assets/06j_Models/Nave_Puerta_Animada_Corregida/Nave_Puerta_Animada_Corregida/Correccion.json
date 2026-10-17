@@ -1,0 +1,882 @@
+[
+  {
+    "object": "Aleta_motor_-1_-2.05",
+    "signed_volume_before": 0.5377960878567406,
+    "signed_volume_after": 0.5377960878567406
+  },
+  {
+    "object": "Aleta_motor_-1_2.0",
+    "signed_volume_before": 0.5377960878567404,
+    "signed_volume_after": 0.5377960878567404
+  },
+  {
+    "object": "Aleta_motor_1_-2.05",
+    "signed_volume_before": -0.5377960878567406,
+    "signed_volume_after": 0.5377960878567404
+  },
+  {
+    "object": "Aleta_motor_1_2.0",
+    "signed_volume_before": -0.5377960878567404,
+    "signed_volume_after": 0.5377960878567406
+  },
+  {
+    "object": "Anillo_turbina_-1_-2.05",
+    "signed_volume_before": 0.1269599981557627,
+    "signed_volume_after": 0.1269599981557627
+  },
+  {
+    "object": "Anillo_turbina_-1_2.0",
+    "signed_volume_before": 0.1269599981557627,
+    "signed_volume_after": 0.1269599981557627
+  },
+  {
+    "object": "Anillo_turbina_1_-2.05",
+    "signed_volume_before": 0.1269599981557627,
+    "signed_volume_after": 0.1269599981557627
+  },
+  {
+    "object": "Anillo_turbina_1_2.0",
+    "signed_volume_before": 0.1269599981557627,
+    "signed_volume_after": 0.1269599981557627
+  },
+  {
+    "object": "Armadura_techo_-1_0",
+    "signed_volume_before": 0.08230416435965637,
+    "signed_volume_after": 0.08230416435965637
+  },
+  {
+    "object": "Armadura_techo_-1_1",
+    "signed_volume_before": 0.08230416435965637,
+    "signed_volume_after": 0.08230416435965637
+  },
+  {
+    "object": "Armadura_techo_-1_2",
+    "signed_volume_before": 0.08230416435965637,
+    "signed_volume_after": 0.08230416435965637
+  },
+  {
+    "object": "Armadura_techo_-1_3",
+    "signed_volume_before": 0.08230416435965637,
+    "signed_volume_after": 0.08230416435965637
+  },
+  {
+    "object": "Armadura_techo_1_0",
+    "signed_volume_before": 0.08230416435965637,
+    "signed_volume_after": 0.08230416435965637
+  },
+  {
+    "object": "Armadura_techo_1_1",
+    "signed_volume_before": 0.08230416435965637,
+    "signed_volume_after": 0.08230416435965637
+  },
+  {
+    "object": "Armadura_techo_1_2",
+    "signed_volume_before": 0.08230416435965637,
+    "signed_volume_after": 0.08230416435965637
+  },
+  {
+    "object": "Armadura_techo_1_3",
+    "signed_volume_before": 0.08230416435965637,
+    "signed_volume_after": 0.08230416435965637
+  },
+  {
+    "object": "Banda_motor_-1_-2.05",
+    "signed_volume_before": 0.004338666637996832,
+    "signed_volume_after": 0.004338666637996832
+  },
+  {
+    "object": "Banda_motor_-1_2.0",
+    "signed_volume_before": 0.004338666637996832,
+    "signed_volume_after": 0.004338666637996832
+  },
+  {
+    "object": "Banda_motor_1_-2.05",
+    "signed_volume_before": 0.004338666637996832,
+    "signed_volume_after": 0.004338666637996832
+  },
+  {
+    "object": "Banda_motor_1_2.0",
+    "signed_volume_before": 0.004338666637996832,
+    "signed_volume_after": 0.004338666637996832
+  },
+  {
+    "object": "Bloque_lateral_-1",
+    "signed_volume_before": -13.447506822731587,
+    "signed_volume_after": 13.447506822731583
+  },
+  {
+    "object": "Bloque_lateral_1",
+    "signed_volume_before": -13.447506822731587,
+    "signed_volume_after": 13.447506822731583
+  },
+  {
+    "object": "Bloque_propulsion_-1",
+    "signed_volume_before": 0.7540109222202319,
+    "signed_volume_after": 0.7540109222202319
+  },
+  {
+    "object": "Bloque_propulsion_1",
+    "signed_volume_before": 0.7540109222202319,
+    "signed_volume_after": 0.7540109222202319
+  },
+  {
+    "object": "Boca_chimenea_-1",
+    "signed_volume_before": 0.013183332414335272,
+    "signed_volume_after": 0.013183332414335272
+  },
+  {
+    "object": "Boca_chimenea_1",
+    "signed_volume_before": 0.013183332414335272,
+    "signed_volume_after": 0.013183332414335272
+  },
+  {
+    "object": "Bodega_inferior",
+    "signed_volume_before": 7.282334279716055,
+    "signed_volume_after": 7.282334279716055
+  },
+  {
+    "object": "Borde_rampa_-1",
+    "signed_volume_before": 0.011385332933723926,
+    "signed_volume_after": 0.011385332933723926
+  },
+  {
+    "object": "Borde_rampa_1",
+    "signed_volume_before": 0.011385332933723926,
+    "signed_volume_after": 0.011385332933723926
+  },
+  {
+    "object": "Brazo_motor_-1_-2.05",
+    "signed_volume_before": 0.1799513455062508,
+    "signed_volume_after": 0.1799513455062508
+  },
+  {
+    "object": "Brazo_motor_-1_2.0",
+    "signed_volume_before": 0.1799513455062508,
+    "signed_volume_after": 0.1799513455062508
+  },
+  {
+    "object": "Brazo_motor_1_-2.05",
+    "signed_volume_before": 0.1799513455062508,
+    "signed_volume_after": 0.1799513455062508
+  },
+  {
+    "object": "Brazo_motor_1_2.0",
+    "signed_volume_before": 0.1799513455062508,
+    "signed_volume_after": 0.1799513455062508
+  },
+  {
+    "object": "Carcasa_motor_-1_-2.05",
+    "signed_volume_before": 0.9662266043392818,
+    "signed_volume_after": 0.9662266043392818
+  },
+  {
+    "object": "Carcasa_motor_-1_2.0",
+    "signed_volume_before": 0.9662266043392818,
+    "signed_volume_after": 0.9662266043392818
+  },
+  {
+    "object": "Carcasa_motor_1_-2.05",
+    "signed_volume_before": 0.9662266043392818,
+    "signed_volume_after": 0.9662266043392818
+  },
+  {
+    "object": "Carcasa_motor_1_2.0",
+    "signed_volume_before": 0.9662266043392818,
+    "signed_volume_after": 0.9662266043392818
+  },
+  {
+    "object": "Chimenea_-1",
+    "signed_volume_before": 0.5121396929381694,
+    "signed_volume_after": 0.5121396929381694
+  },
+  {
+    "object": "Chimenea_1",
+    "signed_volume_before": 0.5121396929381694,
+    "signed_volume_after": 0.5121396929381694
+  },
+  {
+    "object": "Collar_turbina_-1_-2.05_0",
+    "signed_volume_before": 0.03175202916196521,
+    "signed_volume_after": 0.03175202916196521
+  },
+  {
+    "object": "Collar_turbina_-1_-2.05_1",
+    "signed_volume_before": 0.029963490528648315,
+    "signed_volume_after": 0.029963490528648315
+  },
+  {
+    "object": "Collar_turbina_-1_-2.05_2",
+    "signed_volume_before": 0.028226908404830067,
+    "signed_volume_after": 0.028226908404830067
+  },
+  {
+    "object": "Collar_turbina_-1_2.0_0",
+    "signed_volume_before": 0.03175202916196521,
+    "signed_volume_after": 0.03175202916196521
+  },
+  {
+    "object": "Collar_turbina_-1_2.0_1",
+    "signed_volume_before": 0.029963490528648315,
+    "signed_volume_after": 0.029963490528648315
+  },
+  {
+    "object": "Collar_turbina_-1_2.0_2",
+    "signed_volume_before": 0.028226908404830067,
+    "signed_volume_after": 0.028226908404830067
+  },
+  {
+    "object": "Collar_turbina_1_-2.05_0",
+    "signed_volume_before": 0.03175202916196521,
+    "signed_volume_after": 0.03175202916196521
+  },
+  {
+    "object": "Collar_turbina_1_-2.05_1",
+    "signed_volume_before": 0.029963490528648315,
+    "signed_volume_after": 0.029963490528648315
+  },
+  {
+    "object": "Collar_turbina_1_-2.05_2",
+    "signed_volume_before": 0.028226908404830067,
+    "signed_volume_after": 0.028226908404830067
+  },
+  {
+    "object": "Collar_turbina_1_2.0_0",
+    "signed_volume_before": 0.03175202916196521,
+    "signed_volume_after": 0.03175202916196521
+  },
+  {
+    "object": "Collar_turbina_1_2.0_1",
+    "signed_volume_before": 0.029963490528648315,
+    "signed_volume_after": 0.029963490528648315
+  },
+  {
+    "object": "Collar_turbina_1_2.0_2",
+    "signed_volume_before": 0.028226908404830067,
+    "signed_volume_after": 0.028226908404830067
+  },
+  {
+    "object": "Escape_-1_1.65",
+    "signed_volume_before": 0.029539158642358183,
+    "signed_volume_after": 0.029539158642358183
+  },
+  {
+    "object": "Escape_-1_2.16",
+    "signed_volume_before": 0.029539158642358183,
+    "signed_volume_after": 0.029539158642358183
+  },
+  {
+    "object": "Escape_1_1.65",
+    "signed_volume_before": 0.029539158642358183,
+    "signed_volume_after": 0.029539158642358183
+  },
+  {
+    "object": "Escape_1_2.16",
+    "signed_volume_before": 0.029539158642358183,
+    "signed_volume_after": 0.029539158642358183
+  },
+  {
+    "object": "Franja_lateral_-1",
+    "signed_volume_before": 0.1598583394262318,
+    "signed_volume_after": 0.1598583394262318
+  },
+  {
+    "object": "Franja_lateral_1",
+    "signed_volume_before": 0.1598583394262318,
+    "signed_volume_after": 0.1598583394262318
+  },
+  {
+    "object": "Fuselaje_central",
+    "signed_volume_before": -25.226326502356027,
+    "signed_volume_after": 25.226326502356027
+  },
+  {
+    "object": "Hueco_rampa",
+    "signed_volume_before": 0.17077866117354212,
+    "signed_volume_after": 0.17077866117354212
+  },
+  {
+    "object": "Interior_Blanco",
+    "signed_volume_before": 0.012696749156244101,
+    "signed_volume_after": 0.012696749156244101
+  },
+  {
+    "object": "Interior_toma_-1",
+    "signed_volume_before": 0.06690049907842277,
+    "signed_volume_after": 0.06690049907842277
+  },
+  {
+    "object": "Interior_toma_1",
+    "signed_volume_before": 0.06690049907842277,
+    "signed_volume_after": 0.06690049907842277
+  },
+  {
+    "object": "Luz_turbina_-1_-2.05",
+    "signed_volume_before": 0.00432451306350258,
+    "signed_volume_after": 0.00432451306350258
+  },
+  {
+    "object": "Luz_turbina_-1_2.0",
+    "signed_volume_before": 0.00432451306350258,
+    "signed_volume_after": 0.00432451306350258
+  },
+  {
+    "object": "Luz_turbina_1_-2.05",
+    "signed_volume_before": 0.00432451306350258,
+    "signed_volume_after": 0.00432451306350258
+  },
+  {
+    "object": "Luz_turbina_1_2.0",
+    "signed_volume_before": 0.00432451306350258,
+    "signed_volume_after": 0.00432451306350258
+  },
+  {
+    "object": "Marco_parabrisas",
+    "signed_volume_before": 0.08795733709128695,
+    "signed_volume_after": 0.08795733709128695
+  },
+  {
+    "object": "Marco_toma_abajo_-1",
+    "signed_volume_before": 0.16296532451168713,
+    "signed_volume_after": 0.16296532451168713
+  },
+  {
+    "object": "Marco_toma_abajo_1",
+    "signed_volume_before": 0.16296532451168713,
+    "signed_volume_after": 0.16296532451168713
+  },
+  {
+    "object": "Marco_toma_arriba_-1",
+    "signed_volume_before": 0.15714134453598666,
+    "signed_volume_after": 0.15714134453598666
+  },
+  {
+    "object": "Marco_toma_arriba_1",
+    "signed_volume_before": 0.15714134453598666,
+    "signed_volume_after": 0.15714134453598666
+  },
+  {
+    "object": "Marco_toma_vertical_-1_-1",
+    "signed_volume_before": 0.10343266681373604,
+    "signed_volume_after": 0.10343266681373604
+  },
+  {
+    "object": "Marco_toma_vertical_-1_1",
+    "signed_volume_before": 0.10343266681373604,
+    "signed_volume_after": 0.10343266681373604
+  },
+  {
+    "object": "Marco_toma_vertical_1_-1",
+    "signed_volume_before": 0.10343266681373604,
+    "signed_volume_after": 0.10343266681373604
+  },
+  {
+    "object": "Marco_toma_vertical_1_1",
+    "signed_volume_before": 0.10343266681373604,
+    "signed_volume_after": 0.10343266681373604
+  },
+  {
+    "object": "Nucleo_escape_-1_1.65",
+    "signed_volume_before": 0.0013225156628280169,
+    "signed_volume_after": 0.0013225156628280169
+  },
+  {
+    "object": "Nucleo_escape_-1_2.16",
+    "signed_volume_before": 0.0013225156628280169,
+    "signed_volume_after": 0.0013225156628280169
+  },
+  {
+    "object": "Nucleo_escape_1_1.65",
+    "signed_volume_before": 0.0013225156628280169,
+    "signed_volume_after": 0.0013225156628280169
+  },
+  {
+    "object": "Nucleo_escape_1_2.16",
+    "signed_volume_before": 0.0013225156628280169,
+    "signed_volume_after": 0.0013225156628280169
+  },
+  {
+    "object": "Parabrisas",
+    "signed_volume_before": 0.01227543791951982,
+    "signed_volume_after": 0.01227543791951982
+  },
+  {
+    "object": "Pata_-1_-1.8",
+    "signed_volume_before": 0.017887616967310577,
+    "signed_volume_after": 0.017887616967310577
+  },
+  {
+    "object": "Pata_-1_1.7",
+    "signed_volume_before": 0.017887616967310577,
+    "signed_volume_after": 0.017887616967310577
+  },
+  {
+    "object": "Pata_1_-1.8",
+    "signed_volume_before": 0.017887616967310577,
+    "signed_volume_after": 0.017887616967310577
+  },
+  {
+    "object": "Pata_1_1.7",
+    "signed_volume_before": 0.017887616967310577,
+    "signed_volume_after": 0.017887616967310577
+  },
+  {
+    "object": "Pelda\u00f1o_0",
+    "signed_volume_before": 0.0009674740079686498,
+    "signed_volume_after": 0.0009674740079686498
+  },
+  {
+    "object": "Pelda\u00f1o_1",
+    "signed_volume_before": 0.0009674740079686498,
+    "signed_volume_after": 0.0009674740079686498
+  },
+  {
+    "object": "Pelda\u00f1o_2",
+    "signed_volume_before": 0.0009674740079686498,
+    "signed_volume_after": 0.0009674740079686498
+  },
+  {
+    "object": "Pelda\u00f1o_3",
+    "signed_volume_before": 0.0009674740079686498,
+    "signed_volume_after": 0.0009674740079686498
+  },
+  {
+    "object": "Pelda\u00f1o_4",
+    "signed_volume_before": 0.0009674740079686498,
+    "signed_volume_after": 0.0009674740079686498
+  },
+  {
+    "object": "Pelda\u00f1o_5",
+    "signed_volume_before": 0.0009674740079686498,
+    "signed_volume_after": 0.0009674740079686498
+  },
+  {
+    "object": "Pelda\u00f1o_6",
+    "signed_volume_before": 0.0009674740079686498,
+    "signed_volume_after": 0.0009674740079686498
+  },
+  {
+    "object": "Pelda\u00f1o_7",
+    "signed_volume_before": 0.0009674740079686498,
+    "signed_volume_after": 0.0009674740079686498
+  },
+  {
+    "object": "Piston_-1_-1.8",
+    "signed_volume_before": 0.023186898505297506,
+    "signed_volume_after": 0.023186898505297506
+  },
+  {
+    "object": "Piston_-1_1.7",
+    "signed_volume_before": 0.023186898505297506,
+    "signed_volume_after": 0.023186898505297506
+  },
+  {
+    "object": "Piston_1_-1.8",
+    "signed_volume_before": 0.023186898505297506,
+    "signed_volume_after": 0.023186898505297506
+  },
+  {
+    "object": "Piston_1_1.7",
+    "signed_volume_before": 0.023186898505297506,
+    "signed_volume_after": 0.023186898505297506
+  },
+  {
+    "object": "Placa_identificacion",
+    "signed_volume_before": 0.02374199975802004,
+    "signed_volume_after": 0.02374199975802004
+  },
+  {
+    "object": "Puente_elevado",
+    "signed_volume_before": -7.232673301160498,
+    "signed_volume_after": 7.232673301160499
+  },
+  {
+    "object": "Puerta_indicador",
+    "signed_volume_before": 4.9312499138060654e-05,
+    "signed_volume_after": 4.9312499138060654e-05
+  },
+  {
+    "object": "Puerta_junta_oscura",
+    "signed_volume_before": 0.08203583721541453,
+    "signed_volume_after": 0.08203583721541453
+  },
+  {
+    "object": "Puerta_luz_horizontal_0.902",
+    "signed_volume_before": 0.0008679060274017101,
+    "signed_volume_after": 0.0008679060274017101
+  },
+  {
+    "object": "Puerta_luz_horizontal_2.258",
+    "signed_volume_before": 0.0008679060274017101,
+    "signed_volume_after": 0.0008679060274017101
+  },
+  {
+    "object": "Puerta_luz_union",
+    "signed_volume_before": 0.0005609166663382198,
+    "signed_volume_after": 0.0005609166663382198
+  },
+  {
+    "object": "Puerta_luz_vertical_-1",
+    "signed_volume_before": 0.0011106360708846462,
+    "signed_volume_after": 0.0011106360708846462
+  },
+  {
+    "object": "Puerta_luz_vertical_1",
+    "signed_volume_before": 0.0011106360708846462,
+    "signed_volume_after": 0.0011106360708846462
+  },
+  {
+    "object": "Puerta_marca_-0.24",
+    "signed_volume_before": 0.00029387198141118937,
+    "signed_volume_after": 0.00029387198141118937
+  },
+  {
+    "object": "Puerta_marca_0.24",
+    "signed_volume_before": 0.00029387198141118937,
+    "signed_volume_after": 0.00029387198141118937
+  },
+  {
+    "object": "Puerta_marco_exterior",
+    "signed_volume_before": 0.34799403207403284,
+    "signed_volume_after": 0.34799403207403284
+  },
+  {
+    "object": "Puerta_panel_acceso",
+    "signed_volume_before": 0.0005805000052191306,
+    "signed_volume_after": 0.0005805000052191306
+  },
+  {
+    "object": "Puerta_panel_derecho",
+    "signed_volume_before": 0.030468853798247854,
+    "signed_volume_after": 0.030468853798247854
+  },
+  {
+    "object": "Puerta_panel_izquierdo",
+    "signed_volume_before": 0.030468853798247854,
+    "signed_volume_after": 0.030468853798247854
+  },
+  {
+    "object": "Puerto_redondo_-1_0",
+    "signed_volume_before": 0.001990009880350552,
+    "signed_volume_after": 0.001990009880350552
+  },
+  {
+    "object": "Puerto_redondo_-1_1",
+    "signed_volume_before": 0.001990009880350552,
+    "signed_volume_after": 0.001990009880350552
+  },
+  {
+    "object": "Puerto_redondo_-1_2",
+    "signed_volume_before": 0.001990009880350552,
+    "signed_volume_after": 0.001990009880350552
+  },
+  {
+    "object": "Puerto_redondo_-1_3",
+    "signed_volume_before": 0.001990009880350552,
+    "signed_volume_after": 0.001990009880350552
+  },
+  {
+    "object": "Puerto_redondo_-1_4",
+    "signed_volume_before": 0.001990009880350552,
+    "signed_volume_after": 0.001990009880350552
+  },
+  {
+    "object": "Puerto_redondo_-1_5",
+    "signed_volume_before": 0.001990009880350552,
+    "signed_volume_after": 0.001990009880350552
+  },
+  {
+    "object": "Puerto_redondo_-1_6",
+    "signed_volume_before": 0.001990009880350552,
+    "signed_volume_after": 0.001990009880350552
+  },
+  {
+    "object": "Puerto_redondo_-1_7",
+    "signed_volume_before": 0.001990009880350552,
+    "signed_volume_after": 0.001990009880350552
+  },
+  {
+    "object": "Puerto_redondo_1_0",
+    "signed_volume_before": 0.001990009880350552,
+    "signed_volume_after": 0.001990009880350552
+  },
+  {
+    "object": "Puerto_redondo_1_1",
+    "signed_volume_before": 0.001990009880350552,
+    "signed_volume_after": 0.001990009880350552
+  },
+  {
+    "object": "Puerto_redondo_1_2",
+    "signed_volume_before": 0.001990009880350552,
+    "signed_volume_after": 0.001990009880350552
+  },
+  {
+    "object": "Puerto_redondo_1_3",
+    "signed_volume_before": 0.001990009880350552,
+    "signed_volume_after": 0.001990009880350552
+  },
+  {
+    "object": "Puerto_redondo_1_4",
+    "signed_volume_before": 0.001990009880350552,
+    "signed_volume_after": 0.001990009880350552
+  },
+  {
+    "object": "Puerto_redondo_1_5",
+    "signed_volume_before": 0.001990009880350552,
+    "signed_volume_after": 0.001990009880350552
+  },
+  {
+    "object": "Puerto_redondo_1_6",
+    "signed_volume_before": 0.001990009880350552,
+    "signed_volume_after": 0.001990009880350552
+  },
+  {
+    "object": "Puerto_redondo_1_7",
+    "signed_volume_before": 0.001990009880350552,
+    "signed_volume_after": 0.001990009880350552
+  },
+  {
+    "object": "Rampa_desplegada",
+    "signed_volume_before": 0.3999546581844882,
+    "signed_volume_after": 0.3999546581844882
+  },
+  {
+    "object": "Rejilla_frontal_-1_0",
+    "signed_volume_before": 0.0015263106234595335,
+    "signed_volume_after": 0.0015263106234595335
+  },
+  {
+    "object": "Rejilla_frontal_-1_1",
+    "signed_volume_before": 0.0015263106234595335,
+    "signed_volume_after": 0.0015263106234595335
+  },
+  {
+    "object": "Rejilla_frontal_-1_2",
+    "signed_volume_before": 0.0015263106234595335,
+    "signed_volume_after": 0.0015263106234595335
+  },
+  {
+    "object": "Rejilla_frontal_-1_3",
+    "signed_volume_before": 0.0015263106234595335,
+    "signed_volume_after": 0.0015263106234595335
+  },
+  {
+    "object": "Rejilla_frontal_-1_4",
+    "signed_volume_before": 0.0015263106234595335,
+    "signed_volume_after": 0.0015263106234595335
+  },
+  {
+    "object": "Rejilla_frontal_-1_5",
+    "signed_volume_before": 0.0015263106234595335,
+    "signed_volume_after": 0.0015263106234595335
+  },
+  {
+    "object": "Rejilla_frontal_-1_6",
+    "signed_volume_before": 0.0015263106234595335,
+    "signed_volume_after": 0.0015263106234595335
+  },
+  {
+    "object": "Rejilla_frontal_-1_7",
+    "signed_volume_before": 0.0015263106234595335,
+    "signed_volume_after": 0.0015263106234595335
+  },
+  {
+    "object": "Rejilla_frontal_1_0",
+    "signed_volume_before": 0.0015263106234595335,
+    "signed_volume_after": 0.0015263106234595335
+  },
+  {
+    "object": "Rejilla_frontal_1_1",
+    "signed_volume_before": 0.0015263106234595335,
+    "signed_volume_after": 0.0015263106234595335
+  },
+  {
+    "object": "Rejilla_frontal_1_2",
+    "signed_volume_before": 0.0015263106234595335,
+    "signed_volume_after": 0.0015263106234595335
+  },
+  {
+    "object": "Rejilla_frontal_1_3",
+    "signed_volume_before": 0.0015263106234595335,
+    "signed_volume_after": 0.0015263106234595335
+  },
+  {
+    "object": "Rejilla_frontal_1_4",
+    "signed_volume_before": 0.0015263106234595335,
+    "signed_volume_after": 0.0015263106234595335
+  },
+  {
+    "object": "Rejilla_frontal_1_5",
+    "signed_volume_before": 0.0015263106234595335,
+    "signed_volume_after": 0.0015263106234595335
+  },
+  {
+    "object": "Rejilla_frontal_1_6",
+    "signed_volume_before": 0.0015263106234595335,
+    "signed_volume_after": 0.0015263106234595335
+  },
+  {
+    "object": "Rejilla_frontal_1_7",
+    "signed_volume_before": 0.0015263106234595335,
+    "signed_volume_after": 0.0015263106234595335
+  },
+  {
+    "object": "Travesano_techo_-1_0",
+    "signed_volume_before": 0.0203546670454641,
+    "signed_volume_after": 0.0203546670454641
+  },
+  {
+    "object": "Travesano_techo_-1_1",
+    "signed_volume_before": 0.0203546670454641,
+    "signed_volume_after": 0.0203546670454641
+  },
+  {
+    "object": "Travesano_techo_-1_2",
+    "signed_volume_before": 0.0203546670454641,
+    "signed_volume_after": 0.0203546670454641
+  },
+  {
+    "object": "Travesano_techo_-1_3",
+    "signed_volume_before": 0.0203546670454641,
+    "signed_volume_after": 0.0203546670454641
+  },
+  {
+    "object": "Travesano_techo_1_0",
+    "signed_volume_before": 0.0203546670454641,
+    "signed_volume_after": 0.0203546670454641
+  },
+  {
+    "object": "Travesano_techo_1_1",
+    "signed_volume_before": 0.0203546670454641,
+    "signed_volume_after": 0.0203546670454641
+  },
+  {
+    "object": "Travesano_techo_1_2",
+    "signed_volume_before": 0.0203546670454641,
+    "signed_volume_after": 0.0203546670454641
+  },
+  {
+    "object": "Travesano_techo_1_3",
+    "signed_volume_before": 0.0203546670454641,
+    "signed_volume_after": 0.0203546670454641
+  },
+  {
+    "object": "Turbina_vertical_-1_-2.05",
+    "signed_volume_before": 0.37392796117251914,
+    "signed_volume_after": 0.37392796117251914
+  },
+  {
+    "object": "Turbina_vertical_-1_2.0",
+    "signed_volume_before": 0.37392796117251914,
+    "signed_volume_after": 0.37392796117251914
+  },
+  {
+    "object": "Turbina_vertical_1_-2.05",
+    "signed_volume_before": 0.37392796117251914,
+    "signed_volume_after": 0.37392796117251914
+  },
+  {
+    "object": "Turbina_vertical_1_2.0",
+    "signed_volume_before": 0.37392796117251914,
+    "signed_volume_after": 0.37392796117251914
+  },
+  {
+    "object": "Ventana_-1_-0.62",
+    "signed_volume_before": 0.0020751960099907466,
+    "signed_volume_after": 0.0020751960099907466
+  },
+  {
+    "object": "Ventana_-1_-1.45",
+    "signed_volume_before": 0.0020751960099907466,
+    "signed_volume_after": 0.0020751960099907466
+  },
+  {
+    "object": "Ventana_-1_0.21",
+    "signed_volume_before": 0.0020751960099907466,
+    "signed_volume_after": 0.0020751960099907466
+  },
+  {
+    "object": "Ventana_-1_1.04",
+    "signed_volume_before": 0.0020751960099907466,
+    "signed_volume_after": 0.0020751960099907466
+  },
+  {
+    "object": "Ventana_1_-0.62",
+    "signed_volume_before": 0.0020751960099907466,
+    "signed_volume_after": 0.0020751960099907466
+  },
+  {
+    "object": "Ventana_1_-1.45",
+    "signed_volume_before": 0.0020751960099907466,
+    "signed_volume_after": 0.0020751960099907466
+  },
+  {
+    "object": "Ventana_1_0.21",
+    "signed_volume_before": 0.0020751960099907466,
+    "signed_volume_after": 0.0020751960099907466
+  },
+  {
+    "object": "Ventana_1_1.04",
+    "signed_volume_before": 0.0020751960099907466,
+    "signed_volume_after": 0.0020751960099907466
+  },
+  {
+    "object": "Ventana_marco_-1_-0.62",
+    "signed_volume_before": 0.019663333568591602,
+    "signed_volume_after": 0.019663333568591602
+  },
+  {
+    "object": "Ventana_marco_-1_-1.45",
+    "signed_volume_before": 0.019663333568591602,
+    "signed_volume_after": 0.019663333568591602
+  },
+  {
+    "object": "Ventana_marco_-1_0.21",
+    "signed_volume_before": 0.019663333568591602,
+    "signed_volume_after": 0.019663333568591602
+  },
+  {
+    "object": "Ventana_marco_-1_1.04",
+    "signed_volume_before": 0.019663333568591602,
+    "signed_volume_after": 0.019663333568591602
+  },
+  {
+    "object": "Ventana_marco_1_-0.62",
+    "signed_volume_before": 0.019663333568591602,
+    "signed_volume_after": 0.019663333568591602
+  },
+  {
+    "object": "Ventana_marco_1_-1.45",
+    "signed_volume_before": 0.019663333568591602,
+    "signed_volume_after": 0.019663333568591602
+  },
+  {
+    "object": "Ventana_marco_1_0.21",
+    "signed_volume_before": 0.019663333568591602,
+    "signed_volume_after": 0.019663333568591602
+  },
+  {
+    "object": "Ventana_marco_1_1.04",
+    "signed_volume_before": 0.019663333568591602,
+    "signed_volume_after": 0.019663333568591602
+  },
+  {
+    "object": "Zapata_-1_-1.8",
+    "signed_volume_before": 0.09134582820783063,
+    "signed_volume_after": 0.09134582820783063
+  },
+  {
+    "object": "Zapata_-1_1.7",
+    "signed_volume_before": 0.09134582820783063,
+    "signed_volume_after": 0.09134582820783063
+  },
+  {
+    "object": "Zapata_1_-1.8",
+    "signed_volume_before": 0.09134582820783063,
+    "signed_volume_after": 0.09134582820783063
+  },
+  {
+    "object": "Zapata_1_1.7",
+    "signed_volume_before": 0.09134582820783063,
+    "signed_volume_after": 0.09134582820783063
+  }
+]
