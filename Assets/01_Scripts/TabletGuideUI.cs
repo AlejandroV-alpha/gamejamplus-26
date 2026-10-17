@@ -10,12 +10,12 @@ namespace GameJam.Tablet
 {
     public sealed class TabletGuideUI : MonoBehaviour
     {
-        private RectTransform frame, screen, workspace;
+        private RectTransform chassis, screen, workspace;
         private CanvasGroup overlay;
         private TabletRecipeCatalog catalog;
         private TabletUISkin skin;
         private TMP_FontAsset tmpFont;
-        private TextMeshProUGUI planetHeaderLabel, osClockText, statusBannerLeft, statusBannerRight;
+        private TextMeshProUGUI osClockText;
         private readonly List<Button> planetTabButtons = new();
         private readonly List<TextMeshProUGUI> planetTabLabels = new();
         private readonly List<Button> dockButtons = new();
@@ -24,15 +24,20 @@ namespace GameJam.Tablet
         private int planetIndex = 1;
         private string page = "Inicio";
 
-        // Pixel Sci-Fi Cyan Theme Palette:
+        // Pixel Sci-Fi Palette:
         private static readonly Color CyanAccent = new(0.00f, 0.92f, 0.88f, 1f);     // Vibrant cyan
-        private static readonly Color CyanHover = new(0.35f, 0.96f, 1.00f, 1f);      // Bright electric hover
-        private static readonly Color InkWhite = new(0.95f, 0.98f, 1.00f, 1f);       // Crisp white
-        private static readonly Color MutedCyan = new(0.42f, 0.65f, 0.78f, 1f);      // Technical secondary
-        private static readonly Color DimCyan = new(0.24f, 0.40f, 0.52f, 1f);        // Subtle labels
-        private static readonly Color PanelTint = new(0.05f, 0.08f, 0.13f, 0.94f);   // 9-slice panel tint
-        private static readonly Color InsetTint = new(0.02f, 0.035f, 0.06f, 0.92f);  // Sunken readout tint
-        private static readonly Color SlotTint = new(0.08f, 0.14f, 0.22f, 0.95f);   // Item / crystal slot tint
+        private static readonly Color InkWhite = new(0.96f, 0.98f, 1.00f, 1f);       // Ultra-crisp reading white
+        private static readonly Color MutedCyan = new(0.45f, 0.66f, 0.78f, 1f);      // Soft technical secondary
+        private static readonly Color DimCyan = new(0.24f, 0.38f, 0.48f, 1f);        // Muted labels
+        private static readonly Color CardBg = new(0.045f, 0.075f, 0.12f, 0.97f);    // High-contrast solid card
+        private static readonly Color InsetBg = new(0.02f, 0.035f, 0.055f, 0.95f);   // High-contrast sunken box
+        private static readonly Color SlotBg = new(0.08f, 0.13f, 0.20f, 0.95f);     // Item slot tint
+
+        // Physical Tablet Chassis Palette:
+        private static readonly Color ChassisAlloy = new(0.07f, 0.09f, 0.12f, 1f);    // Rugged space-grade matte body
+        private static readonly Color ChassisBevel = new(0.16f, 0.21f, 0.28f, 1f);    // Outer frame chamfer rim
+        private static readonly Color ChassisGrip = new(0.04f, 0.055f, 0.075f, 1f);   // Tactile grip ribs
+        private static readonly Color HardwareStamp = new(0.24f, 0.32f, 0.42f, 1f); // Silk-screen model stamp
 
         private const float PPU = 0.5f; // 2x retro pixel-art density scaling
 
@@ -78,40 +83,50 @@ namespace GameJam.Tablet
             overlay.blocksRaycasts = false;
 
             // Ambient dark space shade behind tablet
-            var worldShade = CreateSlicedImage(root.transform, "World shade", new Vector2(5000, 5000), null, new Color(0.01f, 0.015f, 0.03f, 0.75f));
+            var worldShade = CreateSlicedImage(root.transform, "World shade", new Vector2(5000, 5000), null, new Color(0.01f, 0.015f, 0.03f, 0.78f));
             worldShade.anchoredPosition = Vector2.zero;
 
-            // Main physical tablet window chassis (Using authentic 9-sliced window.png)
-            frame = CreateSlicedImage(root.transform, "Tablet Window Frame", new Vector2(1360, 830), skin != null ? skin.window : null, Color.white);
-            frame.anchoredPosition = Vector2.zero;
+            // ================= 1. PHYSICAL TABLET HARDWARE CHASSIS =================
+            // Sized like a true tactical field datapad (1280 x 810)
+            chassis = CreateSlicedImage(root.transform, "Physical Tablet Chassis", new Vector2(1280, 810), skin != null ? skin.panel : null, ChassisAlloy);
+            chassis.anchoredPosition = Vector2.zero;
 
-            // Interior screen container within window bezel
-            screen = new GameObject("Screen Area", typeof(RectTransform)).GetComponent<RectTransform>();
-            screen.transform.SetParent(frame, false);
-            screen.anchorMin = Vector2.zero;
-            screen.anchorMax = Vector2.one;
-            screen.offsetMin = new Vector2(16, 16);
-            screen.offsetMax = new Vector2(-16, -16);
+            // Outer metallic rim outline
+            var chassisOutline = chassis.gameObject.AddComponent<Outline>();
+            chassisOutline.effectColor = ChassisBevel;
+            chassisOutline.effectDistance = new Vector2(2, -2);
 
-            // Expedition selfie wallpaper layer (with dark tint for high text contrast)
+            // Tactile side grip ribs (Left and Right edges of chassis)
+            CreateChassisGrips(chassis);
+
+            // Top bezel hardware (Camera sensor, Status LED, Speaker)
+            CreateTopBezelHardware(chassis);
+
+            // Bottom bezel hardware (Silk-screen stamp, Home touch indicator)
+            CreateBottomBezelHardware(chassis);
+
+            // ================= 2. RECESSED GLASS DISPLAY SCREEN =================
+            // Screen area inset within the physical bezel
+            screen = CreateSlicedImage(chassis, "Glass Screen Area", new Vector2(1190, 715), skin != null ? skin.window : null, Color.white);
+            screen.anchoredPosition = new Vector2(0, -2);
+
+            // Screen edge shadow / inner bevel
+            var screenMask = screen.gameObject.AddComponent<RectMask2D>();
+
+            // Expedition selfie wallpaper layer (with strong dark glass contrast tint)
             AddWallpaper();
 
-            // OS Status Bar (Top edge)
-            CreateTopOSBar();
-
-            // Window Header (Terminal brand, Planet tabs, Close button)
-            CreateWindowHeader(close);
-
-            // Sub-header Banner (Active Sector Spectrometry Readout)
-            CreateSubHeaderBanner();
+            // ================= 3. STREAMLINED TABLET OS INTERFACE =================
+            // Single clean Top OS Bar (Title, Planet Tabs, Clock, Close button)
+            CreateTopOSBar(close);
 
             // Central dynamic workspace for pages (Inicio, Tareas, Recetas, Minerales)
             workspace = new GameObject("Widget workspace", typeof(RectTransform)).GetComponent<RectTransform>();
             workspace.transform.SetParent(screen, false);
             workspace.anchorMin = new Vector2(0.5f, 0.5f);
             workspace.anchorMax = new Vector2(0.5f, 0.5f);
-            workspace.sizeDelta = new Vector2(1280, 500);
-            workspace.anchoredPosition = new Vector2(0, -22);
+            workspace.sizeDelta = new Vector2(1170, 570);
+            workspace.anchoredPosition = new Vector2(0, -18);
 
             // Bottom Navigation Dock (Inicio, Tareas, Recetas, Minerales)
             CreateBottomNavigationDock();
@@ -121,17 +136,71 @@ namespace GameJam.Tablet
 
         private void CreateEquipmentHint()
         {
-            var hint = CreateSlicedImage(transform, "Equipment hint", new Vector2(280, 42), skin != null ? skin.inset : null, InsetTint);
+            var hint = CreateSlicedImage(transform, "Equipment hint", new Vector2(280, 42), skin != null ? skin.inset : null, InsetBg);
             hint.anchorMin = hint.anchorMax = new Vector2(1, 0);
             hint.anchoredPosition = new Vector2(-155, 30);
 
             if (skin != null && skin.objectives != null)
             {
-                var icon = CreateIcon(hint, skin.objectives, new Vector2(-110, 0), new Vector2(20, 20), CyanAccent);
+                CreateIcon(hint, skin.objectives, new Vector2(-110, 0), new Vector2(20, 20), CyanAccent);
             }
 
             var label = CreateLabel(hint, "01  TABLET EQUIPADA  [TAB]", 14, new Vector2(14, 0), new Vector2(230, 26), CyanAccent);
             label.alignment = TextAlignmentOptions.Center;
+        }
+
+        private void CreateChassisGrips(RectTransform parent)
+        {
+            // Tactile ribbed rubber grips on left and right borders of the tablet body
+            float[] yOffsets = { -120, -70, -20, 30, 80, 130 };
+            foreach (float y in yOffsets)
+            {
+                // Left grip rib
+                var leftRib = CreateSlicedImage(parent, "Grip_L", new Vector2(8, 28), skin != null ? skin.inset : null, ChassisGrip);
+                leftRib.anchoredPosition = new Vector2(-630, y);
+
+                // Right grip rib
+                var rightRib = CreateSlicedImage(parent, "Grip_R", new Vector2(8, 28), skin != null ? skin.inset : null, ChassisGrip);
+                rightRib.anchoredPosition = new Vector2(630, y);
+            }
+
+            // Power button tab on right outer frame
+            var pwrBtn = CreateSlicedImage(parent, "Pwr_Button", new Vector2(6, 46), skin != null ? skin.inset : null, ChassisBevel);
+            pwrBtn.anchoredPosition = new Vector2(642, 220);
+        }
+
+        private void CreateTopBezelHardware(RectTransform parent)
+        {
+            var cluster = new GameObject("Sensor Cluster", typeof(RectTransform)).GetComponent<RectTransform>();
+            cluster.transform.SetParent(parent, false);
+            cluster.anchoredPosition = new Vector2(0, 385);
+            cluster.sizeDelta = new Vector2(160, 20);
+
+            // Front optical lens
+            var lensRim = CreateSlicedImage(cluster, "LensRim", new Vector2(12, 12), skin != null ? skin.slot : null, new Color(0.02f, 0.03f, 0.05f));
+            lensRim.anchoredPosition = new Vector2(-25, 0);
+            var lensIris = CreateSlicedImage(lensRim, "LensIris", new Vector2(4, 4), null, new Color(0.12f, 0.45f, 0.75f));
+            lensIris.anchoredPosition = Vector2.zero;
+
+            // Technical speaker grille slot
+            var grille = CreateSlicedImage(cluster, "SpeakerGrille", new Vector2(38, 4), skin != null ? skin.inset : null, ChassisGrip);
+            grille.anchoredPosition = new Vector2(5, 0);
+
+            // Operational status LED
+            var led = CreateSlicedImage(cluster, "StatusLED", new Vector2(5, 5), null, new Color(0.00f, 0.96f, 0.74f, 0.90f));
+            led.anchoredPosition = new Vector2(35, 0);
+        }
+
+        private void CreateBottomBezelHardware(RectTransform parent)
+        {
+            // Silk-screen model stamp
+            var stamp = CreateLabel(parent, "ORBIT AEROSPACE // EXP-PAD 07  -  MIL-SPEC DATAPAD", 11,
+                new Vector2(0, -388), new Vector2(450, 16), HardwareStamp);
+            stamp.alignment = TextAlignmentOptions.Center;
+
+            // Touch home indicator bar
+            var homeBar = CreateSlicedImage(parent, "HomeBar", new Vector2(110, 4), skin != null ? skin.inset : null, new Color(0.00f, 0.92f, 0.88f, 0.35f));
+            homeBar.anchoredPosition = new Vector2(0, -374);
         }
 
         private void AddWallpaper()
@@ -155,7 +224,7 @@ namespace GameJam.Tablet
             fit.aspectMode = AspectRatioFitter.AspectMode.EnvelopeParent;
             fit.aspectRatio = skin.wallpaper.rect.width / skin.wallpaper.rect.height;
 
-            // Ambient dark glass tint to balance vibrancy of illustration with text contrast
+            // Deep dark glass tint (0.72) to balance rich sci-fi artwork with perfect UI text readability
             var tintGo = new GameObject("Wallpaper Tint", typeof(RectTransform), typeof(Image));
             tintGo.transform.SetParent(viewport.transform, false);
             var tRect = (RectTransform)tintGo.transform;
@@ -163,84 +232,64 @@ namespace GameJam.Tablet
             tRect.anchorMax = Vector2.one;
             tRect.offsetMin = tRect.offsetMax = Vector2.zero;
             var tintImg = tintGo.GetComponent<Image>();
-            tintImg.color = new Color(0.012f, 0.020f, 0.038f, skin.wallpaperDim);
+            tintImg.color = new Color(0.015f, 0.022f, 0.038f, 0.72f);
             tintImg.raycastTarget = false;
         }
 
-        private void CreateTopOSBar()
+        private void CreateTopOSBar(UnityAction close)
         {
-            var bar = CreateSlicedImage(screen, "OS Status Bar", new Vector2(1280, 26), skin != null ? skin.inset : null, InsetTint);
-            bar.anchoredPosition = new Vector2(0, 368);
+            var bar = CreateSlicedImage(screen, "OS Top Bar", new Vector2(1170, 36), skin != null ? skin.inset : null, InsetBg);
+            bar.anchoredPosition = new Vector2(0, 325);
 
-            var osLeft = CreateLabel(bar, "SYS // EXP-NET: ONLINE  *  SYNC 100%", 12, new Vector2(-460, 0), new Vector2(320, 20), CyanAccent);
-            osLeft.alignment = TextAlignmentOptions.Left;
+            // OS Brand & Version
+            var osLabel = CreateLabel(bar, "ORBIT OS v3.2", 14, new Vector2(-490, 0), new Vector2(160, 24), CyanAccent);
+            osLabel.alignment = TextAlignmentOptions.Left;
 
-            osClockText = CreateLabel(bar, "SOL 42 - 14:38:00 EXP-PAD", 12, Vector2.zero, new Vector2(260, 20), MutedCyan);
-            osClockText.alignment = TextAlignmentOptions.Center;
-
-            var osRight = CreateLabel(bar, "[PWR: 98%]  [ANTENNA: NOMINAL]", 12, new Vector2(460, 0), new Vector2(300, 20), MutedCyan);
-            osRight.alignment = TextAlignmentOptions.Right;
-        }
-
-        private void CreateWindowHeader(UnityAction close)
-        {
-            // Title terminal branding
-            var titleLabel = CreateLabel(screen, "ORBIT // EXP-PAD 07  -  GUIA DE CAMPO", 16, new Vector2(-410, 332), new Vector2(380, 26), InkWhite);
-            titleLabel.alignment = TextAlignmentOptions.Left;
-
-            // Planet Selector Tabs
+            // Planet Selector Tabs (Embedded seamlessly in the top bar)
             var planets = catalog != null ? catalog.planets : null;
             if (planets != null)
             {
                 planetTabButtons.Clear();
                 planetTabLabels.Clear();
 
-                float startX = -120f;
-                float spacing = 150f;
+                float startX = -320f;
+                float spacing = 135f;
                 for (int i = 0; i < planets.Length; i++)
                 {
                     int index = i;
                     string planetName = Clean(planets[i].name.ToUpperInvariant());
-                    var (btn, lbl) = CreateTabButton(screen, planetName, new Vector2(startX + i * spacing, 332), new Vector2(138, 34),
+                    var (btn, lbl) = CreateTabButton(bar, planetName, new Vector2(startX + i * spacing, 0), new Vector2(125, 28),
                         () => SelectPlanet(index));
                     planetTabButtons.Add(btn);
                     planetTabLabels.Add(lbl);
                 }
             }
 
+            // Sol Date & Telemetry
+            osClockText = CreateLabel(bar, "SOL 42 - 14:38  [PWR 98%]", 12, new Vector2(360, 0), new Vector2(230, 20), MutedCyan);
+            osClockText.alignment = TextAlignmentOptions.Right;
+
             // Close Button [X]
-            var closeBtn = CreateIconButton(screen, skin != null ? skin.closeIcon : null, "X",
-                new Vector2(618, 332), new Vector2(34, 30), () => close());
-        }
-
-        private void CreateSubHeaderBanner()
-        {
-            var banner = CreateSlicedImage(screen, "SubHeader Banner", new Vector2(1280, 32), skin != null ? skin.inset : null, InsetTint);
-            banner.anchoredPosition = new Vector2(0, 290);
-
-            statusBannerLeft = CreateLabel(banner, "", 14, new Vector2(-360, 0), new Vector2(520, 24), CyanAccent);
-            statusBannerLeft.alignment = TextAlignmentOptions.Left;
-
-            statusBannerRight = CreateLabel(banner, "ESTADO: EN CURSO  -  PRIORIDAD 01", 12, new Vector2(400, 0), new Vector2(440, 24), MutedCyan);
-            statusBannerRight.alignment = TextAlignmentOptions.Right;
+            var closeBtn = CreateIconButton(bar, skin != null ? skin.closeIcon : null, "X",
+                new Vector2(560, 0), new Vector2(28, 26), () => close());
         }
 
         private void CreateBottomNavigationDock()
         {
-            var dock = CreateSlicedImage(screen, "Bottom Dock", new Vector2(760, 48), skin != null ? skin.inset : null, InsetTint);
-            dock.anchoredPosition = new Vector2(0, -355);
+            var dock = CreateSlicedImage(screen, "Bottom Dock", new Vector2(680, 44), skin != null ? skin.inset : null, InsetBg);
+            dock.anchoredPosition = new Vector2(0, -325);
 
             dockButtons.Clear();
             dockLabels.Clear();
 
             var sections = new[] { "Inicio", "Tareas", "Recetas", "Minerales" };
-            float startX = -270f;
-            float spacing = 180f;
+            float startX = -240f;
+            float spacing = 160f;
 
             for (int i = 0; i < sections.Length; i++)
             {
                 string sec = sections[i];
-                var (btn, lbl) = CreateNavButton(dock, sec.ToUpperInvariant(), new Vector2(startX + i * spacing, 0), new Vector2(165, 36),
+                var (btn, lbl) = CreateNavButton(dock, sec.ToUpperInvariant(), new Vector2(startX + i * spacing, 0), new Vector2(150, 32),
                     () => ShowPage(sec));
                 dockButtons.Add(btn);
                 dockLabels.Add(lbl);
@@ -301,236 +350,259 @@ namespace GameJam.Tablet
                 dockLabels[i].color = active ? CyanAccent : InkWhite;
             }
 
-            // Update sub-header banner
-            statusBannerLeft.text = $"ARCHIVO ORBITAL // {Clean(Planet.name.ToUpperInvariant())}  -  BASE ESPECTROMETRICA";
-
             if (page == "Inicio") RenderHome();
             else if (page == "Tareas") RenderTasks();
             else if (page == "Recetas") RenderRecipes();
             else if (page == "Minerales") RenderMinerals();
         }
 
-        // ================= PAGE 1: INICIO (OVERVIEW DASHBOARD) =================
+        // ================= PAGE 1: INICIO (PRIMARY MISSION FOCUSED) =================
         private void RenderHome()
         {
-            // Card 1: Misión Principal (Top-Left)
-            var cardMission = CreateCard(workspace, "Card_Mision", new Vector2(-320, 125), new Vector2(600, 230), () => ShowTasks());
-            CreateIcon(cardMission, skin != null ? skin.ship : null, new Vector2(-260, 85), new Vector2(24, 24), CyanAccent);
-            var mTitle = CreateLabel(cardMission, $"MISION PRINCIPAL // {Clean(Planet.name.ToUpperInvariant())}", 16, new Vector2(20, 85), new Vector2(500, 24), CyanAccent);
+            // ----------------- LEFT HERO COLUMN: PRIMARY MISSION (DOMINANT FOCUS) -----------------
+            var heroCard = CreateSlicedImage(workspace, "Hero_Mission", new Vector2(700, 470), skin != null ? skin.panel : null, CardBg);
+            heroCard.anchoredPosition = new Vector2(-225, 0);
+
+            // Top Header Line
+            CreateIcon(heroCard, skin != null ? skin.ship : null, new Vector2(-305, 205), new Vector2(26, 26), CyanAccent);
+            var mTitle = CreateLabel(heroCard, $"MISION PRINCIPAL  -  SECTOR {Clean(Planet.name).ToUpperInvariant()}", 18,
+                new Vector2(-15, 205), new Vector2(530, 26), CyanAccent);
             mTitle.alignment = TextAlignmentOptions.Left;
 
-            var mInset = CreateSlicedImage(cardMission, "Mission_Inset", new Vector2(560, 105), skin != null ? skin.inset : null, InsetTint);
-            mInset.anchoredPosition = new Vector2(0, 10);
-            var mText = CreateLabel(mInset, Clean(Planet.objective), 16, Vector2.zero, new Vector2(530, 85), InkWhite);
-            mText.alignment = TextAlignmentOptions.TopLeft;
+            var prioBadge = CreateSlicedImage(heroCard, "PrioBadge", new Vector2(100, 26), skin != null ? skin.inset : null, InsetBg);
+            prioBadge.anchoredPosition = new Vector2(285, 205);
+            var prioText = CreateLabel(prioBadge, "[PRIORIDAD 1]", 11, Vector2.zero, new Vector2(95, 20), new Color(1f, 0.45f, 0.35f));
+            prioText.alignment = TextAlignmentOptions.Center;
 
-            var (mBtn, _) = CreateActionButton(cardMission, "VER OBJETIVOS DETALLADOS  >", new Vector2(0, -78), new Vector2(560, 32), () => ShowTasks());
+            // Big Objective Statement Box
+            var objBox = CreateSlicedImage(heroCard, "ObjectiveBox", new Vector2(660, 95), skin != null ? skin.inset : null, InsetBg);
+            objBox.anchoredPosition = new Vector2(0, 130);
+            var objSub = CreateLabel(objBox, "OBJETIVO DE EXPEDICION:", 11, new Vector2(0, 32), new Vector2(620, 18), DimCyan);
+            objSub.alignment = TextAlignmentOptions.Left;
+            var objMain = CreateLabel(objBox, Clean(Planet.objective), 16, new Vector2(0, -10), new Vector2(620, 56), InkWhite);
+            objMain.alignment = TextAlignmentOptions.Left;
 
-            // Card 2: Recetario Técnico (Top-Right)
-            var cardRecipes = CreateCard(workspace, "Card_Recetas", new Vector2(320, 125), new Vector2(600, 230), () => ShowPage("Recetas"));
-            CreateIcon(cardRecipes, skin != null ? skin.repair : null, new Vector2(-260, 85), new Vector2(24, 24), CyanAccent);
-            var rTitle = CreateLabel(cardRecipes, "RECETARIO TECNICO DE COMPONENTES", 16, new Vector2(20, 85), new Vector2(500, 24), CyanAccent);
-            rTitle.alignment = TextAlignmentOptions.Left;
+            // Operational Checklist Preview (Direct actionable steps inside the hero card)
+            var checkCard = CreateSlicedImage(heroCard, "ChecklistCard", new Vector2(660, 160), skin != null ? skin.inset : null, InsetBg);
+            checkCard.anchoredPosition = new Vector2(0, -15);
 
-            var rInset = CreateSlicedImage(cardRecipes, "Recipe_Inset", new Vector2(560, 105), skin != null ? skin.inset : null, InsetTint);
-            rInset.anchoredPosition = new Vector2(0, 10);
+            var checkHeader = CreateLabel(checkCard, "ESTADO DEL PROTOCOLO DE REPARACION:", 12, new Vector2(0, 60), new Vector2(620, 20), MutedCyan);
+            checkHeader.alignment = TextAlignmentOptions.Left;
+
+            string[] stepTexts = {
+                $"[x] 01  Diagnostico inicial de telemetria completado",
+                $"[>] 02  Recolectar suministros en {Clean(Planet.name)}",
+                $"[ ] 03  Fabricar e instalar componentes averiados",
+                $"[ ] 04  Secuencia de ignicion y retorno a la orbita"
+            };
+
+            for (int s = 0; s < stepTexts.Length; s++)
+            {
+                bool inProgress = (s == 1);
+                Color stepColor = inProgress ? CyanAccent : (s == 0 ? InkWhite : DimCyan);
+                var sLabel = CreateLabel(checkCard, stepTexts[s], 13, new Vector2(0, 26 - s * 26), new Vector2(620, 22), stepColor);
+                sLabel.alignment = TextAlignmentOptions.Left;
+            }
+
+            // Primary Call to Action Button
+            var (heroBtn, _) = CreateActionButton(heroCard, "CONTINUAR PROTOCOLO DE MISION  >",
+                new Vector2(0, -185), new Vector2(660, 42), () => ShowTasks());
+
+            // ----------------- RIGHT COLUMN: COMPLEMENTARY TELEMETRY WIDGETS -----------------
+
+            // Widget 1: Próxima Reparación Crítica (Top-Right)
+            var widgetRepair = CreateSlicedImage(workspace, "Widget_Repair", new Vector2(445, 225), skin != null ? skin.panel : null, CardBg);
+            widgetRepair.anchoredPosition = new Vector2(360, 122);
+
+            CreateIcon(widgetRepair, skin != null ? skin.repair : null, new Vector2(-185, 82), new Vector2(22, 22), CyanAccent);
+            var wrTitle = CreateLabel(widgetRepair, "PROXIMA REPARACION", 14, new Vector2(10, 82), new Vector2(350, 22), CyanAccent);
+            wrTitle.alignment = TextAlignmentOptions.Left;
+
+            var wrInset = CreateSlicedImage(widgetRepair, "Repair_Inset", new Vector2(415, 85), skin != null ? skin.inset : null, InsetBg);
+            wrInset.anchoredPosition = new Vector2(0, 16);
 
             if (Planet.recipes != null && Planet.recipes.Length > 0)
             {
                 var r0 = Planet.recipes[0];
-                var cLabel = CreateLabel(rInset, $"[01] {Clean(r0.component).ToUpperInvariant()}", 16, new Vector2(0, 26), new Vector2(530, 24), InkWhite);
+                var cLabel = CreateLabel(wrInset, Clean(r0.component).ToUpperInvariant(), 15, new Vector2(0, 20), new Vector2(390, 24), InkWhite);
                 cLabel.alignment = TextAlignmentOptions.Left;
 
-                var ingLabel = CreateLabel(rInset, Ingredients(r0), 14, new Vector2(0, -18), new Vector2(530, 40), CyanAccent);
+                var ingLabel = CreateLabel(wrInset, Ingredients(r0), 13, new Vector2(0, -18), new Vector2(390, 36), CyanAccent);
                 ingLabel.alignment = TextAlignmentOptions.Left;
             }
 
-            var (rBtn, _) = CreateActionButton(cardRecipes, $"{Planet.recipes.Length} RECETAS DISPONIBLES - ABRIR CATALOGO  >",
-                new Vector2(0, -78), new Vector2(560, 32), () => ShowPage("Recetas"));
+            var (wrBtn, _) = CreateActionButton(widgetRepair, "VER RECETAS  >", new Vector2(0, -68), new Vector2(415, 34), () => ShowPage("Recetas"));
 
-            // Card 3: Recursos Minerales (Bottom-Left)
-            var cardMinerals = CreateCard(workspace, "Card_Minerales", new Vector2(-320, -135), new Vector2(600, 210), () => ShowMinerals());
-            CreateIcon(cardMinerals, skin != null ? skin.mine : null, new Vector2(-260, 75), new Vector2(24, 24), CyanAccent);
-            var minTitle = CreateLabel(cardMinerals, "RECURSOS Y MINERALES ANALIZADOS", 16, new Vector2(20, 75), new Vector2(500, 24), CyanAccent);
-            minTitle.alignment = TextAlignmentOptions.Left;
+            // Widget 2: Minerales Detectados (Bottom-Right)
+            var widgetMin = CreateSlicedImage(workspace, "Widget_Minerals", new Vector2(445, 225), skin != null ? skin.panel : null, CardBg);
+            widgetMin.anchoredPosition = new Vector2(360, -122);
 
-            var minInset = CreateSlicedImage(cardMinerals, "Mineral_Inset", new Vector2(560, 85), skin != null ? skin.inset : null, InsetTint);
-            minInset.anchoredPosition = new Vector2(0, 8);
-            string minList = string.Join("   -   ", Array.ConvertAll(Planet.minerals, m => Clean(m).ToUpperInvariant()));
-            var minText = CreateLabel(minInset, minList, 15, Vector2.zero, new Vector2(530, 60), InkWhite);
+            CreateIcon(widgetMin, skin != null ? skin.mine : null, new Vector2(-185, 82), new Vector2(22, 22), CyanAccent);
+            var wmTitle = CreateLabel(widgetMin, "RECURSOS DETECTADOS", 14, new Vector2(10, 82), new Vector2(350, 22), CyanAccent);
+            wmTitle.alignment = TextAlignmentOptions.Left;
+
+            var wmInset = CreateSlicedImage(widgetMin, "Min_Inset", new Vector2(415, 85), skin != null ? skin.inset : null, InsetBg);
+            wmInset.anchoredPosition = new Vector2(0, 16);
+
+            string minList = string.Join("  -  ", Array.ConvertAll(Planet.minerals, m => Clean(m).ToUpperInvariant()));
+            var minText = CreateLabel(wmInset, minList, 14, new Vector2(0, 12), new Vector2(390, 34), InkWhite);
             minText.alignment = TextAlignmentOptions.Center;
 
-            var (minBtn, _) = CreateActionButton(cardMinerals, "VER ESPECTROMETRIA  >", new Vector2(0, -68), new Vector2(560, 32), () => ShowMinerals());
+            var minSub = CreateLabel(wmInset, $"{Planet.minerals.Length} minerales registrados en el sector", 11, new Vector2(0, -22), new Vector2(390, 18), DimCyan);
+            minSub.alignment = TextAlignmentOptions.Center;
 
-            // Card 4: Protocolo de Misión (Bottom-Right)
-            var cardTasks = CreateCard(workspace, "Card_Tareas", new Vector2(320, -135), new Vector2(600, 210), () => ShowTasks());
-            CreateIcon(cardTasks, skin != null ? skin.objectives : null, new Vector2(-260, 75), new Vector2(24, 24), CyanAccent);
-            var pTitle = CreateLabel(cardTasks, "PROTOCOLO OPERATIVO RECOMENDADO", 16, new Vector2(20, 75), new Vector2(500, 24), CyanAccent);
-            pTitle.alignment = TextAlignmentOptions.Left;
-
-            var pInset = CreateSlicedImage(cardTasks, "Protocol_Inset", new Vector2(560, 85), skin != null ? skin.inset : null, InsetTint);
-            pInset.anchoredPosition = new Vector2(0, 8);
-            var pText = CreateLabel(pInset, "01 RECOLECTAR MATERIALES  ->  02 REPARAR NAVE\n03 CHEQUEAR SISTEMAS Y DESPEGAR",
-                14, Vector2.zero, new Vector2(530, 60), InkWhite);
-            pText.alignment = TextAlignmentOptions.Center;
-
-            var (pBtn, _) = CreateActionButton(cardTasks, "SEGUIMIENTO DE OBJETIVOS  >", new Vector2(0, -68), new Vector2(560, 32), () => ShowTasks());
+            var (wmBtn, _) = CreateActionButton(widgetMin, "CONSULTAR MINERALES  >", new Vector2(0, -68), new Vector2(415, 34), () => ShowMinerals());
         }
 
         // ================= PAGE 2: TAREAS (MISSION OBJECTIVES) =================
         private void RenderTasks()
         {
-            var header = CreateLabel(workspace, $"SEGUIMIENTO DE PROTOCOLO  -  {Clean(Planet.name).ToUpperInvariant()}", 20,
-                new Vector2(0, 210), new Vector2(1240, 32), CyanAccent);
+            var header = CreateLabel(workspace, $"SEGUIMIENTO DE PROTOCOLO  -  SECTOR {Clean(Planet.name).ToUpperInvariant()}", 18,
+                new Vector2(0, 225), new Vector2(1150, 28), CyanAccent);
             header.alignment = TextAlignmentOptions.Left;
 
             var steps = new[] {
-                $"Reunir los materiales del sector de {Clean(Planet.name)}",
-                "Consultar los planos tecnicos y reparar los componentes de la nave",
-                "Completar la secuencia de chequeo y preparar la partida"
+                $"Localizar zona de impacto y diagnosticar sistemas de {Clean(Planet.name)}",
+                "Recolectar los minerales y recursos especificados en el plano tecnico",
+                "Reparar los componentes en la estacion de ensamblaje",
+                "Completar la secuencia de ignicion y retorno a la nave central"
             };
 
             for (int i = 0; i < steps.Length; i++)
             {
-                var row = CreateSlicedImage(workspace, $"Task_Row_{i}", new Vector2(1240, 95), skin != null ? skin.panel : null, PanelTint);
-                row.anchoredPosition = new Vector2(0, 115 - i * 115);
+                var row = CreateSlicedImage(workspace, $"Task_Row_{i}", new Vector2(1150, 88), skin != null ? skin.panel : null, CardBg);
+                row.anchoredPosition = new Vector2(0, 140 - i * 105);
 
                 // Slot with check icon
-                var slot = CreateSlicedImage(row, "Slot", new Vector2(44, 44), skin != null ? skin.slot : null, SlotTint);
-                slot.anchoredPosition = new Vector2(-570, 0);
+                var slot = CreateSlicedImage(row, "Slot", new Vector2(42, 42), skin != null ? skin.slot : null, SlotBg);
+                slot.anchoredPosition = new Vector2(-525, 0);
                 if (skin != null && skin.checkIcon != null)
                 {
                     CreateIcon(slot, skin.checkIcon, Vector2.zero, new Vector2(24, 24), CyanAccent);
                 }
 
                 // Step index
-                var numLabel = CreateLabel(row, (i + 1).ToString("00"), 20, new Vector2(-510, 0), new Vector2(50, 40), CyanAccent);
+                var numLabel = CreateLabel(row, (i + 1).ToString("00"), 18, new Vector2(-470, 0), new Vector2(45, 36), CyanAccent);
                 numLabel.alignment = TextAlignmentOptions.Center;
 
                 // Step description
-                var stepDesc = CreateLabel(row, steps[i], 16, new Vector2(40, 0), new Vector2(900, 60), InkWhite);
+                var stepDesc = CreateLabel(row, steps[i], 15, new Vector2(50, 0), new Vector2(850, 50), InkWhite);
                 stepDesc.alignment = TextAlignmentOptions.Left;
 
                 // Status tag inset
-                var tag = CreateSlicedImage(row, "Tag", new Vector2(130, 32), skin != null ? skin.inset : null, InsetTint);
-                tag.anchoredPosition = new Vector2(535, 0);
-                var tagLabel = CreateLabel(tag, i == 0 ? "[EN CURSO]" : "[PENDIENTE]", 12, Vector2.zero, new Vector2(120, 24), i == 0 ? CyanAccent : MutedCyan);
+                var tag = CreateSlicedImage(row, "Tag", new Vector2(120, 30), skin != null ? skin.inset : null, InsetBg);
+                tag.anchoredPosition = new Vector2(495, 0);
+                var tagLabel = CreateLabel(tag, i == 1 ? "[EN CURSO]" : (i == 0 ? "[COMPLETO]" : "[PENDIENTE]"), 11,
+                    Vector2.zero, new Vector2(115, 22), i == 1 ? CyanAccent : (i == 0 ? InkWhite : DimCyan));
                 tagLabel.alignment = TextAlignmentOptions.Center;
             }
 
-            var note = CreateLabel(workspace, "ESTADO ORBITAL // ACTUALIZACION TELEMETRICA EN TIEMPO REAL", 12,
-                new Vector2(0, -225), new Vector2(1240, 24), DimCyan);
+            var note = CreateLabel(workspace, "ESTADO OPERATIVO // ACTUALIZACION TELEMETRICA EN TIEMPO REAL", 11,
+                new Vector2(0, -245), new Vector2(1150, 20), DimCyan);
             note.alignment = TextAlignmentOptions.Center;
         }
 
         // ================= PAGE 3: RECETAS (ENGINEERING BLUEPRINTS) =================
         private void RenderRecipes()
         {
-            var header = CreateLabel(workspace, $"PLANOS TECNICOS DE REPARACION  -  {Clean(Planet.name).ToUpperInvariant()}", 20,
-                new Vector2(0, 215), new Vector2(1240, 32), CyanAccent);
+            var header = CreateLabel(workspace, $"PLANOS TECNICOS DE REPARACION  -  SECTOR {Clean(Planet.name).ToUpperInvariant()}", 18,
+                new Vector2(0, 225), new Vector2(1150, 28), CyanAccent);
             header.alignment = TextAlignmentOptions.Left;
 
             for (int i = 0; i < Planet.recipes.Length; i++)
             {
                 var recipe = Planet.recipes[i];
-                var row = CreateSlicedImage(workspace, $"Recipe_{i}", new Vector2(1240, 100), skin != null ? skin.panel : null, PanelTint);
-                row.anchoredPosition = new Vector2(0, 120 - i * 120);
+                var row = CreateSlicedImage(workspace, $"Recipe_{i}", new Vector2(1150, 95), skin != null ? skin.panel : null, CardBg);
+                row.anchoredPosition = new Vector2(0, 135 - i * 115);
 
                 // Slot with repair gear icon
-                var slot = CreateSlicedImage(row, "Slot", new Vector2(48, 48), skin != null ? skin.slot : null, SlotTint);
-                slot.anchoredPosition = new Vector2(-565, 0);
+                var slot = CreateSlicedImage(row, "Slot", new Vector2(46, 46), skin != null ? skin.slot : null, SlotBg);
+                slot.anchoredPosition = new Vector2(-520, 0);
                 if (skin != null && skin.repair != null)
                 {
                     CreateIcon(slot, skin.repair, Vector2.zero, new Vector2(26, 26), CyanAccent);
                 }
 
                 // Component index & name
-                var nameLabel = CreateLabel(row, $"[0{i + 1}]  {Clean(recipe.component).ToUpperInvariant()}", 18,
-                    new Vector2(-280, 0), new Vector2(460, 40), InkWhite);
+                var nameLabel = CreateLabel(row, $"[0{i + 1}]  {Clean(recipe.component).ToUpperInvariant()}", 16,
+                    new Vector2(-260, 0), new Vector2(430, 38), InkWhite);
                 nameLabel.alignment = TextAlignmentOptions.Left;
 
                 // Inset container with materials
-                var ingInset = CreateSlicedImage(row, "Ing_Inset", new Vector2(530, 60), skin != null ? skin.inset : null, InsetTint);
-                ingInset.anchoredPosition = new Vector2(250, 0);
-                var ingLabel = CreateLabel(ingInset, Ingredients(recipe), 15, Vector2.zero, new Vector2(500, 48), CyanAccent);
+                var ingInset = CreateSlicedImage(row, "Ing_Inset", new Vector2(500, 55), skin != null ? skin.inset : null, InsetBg);
+                ingInset.anchoredPosition = new Vector2(230, 0);
+                var ingLabel = CreateLabel(ingInset, Ingredients(recipe), 14, Vector2.zero, new Vector2(480, 44), CyanAccent);
                 ingLabel.alignment = TextAlignmentOptions.Center;
 
                 // Status tag
-                var tag = CreateSlicedImage(row, "Tag", new Vector2(100, 32), skin != null ? skin.inset : null, InsetTint);
-                tag.anchoredPosition = new Vector2(550, 0);
-                var tagLabel = CreateLabel(tag, "[CRITICO]", 12, Vector2.zero, new Vector2(90, 24), new Color(1f, 0.45f, 0.35f));
+                var tag = CreateSlicedImage(row, "Tag", new Vector2(95, 30), skin != null ? skin.inset : null, InsetBg);
+                tag.anchoredPosition = new Vector2(505, 0);
+                var tagLabel = CreateLabel(tag, "[REQUERIDO]", 11, Vector2.zero, new Vector2(90, 22), new Color(1f, 0.45f, 0.35f));
                 tagLabel.alignment = TextAlignmentOptions.Center;
             }
 
-            var note = CreateLabel(workspace, "LOS COMPONENTES REQUIEREN SUMINISTROS ESPECIFICOS DEL SECTOR PLANETARIO", 12,
-                new Vector2(0, -225), new Vector2(1240, 24), DimCyan);
+            var note = CreateLabel(workspace, "LOS COMPONENTES REQUIEREN SUMINISTROS ESPECIFICOS DEL SECTOR PLANETARIO", 11,
+                new Vector2(0, -245), new Vector2(1150, 20), DimCyan);
             note.alignment = TextAlignmentOptions.Center;
         }
 
         // ================= PAGE 4: MINERALES (SPECTROMETRY CATALOG) =================
         private void RenderMinerals()
         {
-            var header = CreateLabel(workspace, $"CATALOGO ESPECTROMETRICO DE RECURSOS  -  {Clean(Planet.name).ToUpperInvariant()}", 20,
-                new Vector2(0, 215), new Vector2(1240, 32), CyanAccent);
+            var header = CreateLabel(workspace, $"CATALOGO ESPECTROMETRICO DE RECURSOS  -  SECTOR {Clean(Planet.name).ToUpperInvariant()}", 18,
+                new Vector2(0, 225), new Vector2(1150, 28), CyanAccent);
             header.alignment = TextAlignmentOptions.Left;
 
-            float cardWidth = 380f;
-            float spacing = 410f;
+            float cardWidth = 360f;
+            float spacing = 390f;
             float startX = -(Planet.minerals.Length - 1) * 0.5f * spacing;
 
             for (int i = 0; i < Planet.minerals.Length; i++)
             {
                 string mineral = Planet.minerals[i];
-                var card = CreateSlicedImage(workspace, $"Mineral_{i}", new Vector2(cardWidth, 340), skin != null ? skin.panel : null, PanelTint);
+                var card = CreateSlicedImage(workspace, $"Mineral_{i}", new Vector2(cardWidth, 350), skin != null ? skin.panel : null, CardBg);
                 card.anchoredPosition = new Vector2(startX + i * spacing, 5);
 
                 // Mineral slot / bracket container
-                var bracket = CreateSlicedImage(card, "Bracket", new Vector2(130, 130), skin != null ? skin.bracket : null, SlotTint);
-                bracket.anchoredPosition = new Vector2(0, 75);
+                var bracket = CreateSlicedImage(card, "Bracket", new Vector2(120, 120), skin != null ? skin.bracket : null, SlotBg);
+                bracket.anchoredPosition = new Vector2(0, 80);
 
                 // Crystal visual shard
                 var crystalGo = new GameObject("Crystal Shard", typeof(RectTransform), typeof(TabletCrystalIcon));
                 crystalGo.transform.SetParent(bracket.transform, false);
                 var cRect = (RectTransform)crystalGo.transform;
-                cRect.sizeDelta = new Vector2(75, 95);
+                cRect.sizeDelta = new Vector2(70, 90);
                 cRect.anchoredPosition = Vector2.zero;
                 var crystal = crystalGo.GetComponent<TabletCrystalIcon>();
                 crystal.color = (i == 1 && Planet != null) ? Planet.accent : CyanAccent;
                 crystal.raycastTarget = false;
 
                 // Mineral Name
-                var nameLabel = CreateLabel(card, Clean(mineral).ToUpperInvariant(), 20, new Vector2(0, -22), new Vector2(340, 30), InkWhite);
+                var nameLabel = CreateLabel(card, Clean(mineral).ToUpperInvariant(), 18, new Vector2(0, -15), new Vector2(330, 28), InkWhite);
                 nameLabel.alignment = TextAlignmentOptions.Center;
 
                 // Inset stats box
-                var statsInset = CreateSlicedImage(card, "Stats", new Vector2(340, 60), skin != null ? skin.inset : null, InsetTint);
-                statsInset.anchoredPosition = new Vector2(0, -78);
+                var statsInset = CreateSlicedImage(card, "Stats", new Vector2(320, 60), skin != null ? skin.inset : null, InsetBg);
+                statsInset.anchoredPosition = new Vector2(0, -70);
 
                 int usedCount = CountRecipes(mineral);
-                var statsLabel = CreateLabel(statsInset, $"UTILIZADO EN {usedCount} RECETAS\nCOMPOSICION GEOLOGICA CLASE A", 13,
-                    Vector2.zero, new Vector2(320, 50), CyanAccent);
+                var statsLabel = CreateLabel(statsInset, $"UTILIZADO EN {usedCount} RECETAS\nCOMPOSICION GEOLOGICA CLASE A", 12,
+                    Vector2.zero, new Vector2(300, 48), CyanAccent);
                 statsLabel.alignment = TextAlignmentOptions.Center;
 
                 // Analysis tag
-                var aTag = CreateSlicedImage(card, "AnalysisTag", new Vector2(260, 28), skin != null ? skin.inset : null, InsetTint);
-                aTag.anchoredPosition = new Vector2(0, -135);
-                var aLabel = CreateLabel(aTag, "ESPECTRO: ANALIZADO Y DISPONIBLE", 11, Vector2.zero, new Vector2(250, 22), MutedCyan);
+                var aTag = CreateSlicedImage(card, "AnalysisTag", new Vector2(260, 26), skin != null ? skin.inset : null, InsetBg);
+                aTag.anchoredPosition = new Vector2(0, -130);
+                var aLabel = CreateLabel(aTag, "ESPECTRO: ANALIZADO Y DISPONIBLE", 11, Vector2.zero, new Vector2(250, 20), MutedCyan);
                 aLabel.alignment = TextAlignmentOptions.Center;
             }
 
-            var note = CreateLabel(workspace, "BASE DE DATOS ESPECTROMETRICA ORBITAL  -  EXPEDICION MARCIANA", 12,
-                new Vector2(0, -225), new Vector2(1240, 24), DimCyan);
+            var note = CreateLabel(workspace, "BASE DE DATOS ESPECTROMETRICA ORBITAL  -  DATAPAD MIL-SPEC", 11,
+                new Vector2(0, -245), new Vector2(1150, 20), DimCyan);
             note.alignment = TextAlignmentOptions.Center;
         }
 
         // ================= UI HELPER BUILDERS (UGUI BEST PRACTICES) =================
-
-        private RectTransform CreateCard(Transform parent, string name, Vector2 position, Vector2 size, UnityAction action)
-        {
-            var rect = CreateSlicedImage(parent, name, size, skin != null ? skin.panel : null, PanelTint);
-            rect.anchoredPosition = position;
-            return rect;
-        }
 
         private RectTransform CreateSlicedImage(Transform parent, string name, Vector2 size, Sprite sprite, Color tint)
         {
@@ -642,7 +714,7 @@ namespace GameJam.Tablet
             btn.spriteState = ss;
             btn.onClick.AddListener(action);
 
-            var lbl = CreateLabel(rect, text, 14, Vector2.zero, size - new Vector2(8, 4), MutedCyan);
+            var lbl = CreateLabel(rect, text, 13, Vector2.zero, size - new Vector2(8, 4), MutedCyan);
             lbl.alignment = TextAlignmentOptions.Center;
             return (btn, lbl);
         }
@@ -761,10 +833,10 @@ namespace GameJam.Tablet
             overlay.blocksRaycasts = progress > 0;
             overlay.interactable = TargetOpen && progress > 0.95f;
 
-            // Physical tablet rise and tilt animation
-            frame.anchoredPosition = new Vector2(0, Mathf.Lerp(-1000, 0, eased));
-            frame.localScale = Vector3.one * Mathf.Lerp(0.70f, 1f, eased);
-            frame.localRotation = Quaternion.Euler(0, 0, Mathf.Lerp(-4, 0, eased));
+            // Physical handheld tablet rise and slight angle animation
+            chassis.anchoredPosition = new Vector2(0, Mathf.Lerp(-960, 0, eased));
+            chassis.localScale = Vector3.one * Mathf.Lerp(0.72f, 1f, eased);
+            chassis.localRotation = Quaternion.Euler(0, 0, Mathf.Lerp(-3.5f, 0, eased));
         }
     }
 }
