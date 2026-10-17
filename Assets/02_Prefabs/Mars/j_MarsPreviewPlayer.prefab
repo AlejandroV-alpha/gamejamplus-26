@@ -1,0 +1,75 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1001 &3889016852608663613
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 770012587065107222, guid: 1a9d8fc63d3ea448c91624031258fe92, type: 3}
+      propertyPath: GlobalObjectIdHash
+      value: 2407947734
+      objectReference: {fileID: 0}
+    - target: {fileID: 770012587065107222, guid: 1a9d8fc63d3ea448c91624031258fe92, type: 3}
+      propertyPath: SceneMigrationSynchronization
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 770012587065107222, guid: 1a9d8fc63d3ea448c91624031258fe92, type: 3}
+      propertyPath: InScenePlacedSourceGlobalObjectIdHash
+      value: 491336958
+      objectReference: {fileID: 0}
+    - target: {fileID: 3893294197879345259, guid: 1a9d8fc63d3ea448c91624031258fe92, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3893294197879345259, guid: 1a9d8fc63d3ea448c91624031258fe92, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3893294197879345259, guid: 1a9d8fc63d3ea448c91624031258fe92, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3893294197879345259, guid: 1a9d8fc63d3ea448c91624031258fe92, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3893294197879345259, guid: 1a9d8fc63d3ea448c91624031258fe92, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3893294197879345259, guid: 1a9d8fc63d3ea448c91624031258fe92, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3893294197879345259, guid: 1a9d8fc63d3ea448c91624031258fe92, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3893294197879345259, guid: 1a9d8fc63d3ea448c91624031258fe92, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3893294197879345259, guid: 1a9d8fc63d3ea448c91624031258fe92, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3893294197879345259, guid: 1a9d8fc63d3ea448c91624031258fe92, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4416926081852918481, guid: 1a9d8fc63d3ea448c91624031258fe92, type: 3}
+      propertyPath: m_Name
+      value: j_MarsPreviewPlayer
+      objectReference: {fileID: 0}
+    - target: {fileID: 6335676085073359025, guid: 1a9d8fc63d3ea448c91624031258fe92, type: 3}
+      propertyPath: 'cameraModePrefabs.Array.data[0]'
+      value: 
+      objectReference: {fileID: 5622520908732185617, guid: 759b3211060754dee9567487cbe086de, type: 3}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 1a9d8fc63d3ea448c91624031258fe92, type: 3}
