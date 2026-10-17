@@ -45,7 +45,7 @@ namespace Blocks.Gameplay.Core
         /// <summary>
         /// Gets the singleton instance of the GameNetworkManager.
         /// </summary>
-        public static GameNetworkManager Instance { get; private set; }
+        public static GameNetworkManager Instance => Singleton as GameNetworkManager;
 
         [Header("Performance Settings")]
         [Tooltip("Target frame rate for the application.")]
@@ -61,7 +61,8 @@ namespace Blocks.Gameplay.Core
         /// <summary>
         /// Gets the network state view model used for UI updates.
         /// </summary>
-        public NetworkStateViewModel NetworkState { get; private set; }
+        private NetworkStateViewModel m_NetworkState;
+        public NetworkStateViewModel NetworkState => m_NetworkState ??= new NetworkStateViewModel();
 
         private readonly System.Collections.Generic.Dictionary<ulong, string> m_PlayerNames = new System.Collections.Generic.Dictionary<ulong, string>();
 
@@ -69,39 +70,20 @@ namespace Blocks.Gameplay.Core
 
         #region Unity Methods
 
-        private void Awake()
+        // Leave Awake/OnDestroy to NetworkManager. Hiding its private Unity messages
+        // skips transport cleanup and can leave the UDP socket bound after Play stops.
+        private void Start()
         {
-            // Enforce singleton pattern
-            if (Instance != null && Instance != this)
+            if (Singleton != this)
             {
                 Debug.LogWarning("Duplicate GameNetworkManager instance detected. Destroying self.");
                 Destroy(gameObject);
                 return;
             }
-
-            Instance = this;
-            DontDestroyOnLoad(gameObject);
-
-            NetworkState = new NetworkStateViewModel();
             SetFrameRate(targetFrameRate, enableVSync);
-        }
-
-        private void Start()
-        {
             OnClientConnectedCallback += HandleClientConnected;
             OnClientDisconnectCallback += HandleClientDisconnect;
             OnServerStarted += HandleServerStarted;
-        }
-
-        private void OnDestroy()
-        {
-            if (Instance == this)
-            {
-                OnClientConnectedCallback -= HandleClientConnected;
-                OnClientDisconnectCallback -= HandleClientDisconnect;
-                OnServerStarted -= HandleServerStarted;
-                Instance = null;
-            }
         }
 
         #endregion
