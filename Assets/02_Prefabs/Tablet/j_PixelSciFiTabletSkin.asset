@@ -12,17 +12,25 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bb1a2be1f81e6ec4c98010c8229d003e, type: 3}
   m_Name: j_PixelSciFiTabletSkin
   m_EditorClassIdentifier: Assembly-CSharp::GameJam.Tablet.TabletUISkin
+  font: {fileID: 12800000, guid: e3265ab4bf004d28a9537516768c1c75, type: 3}
+  tmpFont: {fileID: 11400000, guid: 22966ed4b2accbc6dd46dc36d222d833, type: 2}
+  window: {fileID: 21300000, guid: 91c0c13fb0a785ed350d6da3e32b0303, type: 3}
   panel: {fileID: 21300000, guid: ee55592aae7a2548a282aa3f853b4717, type: 3}
   inset: {fileID: 21300000, guid: 30f76d007b047be860b0a9a466f9551b, type: 3}
+  bracket: {fileID: 21300000, guid: 1a82a306021cf19d651e589e202b30dc, type: 3}
+  slot: {fileID: 21300000, guid: 8c2eff6d76d9cc12c0564c8c2d7839fe, type: 3}
   button: {fileID: 21300000, guid: 7d3a38fbea345be143485d715582f56f, type: 3}
   hover: {fileID: 21300000, guid: d26cdb22a1dcbac694a43555e62a09c8, type: 3}
   pressed: {fileID: 21300000, guid: cc8ae429f9229bc9f13c64a64595e781, type: 3}
   tab: {fileID: 21300000, guid: edd8137c460a500816b98ce1ecec0c29, type: 3}
   selectedTab: {fileID: 21300000, guid: 24a2abbdbcdb0cb3b960c52c3409401f, type: 3}
+  tabHover: {fileID: 21300000, guid: 702384427170f4ae0debdb629953fbd8, type: 3}
   ship: {fileID: 21300000, guid: 28b83a56a608ccc9afbd8e3d7ba9b3a9, type: 3}
-  repair: {fileID: 21300000, guid: faa97827d1bce85d6242647a7fb9acb4, type: 3}
-  mine: {fileID: 21300000, guid: 371d2bb42a874f53d383de35064157b3, type: 3}
-  objectives: {fileID: 21300000, guid: 8273378a85d88eda3c4b0c0e4d6c238f, type: 3}
+  repair: {fileID: 21300000, guid: fc28593024f22b392da029b39a03cd50, type: 3}
+  mine: {fileID: 21300000, guid: 76d0df8ab73c7d243d7862bcf42db019, type: 3}
+  objectives: {fileID: 21300000, guid: 31f2799b75b5a01cb7b0768244a2a970, type: 3}
+  closeIcon: {fileID: 21300000, guid: a3e863914c341e0d27ce8b75728b187d, type: 3}
+  checkIcon: {fileID: 21300000, guid: 8273378a85d88eda3c4b0c0e4d6c238f, type: 3}
   wallpaper: {fileID: 21300000, guid: 7f00c7bd00bd87649a3813d372766df8, type: 3}
-  wallpaperDim: 0.3
-  widgetOpacity: 0.86
+  wallpaperDim: 0.35
+  widgetOpacity: 0.90
