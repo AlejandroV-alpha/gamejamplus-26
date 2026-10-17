@@ -28,7 +28,6 @@ namespace GameJam.Tablet
 
         // Android Sci-Fi Theme Palette:
         private static readonly Color CyanAccent = new(0.00f, 0.92f, 0.88f, 1f);     // Vibrant Android cyan
-        private static readonly Color CyanGlow = new(0.35f, 0.96f, 1.00f, 1f);       // Electric cyan hover
         private static readonly Color InkWhite = new(0.96f, 0.98f, 1.00f, 1f);       // Ultra-crisp reading white
         private static readonly Color MutedCyan = new(0.48f, 0.68f, 0.80f, 1f);      // Soft technical secondary
         private static readonly Color DimCyan = new(0.26f, 0.40f, 0.50f, 1f);        // Muted labels
@@ -36,11 +35,14 @@ namespace GameJam.Tablet
         private static readonly Color InsetBg = new(0.02f, 0.035f, 0.055f, 0.95f);   // High-contrast sunken box
         private static readonly Color SlotBg = new(0.08f, 0.13f, 0.20f, 0.95f);     // Item slot tint
 
-        // Physical Tablet Chassis Palette (Modern Android Tablet):
-        private static readonly Color ChassisRim = new(0.18f, 0.24f, 0.32f, 1f);     // Anodized aluminum edge chamfer
-        private static readonly Color ChassisMatte = new(0.065f, 0.085f, 0.115f, 1f);// Space-grade dark matte body
+        // Physical Rugged Tablet Hardware Palette:
+        private static readonly Color ChassisRim = new(0.18f, 0.24f, 0.32f, 1f);     // Outer titanium chamfer rim
+        private static readonly Color ChassisMatte = new(0.065f, 0.085f, 0.115f, 1f);// Rugged dark matte alloy body
         private static readonly Color ChassisBezel = new(0.035f, 0.045f, 0.065f, 1f);// Inner screen bezel border
-        private static readonly Color HardwareStamp = new(0.24f, 0.32f, 0.42f, 1f); // Silk-screen model stamp
+        private static readonly Color ArmorBumper = new(0.12f, 0.16f, 0.22f, 1f);   // Reinforced rubberized corner armor
+        private static readonly Color HexBolt = new(0.26f, 0.34f, 0.46f, 1f);       // Dark titanium hardware bolts
+        private static readonly Color GoldPin = new(0.85f, 0.70f, 0.25f, 1f);       // Gold magnetic dock pogo pins
+        private static readonly Color HardwareStamp = new(0.28f, 0.38f, 0.50f, 1f); // Silk-screen technical markings
 
         private const float PPU = 0.5f;
 
@@ -89,10 +91,9 @@ namespace GameJam.Tablet
             var worldShade = CreateSlicedImage(root.transform, "World shade", new Vector2(5000, 5000), null, new Color(0.01f, 0.015f, 0.03f, 0.80f));
             worldShade.anchoredPosition = Vector2.zero;
 
-            // ================= 1. PHYSICAL TABLET HARDWARE CHASSIS (ANDROID TABLET FORM) =================
+            // ================= 1. PHYSICAL TABLET HARDWARE CHASSIS (RUGGED FIELD DATAPAD) =================
             // Modern 16:10 rounded tablet chassis (1300 x 820)
-            // Outer anodized aluminum chamfer rim with generous 36px rounded corners
-            var chassisRimGo = CreateRoundedPanel(root.transform, "Tablet Aluminum Rim", new Vector2(1300, 820), 36, ChassisRim);
+            var chassisRimGo = CreateRoundedPanel(root.transform, "Tablet Titanium Rim", new Vector2(1300, 820), 36, ChassisRim);
             chassis = (RectTransform)chassisRimGo.transform;
             chassis.anchoredPosition = Vector2.zero;
 
@@ -100,17 +101,23 @@ namespace GameJam.Tablet
             var chassisBody = CreateRoundedPanel(chassis, "Tablet Matte Body", new Vector2(1292, 812), 33, ChassisMatte);
             chassisBody.anchoredPosition = Vector2.zero;
 
-            // Side grip notches on left and right borders
-            CreateChassisGrips(chassisBody);
+            // 1A. Four Reinforced Corner Armor Bumpers with Hex Screws (Field drop protection)
+            CreateArmorCornerBumpers(chassisBody);
 
-            // Top bezel hardware (Camera sensor, Status LED, Speaker grille)
-            CreateTopBezelHardware(chassisBody);
+            // 1B. Left Edge: Weather-sealed Data Port Door & Core Expansion Bay
+            CreateLeftDataPort(chassisBody);
 
-            // Bottom bezel hardware (Silk-screen stamp, Android home gesture pill)
-            CreateBottomBezelHardware(chassisBody);
+            // 1C. Right Edge: Tactile Power Switch, Volume Rocker, Magnetic Stylus Groove
+            CreateRightHardwareControls(chassisBody);
+
+            // 1D. Top Bezel Hardware: Multispectral Camera, Atmospheric Intake Grille, Comms LED
+            CreateTopSensorArray(chassisBody);
+
+            // 1E. Bottom Bezel Hardware: Gold Pogo Dock Connector Pins, Model Markings, Android Gesture Bar
+            CreateBottomDockHardware(chassisBody);
 
             // ================= 2. RECESSED ROUNDED GLASS DISPLAY SCREEN =================
-            // Modern rounded screen (1210 x 730) with 20px rounded display corners
+            // Screen area (1210 x 730) with 20px rounded display corners
             var screenRim = CreateRoundedPanel(chassisBody, "Screen Recessed Rim", new Vector2(1210, 730), 22, ChassisBezel);
             screenRim.anchoredPosition = new Vector2(0, -2);
 
@@ -160,59 +167,135 @@ namespace GameJam.Tablet
             label.alignment = TextAlignmentOptions.Center;
         }
 
-        private void CreateChassisGrips(RectTransform parent)
+        // 1A. Heavy-Duty Protective Corner Bumpers (Makes total sense on an astronaut field tablet)
+        private void CreateArmorCornerBumpers(RectTransform parent)
         {
-            // Tactile ribbed rubber grips on left and right borders of the tablet body
-            float[] yOffsets = { -120, -70, -20, 30, 80, 130 };
-            foreach (float y in yOffsets)
-            {
-                var leftRib = CreateRoundedPanel(parent, "Grip_L", new Vector2(8, 28), 3, ChassisRim);
-                leftRib.anchoredPosition = new Vector2(-640, y);
+            Vector2[] corners = {
+                new(-628, 388), new(628, 388),
+                new(-628, -388), new(628, -388)
+            };
 
-                var rightRib = CreateRoundedPanel(parent, "Grip_R", new Vector2(8, 28), 3, ChassisRim);
-                rightRib.anchoredPosition = new Vector2(640, y);
+            foreach (var pos in corners)
+            {
+                // Rubberized protective armor plate
+                var plate = CreateRoundedPanel(parent, "CornerArmor", new Vector2(34, 34), 8, ArmorBumper);
+                plate.anchoredPosition = pos;
+
+                // Dark titanium hex fastener bolt
+                var boltRim = CreateRoundedPanel(plate, "HexBolt", new Vector2(10, 10), 5, HexBolt);
+                boltRim.anchoredPosition = Vector2.zero;
+                var boltCenter = CreateRoundedPanel(boltRim, "Pin", new Vector2(4, 4), 2, new Color(0.08f, 0.12f, 0.16f));
+                boltCenter.anchoredPosition = Vector2.zero;
+            }
+        }
+
+        // 1B. Left Edge: Weather-sealed High-Speed Data Cartridge Bay
+        private void CreateLeftDataPort(RectTransform parent)
+        {
+            // Recessed port housing on left bezel
+            var bay = CreateRoundedPanel(parent, "DataBayHousing", new Vector2(10, 140), 4, new Color(0.03f, 0.045f, 0.07f));
+            bay.anchoredPosition = new Vector2(-637, 20);
+
+            // Sealed rubber protective cover
+            var door = CreateRoundedPanel(bay, "SealFlap", new Vector2(6, 120), 3, ChassisRim);
+            door.anchoredPosition = Vector2.zero;
+
+            // Grip ridges on door
+            for (int r = -2; r <= 2; r++)
+            {
+                var ridge = CreateRoundedPanel(door, "Ridge", new Vector2(4, 3), 1, new Color(0.08f, 0.12f, 0.16f));
+                ridge.anchoredPosition = new Vector2(0, r * 16);
             }
 
-            // Power lock button on right outer frame
+            // Port indicator LED
+            var led = CreateRoundedPanel(parent, "PortLED", new Vector2(4, 8), 2, new Color(0.00f, 0.92f, 0.88f, 0.70f));
+            led.anchoredPosition = new Vector2(-637, -65);
+        }
+
+        // 1C. Right Edge: Sealed Power Switch, Tactile Volume Rocker, Magnetic Stylus Dock
+        private void CreateRightHardwareControls(RectTransform parent)
+        {
+            // Power switch with subtle red accent line
             var pwrBtn = CreateRoundedPanel(parent, "Pwr_Button", new Vector2(6, 44), 3, ChassisRim);
             pwrBtn.anchoredPosition = new Vector2(648, 220);
+            var pwrAccent = CreateRoundedPanel(pwrBtn, "Accent", new Vector2(2, 20), 1, new Color(0.9f, 0.3f, 0.3f, 0.9f));
+            pwrAccent.anchoredPosition = Vector2.zero;
 
-            // Volume rocker on right outer frame
+            // Volume rocker with center separator
             var volBtn = CreateRoundedPanel(parent, "Vol_Button", new Vector2(6, 80), 3, ChassisRim);
             volBtn.anchoredPosition = new Vector2(648, 140);
+            var volDiv = CreateRoundedPanel(volBtn, "Divider", new Vector2(4, 2), 1, new Color(0.08f, 0.12f, 0.16f));
+            volDiv.anchoredPosition = Vector2.zero;
+
+            // Magnetic Stylus docking slot on the right bezel
+            var stylusSlot = CreateRoundedPanel(parent, "StylusDock", new Vector2(8, 200), 4, new Color(0.03f, 0.045f, 0.07f));
+            stylusSlot.anchoredPosition = new Vector2(637, -30);
+            var stylusBody = CreateRoundedPanel(stylusSlot, "StylusPen", new Vector2(4, 180), 2, new Color(0.14f, 0.19f, 0.26f));
+            stylusBody.anchoredPosition = Vector2.zero;
         }
 
-        private void CreateTopBezelHardware(RectTransform parent)
+        // 1D. Top Bezel: Multispectral Camera, Atmospheric Intake Grille, Comms Status LED
+        private void CreateTopSensorArray(RectTransform parent)
         {
-            var cluster = new GameObject("Sensor Cluster", typeof(RectTransform)).GetComponent<RectTransform>();
+            var cluster = new GameObject("Sensor Array", typeof(RectTransform)).GetComponent<RectTransform>();
             cluster.transform.SetParent(parent, false);
             cluster.anchoredPosition = new Vector2(0, 390);
-            cluster.sizeDelta = new Vector2(180, 20);
+            cluster.sizeDelta = new Vector2(340, 20);
 
-            // Front optical camera
-            var lensRim = CreateRoundedPanel(cluster, "LensRim", new Vector2(14, 14), 7, new Color(0.02f, 0.03f, 0.05f));
-            lensRim.anchoredPosition = new Vector2(-30, 0);
-            var lensIris = CreateRoundedPanel(lensRim, "LensIris", new Vector2(6, 6), 3, new Color(0.12f, 0.45f, 0.75f));
+            // Atmospheric & radiation intake micro-grille
+            var atmosGrille = CreateRoundedPanel(cluster, "AtmosSensorGrille", new Vector2(56, 6), 3, new Color(0.02f, 0.035f, 0.05f));
+            atmosGrille.anchoredPosition = new Vector2(-75, 0);
+            for (int g = -3; g <= 3; g++)
+            {
+                var slit = CreateRoundedPanel(atmosGrille, "Slit", new Vector2(2, 4), 1, new Color(0.12f, 0.16f, 0.22f));
+                slit.anchoredPosition = new Vector2(g * 7, 0);
+            }
+
+            // Primary visual spectrum camera
+            var lensRim = CreateRoundedPanel(cluster, "VisualLensRim", new Vector2(14, 14), 7, new Color(0.02f, 0.03f, 0.05f));
+            lensRim.anchoredPosition = new Vector2(-22, 0);
+            var lensIris = CreateRoundedPanel(lensRim, "LensIris", new Vector2(6, 6), 3, new Color(0.10f, 0.40f, 0.70f));
             lensIris.anchoredPosition = Vector2.zero;
 
-            // Micro speaker grille slot
-            var grille = CreateRoundedPanel(cluster, "SpeakerGrille", new Vector2(40, 4), 2, new Color(0.02f, 0.03f, 0.05f));
-            grille.anchoredPosition = new Vector2(5, 0);
+            // Infrared / multispectral scanner dot
+            var irLens = CreateRoundedPanel(cluster, "IRSensor", new Vector2(8, 8), 4, new Color(0.25f, 0.08f, 0.12f));
+            irLens.anchoredPosition = new Vector2(-2, 0);
 
-            // Operational status LED
+            // Comms micro speaker grille
+            var speaker = CreateRoundedPanel(cluster, "SpeakerGrille", new Vector2(40, 4), 2, new Color(0.02f, 0.03f, 0.05f));
+            speaker.anchoredPosition = new Vector2(38, 0);
+
+            // Operational status LED with technical label
             var led = CreateRoundedPanel(cluster, "StatusLED", new Vector2(5, 5), 2, new Color(0.00f, 0.96f, 0.74f, 0.95f));
-            led.anchoredPosition = new Vector2(40, 0);
+            led.anchoredPosition = new Vector2(80, 0);
         }
 
-        private void CreateBottomBezelHardware(RectTransform parent)
+        // 1E. Bottom Bezel: Gold Pogo Dock Connector Pins, Authentic Aerospace Markings, Android Gesture Bar
+        private void CreateBottomDockHardware(RectTransform parent)
         {
-            // Silk-screen model stamp
-            var stamp = CreateLabel(parent, "ORBIT // TAB 10 Pro  -  EXPEDITION EDITION", 11,
-                new Vector2(0, -394), new Vector2(450, 16), HardwareStamp);
-            stamp.alignment = TextAlignmentOptions.Center;
+            // Left in-universe specification stamping
+            var leftStamp = CreateLabel(parent, "ORBIT AEROSPACE // EXP-DATAPAD MK-VII", 11,
+                new Vector2(-360, -394), new Vector2(380, 16), HardwareStamp);
+            leftStamp.alignment = TextAlignmentOptions.Left;
 
-            // Modern Android navigation gesture pill (━)
-            var gesturePill = CreateRoundedPanel(parent, "GesturePill", new Vector2(130, 4), 2, new Color(0.00f, 0.92f, 0.88f, 0.45f));
+            // Right in-universe serial & certification stamping
+            var rightStamp = CreateLabel(parent, "S/N: 8492-EXP-07  -  HAZMAT CLASS-1", 11,
+                new Vector2(360, -394), new Vector2(380, 16), HardwareStamp);
+            rightStamp.alignment = TextAlignmentOptions.Right;
+
+            // Center Magnetic Pogo Dock Connector (Where the tablet docks into the spaceship console!)
+            var dockSlot = CreateRoundedPanel(parent, "PogoDockConnector", new Vector2(110, 10), 4, new Color(0.02f, 0.035f, 0.05f));
+            dockSlot.anchoredPosition = new Vector2(0, -394);
+
+            // 5 Gold Contact Pins
+            for (int p = -2; p <= 2; p++)
+            {
+                var pin = CreateRoundedPanel(dockSlot, $"Pin_{p}", new Vector2(5, 5), 2.5f, GoldPin);
+                pin.anchoredPosition = new Vector2(p * 14, 0);
+            }
+
+            // Modern Android navigation gesture pill (━) sitting right above the dock port
+            var gesturePill = CreateRoundedPanel(parent, "GesturePill", new Vector2(120, 3), 1.5f, new Color(0.00f, 0.92f, 0.88f, 0.40f));
             gesturePill.anchoredPosition = new Vector2(0, -378);
         }
 
@@ -251,7 +334,7 @@ namespace GameJam.Tablet
 
         private void CreateAndroidTopStatusBar(UnityAction close)
         {
-            // Sleek Android Material Top Status Bar (pill shaped, semi-translucent)
+            // Sleek Android Material Top Status Bar
             var bar = CreateRoundedPanel(screen, "Android Status Bar", new Vector2(1170, 38), 14, InsetBg);
             bar.anchoredPosition = new Vector2(0, 325);
 
@@ -259,11 +342,11 @@ namespace GameJam.Tablet
             barOutline.effectColor = new Color(0.00f, 0.92f, 0.88f, 0.25f);
             barOutline.effectDistance = new Vector2(1, -1);
 
-            // Left: Clock & Network
+            // Left: Clock & Network in-universe telemetry
             var clockLabel = CreateLabel(bar, "14:38", 15, new Vector2(-540, 0), new Vector2(70, 24), InkWhite);
             clockLabel.alignment = TextAlignmentOptions.Left;
 
-            var osLabel = CreateLabel(bar, "ORBIT OS 14  -  5G", 12, new Vector2(-430, 0), new Vector2(160, 24), MutedCyan);
+            var osLabel = CreateLabel(bar, "ORBIT OS 14 // SAT-LINK: NOMINAL", 12, new Vector2(-390, 0), new Vector2(240, 24), MutedCyan);
             osLabel.alignment = TextAlignmentOptions.Left;
 
             // Center-Left: Planet Selector Segmented Pills
@@ -274,7 +357,7 @@ namespace GameJam.Tablet
                 planetTabLabels.Clear();
                 planetTabPanels.Clear();
 
-                float startX = -220f;
+                float startX = -180f;
                 float spacing = 130f;
                 for (int i = 0; i < planets.Length; i++)
                 {
@@ -301,7 +384,7 @@ namespace GameJam.Tablet
             batText.alignment = TextAlignmentOptions.Center;
 
             // Close Chip Button (✕)
-            var closeBtn = CreateCircularChipButton(bar, "✕", new Vector2(545, 0), new Vector2(28, 26), () => close());
+            var closeBtn = CreateCircularChipButton(bar, "X", new Vector2(545, 0), new Vector2(28, 26), () => close());
         }
 
         private void CreateAndroidTaskbarDock()
@@ -448,8 +531,8 @@ namespace GameJam.Tablet
                 sLabel.alignment = TextAlignmentOptions.Left;
             }
 
-            // Primary Call to Action: Rounded Android Pill Button
-            var (heroBtn, _) = CreatePillActionButton(heroCard, "CONTINUAR PROTOCOLO DE MISION  ➔",
+            // Primary Call to Action: Rounded Android Pill Button with clean ASCII arrow '>'
+            var (heroBtn, _) = CreatePillActionButton(heroCard, "CONTINUAR PROTOCOLO DE MISION  >",
                 new Vector2(0, -185), new Vector2(660, 42), 14, () => ShowTasks());
 
             // ----------------- RIGHT COLUMN: COMPLEMENTARY TELEMETRY WIDGETS -----------------
@@ -479,7 +562,7 @@ namespace GameJam.Tablet
                 ingLabel.alignment = TextAlignmentOptions.Left;
             }
 
-            var (wrBtn, _) = CreatePillActionButton(widgetRepair, "VER RECETAS  ➔", new Vector2(0, -68), new Vector2(415, 34), 12, () => ShowPage("Recetas"));
+            var (wrBtn, _) = CreatePillActionButton(widgetRepair, "VER RECETAS  >", new Vector2(0, -68), new Vector2(415, 34), 12, () => ShowPage("Recetas"));
 
             // Widget 2: Minerales Detectados (Bottom-Right)
             var widgetMin = CreateRoundedPanel(workspace, "Widget_Minerals", new Vector2(445, 225), 16, CardBg);
@@ -503,7 +586,7 @@ namespace GameJam.Tablet
             var minSub = CreateLabel(wmInset, $"{Planet.minerals.Length} minerales registrados en el sector", 11, new Vector2(0, -22), new Vector2(390, 18), DimCyan);
             minSub.alignment = TextAlignmentOptions.Center;
 
-            var (wmBtn, _) = CreatePillActionButton(widgetMin, "CONSULTAR MINERALES  ➔", new Vector2(0, -68), new Vector2(415, 34), 12, () => ShowMinerals());
+            var (wmBtn, _) = CreatePillActionButton(widgetMin, "CONSULTAR MINERALES  >", new Vector2(0, -68), new Vector2(415, 34), 12, () => ShowMinerals());
         }
 
         // ================= PAGE 2: TAREAS (MISSION OBJECTIVES) =================
@@ -679,7 +762,7 @@ namespace GameJam.Tablet
             var panel = go.GetComponent<TabletRoundedPanel>();
             panel.radius = radius;
             panel.color = color;
-            panel.raycastTarget = false; // By default non-interactive
+            panel.raycastTarget = false;
             return rect;
         }
 
@@ -882,6 +965,7 @@ namespace GameJam.Tablet
                 .Replace('ñ', 'n').Replace('Ñ', 'N')
                 .Replace('·', '-')
                 .Replace('→', '>')
+                .Replace('➔', '>')
                 .Replace('×', 'x');
         }
 
