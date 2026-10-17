@@ -38,6 +38,7 @@ namespace Blocks.Gameplay.Core
         /// Gets the current horizontal rotation angle of the look target.
         /// </summary>
         public float CurrentHorizontalLookAngle => m_CurrentHorizontalLookAngle;
+        public bool LookInputEnabled { get => enableLookInput; set => enableLookInput = value; }
 
         /// <summary>
         /// Gets the currently active player rotation coupling mode, determined by the active camera mode.

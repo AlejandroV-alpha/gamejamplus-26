@@ -1,0 +1,93 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f474f8db8d7976643bb047862ca65c7c, type: 3}
+  m_Name: j_PlanetRecipeCatalog
+  m_EditorClassIdentifier: Assembly-CSharp::GameJam.Tablet.TabletRecipeCatalog
+  planets:
+  - name: Neptuno
+    objective: Reparar la nave estrellada
+    minerals:
+    - Metal
+    - Cristal de hielo
+    - Circuito
+    accent: {r: 0.15, g: 0.52, b: 0.85, a: 1}
+    recipes:
+    - component: Motor
+      ingredients:
+      - mineral: Metal
+        amount: 3
+      - mineral: Cristal de hielo
+        amount: 2
+    - component: Navegador
+      ingredients:
+      - mineral: Circuito
+        amount: 2
+      - mineral: Cristal de hielo
+        amount: 1
+    - component: Blindaje
+      ingredients:
+      - mineral: Metal
+        amount: 3
+      - mineral: Circuito
+        amount: 1
+  - name: Marte
+    objective: "Reparar los da\xF1os de la tormenta"
+    minerals:
+    - Metal
+    - Mineral rojo
+    - Circuito
+    accent: {r: 0.8, g: 0.24, b: 0.22, a: 1}
+    recipes:
+    - component: Propulsor
+      ingredients:
+      - mineral: Metal
+        amount: 2
+      - mineral: Mineral rojo
+        amount: 2
+    - component: Filtro de aire
+      ingredients:
+      - mineral: Mineral rojo
+        amount: 2
+      - mineral: Circuito
+        amount: 1
+    - component: Radar
+      ingredients:
+      - mineral: Circuito
+        amount: 2
+      - mineral: Metal
+        amount: 1
+  - name: Saturno
+    objective: Preparar el viaje final
+    minerals:
+    - Metal
+    - "Cristal energ\xE9tico"
+    - Circuito
+    accent: {r: 0.65, g: 0.32, b: 0.85, a: 1}
+    recipes:
+    - component: "N\xFAcleo energ\xE9tico"
+      ingredients:
+      - mineral: "Cristal energ\xE9tico"
+        amount: 2
+      - mineral: Circuito
+        amount: 2
+    - component: Estabilizador
+      ingredients:
+      - mineral: Metal
+        amount: 3
+      - mineral: "Cristal energ\xE9tico"
+        amount: 1
+    - component: Hiperpropulsor
+      ingredients:
+      - mineral: Metal
+        amount: 2
+      - mineral: "Cristal energ\xE9tico"
+        amount: 2

@@ -57,6 +57,7 @@ namespace Blocks.Gameplay.Core
         /// Gets the Core Input Handler component.
         /// </summary>
         public CoreInputHandler CoreInput => coreInput;
+        public bool MovementInputEnabled => m_IsMovementInputEnabled;
 
         /// <summary>
         /// Gets the Core Movement component.

@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 088c12b0c36dd2a4d93f2a222a92d7bd, type: 3}
+  m_Name: j_MissionTablet
+  m_EditorClassIdentifier: Assembly-CSharp::GameJam.Tablet.TabletItemDefinition
+  itemId: mission-tablet
+  displayName: "Tablet de misi\xF3n"
+  heldPrefab: {fileID: 5809249579818630573, guid: 0076bf95e44879247a9eb7c7c1abb9ff, type: 3}
+  catalog: {fileID: 11400000, guid: cdfe2f13849f4d84d8a846fd4f933733, type: 2}
+  skin: {fileID: 11400000, guid: a1d39d641676eff4fb9ad5a7ecaad1c0, type: 2}
