@@ -29,7 +29,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _GrainTex:
-        m_Texture: {fileID: 2800000, guid: 6a14e406b18fb48aaa310a326876f97a, type: 3}
+        m_Texture: {fileID: 2800000, guid: e205924a5e2007442ba58d750fcd5ee5, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MainTex:
@@ -37,7 +37,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _RockTex:
-        m_Texture: {fileID: 2800000, guid: d5a46b20f7fe248209db917d1e6be190, type: 3}
+        m_Texture: {fileID: 2800000, guid: 723cd683fda2ec74d90e645737958289, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _Splat0:
@@ -61,10 +61,14 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     m_Ints: []
-    m_Floats: []
+    m_Floats:
+    - _HeightBlend: 10
+    - _SandHeight: 42
     m_Colors:
     - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
-    - _RockTint: {r: 0.68, g: 0.47999996, b: 0.34999996, a: 1}
-    - _SandTint: {r: 1, g: 0.78999996, b: 0.6399999, a: 1}
+    - _RockTint: {r: 0.9911565, g: 0.81525064, b: 0.80363095, a: 1}
+    - _SandColor: {r: 0.9622642, g: 0.9622642, b: 0.9622642, a: 1}
+    - _SandTint: {r: 1.0864043, g: 1.3226402, b: 1.543918, a: 1}
+    - _StoneColor: {r: 0.5943396, g: 0.3488424, b: 0.30558026, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
