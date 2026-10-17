@@ -122,8 +122,9 @@ namespace Blocks.Gameplay.Core
         /// </summary>
         private void UpdateLocomotionParameters()
         {
-            bool isGrounded = coreMovement.IsGrounded;
             float verticalVelocity = coreMovement.VerticalVelocity;
+            // Ground probes can still overlap the floor on the first rising frame.
+            bool isGrounded = coreMovement.IsGrounded && verticalVelocity <= 0.1f;
 
             // Set booleans for grounded, jumping, and falling states.
             Animator.SetBool(m_AnimIDGrounded, isGrounded);

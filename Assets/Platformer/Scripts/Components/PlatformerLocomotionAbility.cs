@@ -114,6 +114,11 @@ namespace Blocks.Gameplay.Core
         private float m_MoveInputStartTime;
         private bool m_IsMoveInputActive;
         private Vector2 m_LastMoveDirection;
+        [Header("Takeoff Animation Synchronization")]
+        [SerializeField] private bool synchronizeTakeoffAnimation;
+        [SerializeField] private string takeoffAnimationState = "Airborne";
+        [SerializeField, Range(0f, 1f)] private float takeoffNormalizedTime = 0.34f;
+
         private bool m_TurnInPlaceTriggered;
         private readonly int m_AnimIDSpeed = Animator.StringToHash("Speed");
         private Animator m_Animator;
@@ -473,6 +478,16 @@ namespace Blocks.Gameplay.Core
                 ? Mathf.Sqrt(m_Motor.jumpHeight * -2f * m_Motor.gravity)
                 : 0f;
             m_Motor.SetVerticalVelocity(jumpVelocity);
+
+            // Start at the actual takeoff pose in the same frame as the physical impulse.
+            // Opt-in keeps the template controller's existing behavior intact.
+            if (synchronizeTakeoffAnimation && m_Animator != null)
+            {
+                m_Animator.SetBool("Grounded", false);
+                m_Animator.SetBool("Jump", true);
+                m_Animator.Play(takeoffAnimationState, 0, takeoffNormalizedTime);
+            }
+
 
             m_JumpBufferTimer = 0f;
             m_JumpCooldown = 0.1f;
