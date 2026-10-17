@@ -1,0 +1,6 @@
+Nave con puerta corrediza animada.
+30 fps, fotogramas 1-90: comienza cerrada, abre en 8-45 y queda abierta. No activar Loop Time para esta toma.
+Importa FBX con Import Animation habilitado. Puedes renombrar su toma a AbrirPuerta. El GLB conserva los materiales emisivos.
+En Unity, configura Interior_Luz_Blanca con Emission blanca HDR (intensidad inicial 8-15), Metallic 0. Activa Bloom en el postprocesado para ver el halo. FBX puede necesitar reasignar este material.
+El interior es una superficie blanca emisiva opaca: no se muestra una habitacion.
+La apertura y cierre pueden controlarse con el mismo clip reproduciendolo hacia adelante o hacia atras.
