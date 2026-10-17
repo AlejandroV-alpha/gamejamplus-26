@@ -29,5 +29,8 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/00_Scenes/j_MarsDesertPreview.unity
     guid: 0735c286ba353a046a1e2464d72eb055
+  - enabled: 1
+    path: Assets/00_Scenes/j_TabletPrototype.unity
+    guid: ad7050d41d12cfe4b969870dd3441809
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
