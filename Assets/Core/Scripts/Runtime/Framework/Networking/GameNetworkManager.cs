@@ -1,5 +1,7 @@
 using UnityEngine;
 using Unity.Netcode;
+using System.Net;
+using System.Net.Sockets;
 
 namespace Blocks.Gameplay.Core
 {
@@ -84,6 +86,23 @@ namespace Blocks.Gameplay.Core
             OnClientConnectedCallback += HandleClientConnected;
             OnClientDisconnectCallback += HandleClientDisconnect;
             OnServerStarted += HandleServerStarted;
+            Application.quitting += HandleApplicationQuitting;
+        }
+
+        private void OnDisable()
+        {
+            if (IsServer || IsClient || IsHost)
+            {
+                Shutdown();
+            }
+        }
+
+        private void HandleApplicationQuitting()
+        {
+            if (IsServer || IsClient || IsHost)
+            {
+                Shutdown();
+            }
         }
 
         #endregion
@@ -102,6 +121,9 @@ namespace Blocks.Gameplay.Core
                 return;
             }
 
+            // Ensure transport port is free before attempting bind
+            EnsureAvailableHostPort();
+
             NetworkState.ConnectionState = ConnectionStates.Connecting;
             UpdateViewModel();
 
@@ -109,6 +131,59 @@ namespace Blocks.Gameplay.Core
             {
                 NetworkState.ConnectionState = ConnectionStates.Failed;
                 UpdateViewModel();
+            }
+        }
+
+        /// <summary>
+        /// Checks if the configured transport port is already in use by another process
+        /// or an orphaned socket. If in use, automatically selects the next available UDP port.
+        /// </summary>
+        public void EnsureAvailableHostPort()
+        {
+            if (NetworkConfig?.NetworkTransport is Unity.Netcode.Transports.UTP.UnityTransport utp)
+            {
+                ushort initialPort = utp.ConnectionData.Port;
+                string listenAddress = string.IsNullOrEmpty(utp.ConnectionData.ServerListenAddress) ? "127.0.0.1" : utp.ConnectionData.ServerListenAddress;
+
+                if (!IsUdpPortAvailable(initialPort, listenAddress))
+                {
+                    ushort availablePort = GetNextAvailableUdpPort(initialPort, listenAddress);
+                    Debug.LogWarning($"[GameNetworkManager] UDP Port {initialPort} is already in use. Auto-switching host to port {availablePort}.");
+                    utp.SetConnectionData(utp.ConnectionData.Address, availablePort, utp.ConnectionData.ServerListenAddress);
+                }
+            }
+        }
+
+        private static ushort GetNextAvailableUdpPort(ushort startingPort, string listenAddress, int maxScan = 100)
+        {
+            for (ushort port = startingPort; port < startingPort + maxScan; port++)
+            {
+                if (IsUdpPortAvailable(port, listenAddress))
+                {
+                    return port;
+                }
+            }
+            return startingPort;
+        }
+
+        private static bool IsUdpPortAvailable(ushort port, string listenAddress)
+        {
+            try
+            {
+                IPAddress ip = IPAddress.Any;
+                if (!string.IsNullOrEmpty(listenAddress) && IPAddress.TryParse(listenAddress, out var parsed))
+                {
+                    ip = parsed;
+                }
+
+                using (var client = new UdpClient(new IPEndPoint(ip, port)))
+                {
+                    return true;
+                }
+            }
+            catch
+            {
+                return false;
             }
         }
 
