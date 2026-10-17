@@ -16,18 +16,18 @@ namespace GameJam.Tablet
         private TabletUISkin skin;
         private TMP_FontAsset tmpFont;
         private TextMeshProUGUI osClockText;
-        private readonly List<Button> planetTabButtons = new();
-        private readonly List<TextMeshProUGUI> planetTabLabels = new();
-        private readonly List<TabletRoundedPanel> planetTabPanels = new();
-        private readonly List<Button> dockButtons = new();
-        private readonly List<TextMeshProUGUI> dockLabels = new();
-        private readonly List<TabletRoundedPanel> dockPanels = new();
         private float progress;
         private int planetIndex = 0;
-        private string page = "Bitacora";
+        private string page = "Inicio";
+        private readonly Stack<string> pageHistory = new();
+        private TextMeshProUGUI sectorLabel;
+        private Button backButton;
+        private CanvasGroup pageGroup;
+        private float pageFade;
+        private string clockMinute;
 
-        // Android Sci-Fi Theme Palette:
-        private static readonly Color CyanAccent = new(0.00f, 0.92f, 0.88f, 1f);     // Vibrant Android cyan
+        // Tablet colors: warm accent and dark surfaces.
+        private static readonly Color CyanAccent = new(1f, 0.65f, 0.35f, 1f);     // Vibrant warm accent
         private static readonly Color InkWhite = new(0.96f, 0.98f, 1.00f, 1f);       // Ultra-crisp reading white
         private static readonly Color MutedCyan = new(0.48f, 0.68f, 0.80f, 1f);      // Soft technical secondary
         private static readonly Color DimCyan = new(0.26f, 0.40f, 0.50f, 1f);        // Muted labels
@@ -58,9 +58,9 @@ namespace GameJam.Tablet
         {
             catalog = data;
             skin = appearance;
-            tmpFont = (skin != null && skin.tmpFont != null) ? skin.tmpFont : null;
+            tmpFont = (skin != null && skin.tmpFont != null) ? skin.tmpFont : TMP_Settings.defaultFontAsset;
             planetIndex = GetMarsIndex();
-            page = "Bitacora";
+            page = "Inicio";
 
             var canvas = gameObject.AddComponent<Canvas>();
             canvas.renderMode = RenderMode.ScreenSpaceOverlay;
@@ -133,10 +133,10 @@ namespace GameJam.Tablet
             AddWallpaper();
 
             // ================= 3. ANDROID TABLET OS INTERFACE =================
-            // Top Android Status Bar (Clock, Network, Planet Chips, Battery, Close)
+            // Top Android Status Bar (Clock, Network, Sector, Close)
             CreateAndroidTopStatusBar(close);
 
-            // Central dynamic workspace for pages (Inicio, Tareas, Recetas, Minerales)
+            // Central dynamic workspace for pages (Inicio, Tareas, Recetas, Minerales, Planetas)
             workspace = new GameObject("Widget workspace", typeof(RectTransform)).GetComponent<RectTransform>();
             workspace.transform.SetParent(screen, false);
             workspace.anchorMin = new Vector2(0.5f, 0.5f);
@@ -144,9 +144,10 @@ namespace GameJam.Tablet
             workspace.sizeDelta = new Vector2(1170, 570);
             workspace.anchoredPosition = new Vector2(0, -18);
 
-            // Bottom Android Taskbar / Dock (Inicio, Tareas, Recetas, Minerales)
+            // Bottom Android Taskbar / Dock (Atras, Inicio, Aplicaciones)
             CreateAndroidTaskbarDock();
 
+            pageGroup = workspace.gameObject.AddComponent<CanvasGroup>();
             RenderPage();
         }
 
@@ -179,11 +180,9 @@ namespace GameJam.Tablet
 
             foreach (var pos in corners)
             {
-                // Rubberized protective armor plate
                 var plate = CreateRoundedPanel(parent, "CornerArmor", new Vector2(34, 34), 8, ArmorBumper);
                 plate.anchoredPosition = pos;
 
-                // Dark titanium hex fastener bolt
                 var boltRim = CreateRoundedPanel(plate, "HexBolt", new Vector2(10, 10), 5, HexBolt);
                 boltRim.anchoredPosition = Vector2.zero;
                 var boltCenter = CreateRoundedPanel(boltRim, "Pin", new Vector2(4, 4), 2, new Color(0.08f, 0.12f, 0.16f));
@@ -194,22 +193,18 @@ namespace GameJam.Tablet
         // 1B. Left Edge: Weather-sealed High-Speed Data Cartridge Bay
         private void CreateLeftDataPort(RectTransform parent)
         {
-            // Recessed port housing on left bezel
             var bay = CreateRoundedPanel(parent, "DataBayHousing", new Vector2(10, 140), 4, new Color(0.03f, 0.045f, 0.07f));
             bay.anchoredPosition = new Vector2(-637, 20);
 
-            // Sealed rubber protective cover
             var door = CreateRoundedPanel(bay, "SealFlap", new Vector2(6, 120), 3, ChassisRim);
             door.anchoredPosition = Vector2.zero;
 
-            // Grip ridges on door
             for (int r = -2; r <= 2; r++)
             {
                 var ridge = CreateRoundedPanel(door, "Ridge", new Vector2(4, 3), 1, new Color(0.08f, 0.12f, 0.16f));
                 ridge.anchoredPosition = new Vector2(0, r * 16);
             }
 
-            // Port indicator LED
             var led = CreateRoundedPanel(parent, "PortLED", new Vector2(4, 8), 2, new Color(0.00f, 0.92f, 0.88f, 0.70f));
             led.anchoredPosition = new Vector2(-637, -65);
         }
@@ -217,19 +212,16 @@ namespace GameJam.Tablet
         // 1C. Right Edge: Sealed Power Switch, Tactile Volume Rocker, Magnetic Stylus Dock
         private void CreateRightHardwareControls(RectTransform parent)
         {
-            // Power switch with subtle red accent line
             var pwrBtn = CreateRoundedPanel(parent, "Pwr_Button", new Vector2(6, 44), 3, ChassisRim);
             pwrBtn.anchoredPosition = new Vector2(648, 220);
             var pwrAccent = CreateRoundedPanel(pwrBtn, "Accent", new Vector2(2, 20), 1, new Color(0.9f, 0.3f, 0.3f, 0.9f));
             pwrAccent.anchoredPosition = Vector2.zero;
 
-            // Volume rocker with center separator
             var volBtn = CreateRoundedPanel(parent, "Vol_Button", new Vector2(6, 80), 3, ChassisRim);
             volBtn.anchoredPosition = new Vector2(648, 140);
             var volDiv = CreateRoundedPanel(volBtn, "Divider", new Vector2(4, 2), 1, new Color(0.08f, 0.12f, 0.16f));
             volDiv.anchoredPosition = Vector2.zero;
 
-            // Magnetic Stylus docking slot on the right bezel
             var stylusSlot = CreateRoundedPanel(parent, "StylusDock", new Vector2(8, 200), 4, new Color(0.03f, 0.045f, 0.07f));
             stylusSlot.anchoredPosition = new Vector2(637, -30);
             var stylusBody = CreateRoundedPanel(stylusSlot, "StylusPen", new Vector2(4, 180), 2, new Color(0.14f, 0.19f, 0.26f));
@@ -244,7 +236,6 @@ namespace GameJam.Tablet
             cluster.anchoredPosition = new Vector2(0, 390);
             cluster.sizeDelta = new Vector2(340, 20);
 
-            // Atmospheric & radiation intake micro-grille
             var atmosGrille = CreateRoundedPanel(cluster, "AtmosSensorGrille", new Vector2(56, 6), 3, new Color(0.02f, 0.035f, 0.05f));
             atmosGrille.anchoredPosition = new Vector2(-75, 0);
             for (int g = -3; g <= 3; g++)
@@ -253,21 +244,17 @@ namespace GameJam.Tablet
                 slit.anchoredPosition = new Vector2(g * 7, 0);
             }
 
-            // Primary visual spectrum camera
             var lensRim = CreateRoundedPanel(cluster, "VisualLensRim", new Vector2(14, 14), 7, new Color(0.02f, 0.03f, 0.05f));
             lensRim.anchoredPosition = new Vector2(-22, 0);
             var lensIris = CreateRoundedPanel(lensRim, "LensIris", new Vector2(6, 6), 3, new Color(0.10f, 0.40f, 0.70f));
             lensIris.anchoredPosition = Vector2.zero;
 
-            // Infrared / multispectral scanner dot
             var irLens = CreateRoundedPanel(cluster, "IRSensor", new Vector2(8, 8), 4, new Color(0.25f, 0.08f, 0.12f));
             irLens.anchoredPosition = new Vector2(-2, 0);
 
-            // Comms micro speaker grille
             var speaker = CreateRoundedPanel(cluster, "SpeakerGrille", new Vector2(40, 4), 2, new Color(0.02f, 0.03f, 0.05f));
             speaker.anchoredPosition = new Vector2(38, 0);
 
-            // Operational status LED with technical label
             var led = CreateRoundedPanel(cluster, "StatusLED", new Vector2(5, 5), 2, new Color(0.00f, 0.96f, 0.74f, 0.95f));
             led.anchoredPosition = new Vector2(80, 0);
         }
@@ -275,28 +262,23 @@ namespace GameJam.Tablet
         // 1E. Bottom Bezel: Gold Pogo Dock Connector Pins, Authentic Aerospace Markings, Android Gesture Bar
         private void CreateBottomDockHardware(RectTransform parent)
         {
-            // Left in-universe specification stamping
             var leftStamp = CreateLabel(parent, "ORBIT AEROSPACE // EXP-DATAPAD MK-VII", 11,
                 new Vector2(-360, -394), new Vector2(380, 16), HardwareStamp);
             leftStamp.alignment = TextAlignmentOptions.Left;
 
-            // Right in-universe serial & certification stamping
             var rightStamp = CreateLabel(parent, "S/N: 8492-EXP-07  -  HAZMAT CLASS-1", 11,
                 new Vector2(360, -394), new Vector2(380, 16), HardwareStamp);
             rightStamp.alignment = TextAlignmentOptions.Right;
 
-            // Center Magnetic Pogo Dock Connector (Where the tablet docks into the spaceship console!)
             var dockSlot = CreateRoundedPanel(parent, "PogoDockConnector", new Vector2(110, 10), 4, new Color(0.02f, 0.035f, 0.05f));
             dockSlot.anchoredPosition = new Vector2(0, -394);
 
-            // 5 Gold Contact Pins
             for (int p = -2; p <= 2; p++)
             {
                 var pin = CreateRoundedPanel(dockSlot, $"Pin_{p}", new Vector2(5, 5), 2.5f, GoldPin);
                 pin.anchoredPosition = new Vector2(p * 14, 0);
             }
 
-            // Modern Android navigation gesture pill (━) sitting right above the dock port
             var gesturePill = CreateRoundedPanel(parent, "GesturePill", new Vector2(120, 3), 1.5f, new Color(0.00f, 0.92f, 0.88f, 0.40f));
             gesturePill.anchoredPosition = new Vector2(0, -378);
         }
@@ -322,7 +304,6 @@ namespace GameJam.Tablet
             fit.aspectMode = AspectRatioFitter.AspectMode.EnvelopeParent;
             fit.aspectRatio = skin.wallpaper.rect.width / skin.wallpaper.rect.height;
 
-            // Deep dark glass tint (0.74) to balance rich sci-fi artwork with perfect UI text readability
             var tintGo = new GameObject("Wallpaper Tint", typeof(RectTransform), typeof(Image));
             tintGo.transform.SetParent(viewport.transform, false);
             var tRect = (RectTransform)tintGo.transform;
@@ -330,7 +311,7 @@ namespace GameJam.Tablet
             tRect.anchorMax = Vector2.one;
             tRect.offsetMin = tRect.offsetMax = Vector2.zero;
             var tintImg = tintGo.GetComponent<Image>();
-            tintImg.color = new Color(0.015f, 0.022f, 0.038f, 0.74f);
+            tintImg.color = new Color(0.015f, 0.022f, 0.038f, 0.65f);
             tintImg.raycastTarget = false;
         }
 
@@ -350,350 +331,268 @@ namespace GameJam.Tablet
 
         private void CreateAndroidTopStatusBar(UnityAction close)
         {
-            // Sleek Android Material Top Status Bar
-            var bar = CreateRoundedPanel(screen, "Android Status Bar", new Vector2(1170, 38), 14, InsetBg);
-            bar.anchoredPosition = new Vector2(0, 325);
-
-            var barOutline = bar.gameObject.AddComponent<Outline>();
-            barOutline.effectColor = new Color(0.00f, 0.92f, 0.88f, 0.25f);
-            barOutline.effectDistance = new Vector2(1, -1);
-
-            // Left: Clock & Network in-universe telemetry
-            var clockLabel = CreateLabel(bar, "14:38", 15, new Vector2(-540, 0), new Vector2(70, 24), InkWhite);
-            clockLabel.alignment = TextAlignmentOptions.Left;
-
-            var osLabel = CreateLabel(bar, "ORBIT OS 14 // SAT-LINK: NOMINAL", 12, new Vector2(-360, 0), new Vector2(270, 24), MutedCyan);
-            osLabel.alignment = TextAlignmentOptions.Left;
-
-            // Center: Active Sector Pill (Only MARTE shown - others hidden)
-            var sectorPill = CreateRoundedPanel(bar, "SectorPill", new Vector2(230, 26), 13, new Color(0.00f, 0.35f, 0.45f, 0.95f));
-            sectorPill.anchoredPosition = new Vector2(-15, 0);
-
-            var secText = CreateLabel(sectorPill, "SECTOR ACTIVO: MARTE", 12, Vector2.zero, new Vector2(210, 20), CyanAccent);
-            secText.alignment = TextAlignmentOptions.Center;
-
-            // Right: System Indicators (Satellite Sync, Battery Pill, Close Chip)
-            var syncLabel = CreateLabel(bar, "[SYNC]", 11, new Vector2(370, 0), new Vector2(70, 20), CyanAccent);
-            syncLabel.alignment = TextAlignmentOptions.Right;
-
-            // Battery Indicator Pill
-            var batPill = CreateRoundedPanel(bar, "BatteryPill", new Vector2(85, 22), 8, new Color(0.05f, 0.10f, 0.16f, 0.95f));
-            batPill.anchoredPosition = new Vector2(460, 0);
-            var batFill = CreateRoundedPanel(batPill, "BatteryFill", new Vector2(75, 14), 5, new Color(0.00f, 0.92f, 0.88f, 0.35f));
-            batFill.anchoredPosition = Vector2.zero;
-            var batText = CreateLabel(batPill, "98%", 11, Vector2.zero, new Vector2(80, 20), InkWhite);
-            batText.alignment = TextAlignmentOptions.Center;
-
-            // Close Chip Button (X)
-            var closeBtn = CreateCircularChipButton(bar, "X", new Vector2(545, 0), new Vector2(28, 26), () => close());
+            var bar = CreateRoundedPanel(screen, "b_Tablet_StatusBar", new Vector2(1202, 42), 0, InsetBg);
+            bar.anchorMin = new Vector2(0, 1);
+            bar.anchorMax = new Vector2(1, 1);
+            bar.pivot = new Vector2(0.5f, 1);
+            bar.sizeDelta = new Vector2(0, 42);
+            bar.anchoredPosition = Vector2.zero;
+            osClockText = CreateLabel(bar, "", 16, new Vector2(-525, 0), new Vector2(90, 26), InkWhite);
+            CreateLabel(bar, "ORBIT / GUIA DE CAMPO", 13, new Vector2(-325, 0), new Vector2(280, 26), MutedCyan);
+            sectorLabel = CreateLabel(bar, "", 14, new Vector2(20, 0), new Vector2(300, 26), CyanAccent);
+            CreateLabel(bar, "ARCHIVO LOCAL", 12, new Vector2(405, 0), new Vector2(170, 26), MutedCyan);
+            CreateNavigationButton(bar, "Cerrar tablet", TabletNavigationIcon.Symbol.Close, new Vector2(550, 0), close);
         }
 
         private void CreateAndroidTaskbarDock()
         {
-            // Floating Android 14 Tablet Taskbar Pill (510 x 44)
-            var dock = CreateRoundedPanel(screen, "Android Taskbar", new Vector2(510, 44), 22, new Color(0.05f, 0.08f, 0.14f, 0.95f));
+            var dock = CreateRoundedPanel(screen, "b_Tablet_Navigation", new Vector2(500, 48), 24, InsetBg);
             dock.anchoredPosition = new Vector2(0, -325);
-
-            var dockOutline = dock.gameObject.AddComponent<Outline>();
-            dockOutline.effectColor = new Color(0.00f, 0.92f, 0.88f, 0.35f);
-            dockOutline.effectDistance = new Vector2(1, -1);
-
-            dockButtons.Clear();
-            dockLabels.Clear();
-            dockPanels.Clear();
-
-            var sections = new[] { "Bitacora", "Checklist", "Recetas" };
-            var displayNames = new[] { "BITACORA", "CHECKLIST", "RECETAS" };
-            float startX = -170f;
-            float spacing = 170f;
-
-            for (int i = 0; i < sections.Length; i++)
-            {
-                string sec = sections[i];
-                var (btn, lbl, pnl) = CreateDockItem(dock, displayNames[i], new Vector2(startX + i * spacing, 0), new Vector2(150, 32),
-                    () => ShowPage(sec));
-                dockButtons.Add(btn);
-                dockLabels.Add(lbl);
-                dockPanels.Add(pnl);
-            }
+            backButton = CreateNavigationButton(dock, "Atras", TabletNavigationIcon.Symbol.Back, new Vector2(-150, 0), GoBack);
+            CreateNavigationButton(dock, "Inicio", TabletNavigationIcon.Symbol.Home, Vector2.zero, GoHome);
+            CreateNavigationButton(dock, "Aplicaciones", TabletNavigationIcon.Symbol.Apps, new Vector2(150, 0), GoHome);
         }
 
-        public void ShowBitacora() => ShowPage("Bitacora");
-        public void ShowChecklist() => ShowPage("Checklist");
+        private Button CreateNavigationButton(Transform parent, string label, TabletNavigationIcon.Symbol symbol,
+            Vector2 position, UnityAction action)
+        {
+            var rect = CreateRoundedPanel(parent, label, new Vector2(56, 34), 12, new Color(1, 1, 1, 0.04f));
+            rect.anchoredPosition = position;
+            rect.GetComponent<TabletRoundedPanel>().raycastTarget = true;
+            var iconObject = new GameObject("Icon", typeof(RectTransform), typeof(CanvasRenderer), typeof(TabletNavigationIcon));
+            iconObject.transform.SetParent(rect, false);
+            var iconRect = (RectTransform)iconObject.transform;
+            iconRect.sizeDelta = new Vector2(23, 23);
+            var icon = iconObject.GetComponent<TabletNavigationIcon>();
+            icon.symbol = symbol;
+            icon.color = InkWhite;
+            icon.raycastTarget = false;
+            var button = rect.gameObject.AddComponent<Button>();
+            button.targetGraphic = icon;
+            var colors = button.colors;
+            colors.highlightedColor = CyanAccent;
+            colors.selectedColor = CyanAccent;
+            colors.pressedColor = new Color(0.85f, 0.45f, 0.18f);
+            colors.disabledColor = new Color(0.35f, 0.4f, 0.46f);
+            button.colors = colors;
+            button.onClick.AddListener(action);
+            return button;
+        }
+
+        public void ShowBitacora() => GoHome();
+        public void ShowChecklist() => ShowPage("Tareas");
         public void ShowRecipes() => ShowPage("Recetas");
-        public void ShowTasks() => ShowPage("Checklist");
-        public void ShowMinerals() => ShowPage("Recetas");
+        public void ShowTasks() => ShowPage("Tareas");
+        public void ShowMinerals() => ShowPage("Minerales");
 
         public void SelectPlanet(int index)
         {
-            if (catalog == null || index < 0 || index >= catalog.planets.Length) return;
+            if (catalog == null || catalog.planets == null || index < 0 || index >= catalog.planets.Length) return;
             planetIndex = index;
-            RenderPage();
+            GoHome();
         }
 
         public void ShowPage(string section)
         {
-            if (section == "Inicio") section = "Bitacora";
-            if (section == "Tareas") section = "Checklist";
-            if (section == "Minerales") section = "Recetas";
+            if (section == "Bitacora") section = "Inicio";
+            if (section == "Checklist") section = "Tareas";
+            if (section != "Inicio" && section != "Tareas" && section != "Recetas" && section != "Minerales" && section != "Planetas") return;
+            if (workspace == null || section == page) return;
+            pageHistory.Push(page);
             page = section;
             RenderPage();
         }
 
         private void RenderPage()
         {
-            // Clear workspace
             for (int i = workspace.childCount - 1; i >= 0; i--)
             {
                 var child = workspace.GetChild(i).gameObject;
                 child.SetActive(false);
                 if (Application.isPlaying) Destroy(child); else DestroyImmediate(child);
             }
-
+            pageFade = 0f;
+            if (pageGroup != null) pageGroup.alpha = 0f;
+            if (backButton != null) backButton.interactable = pageHistory.Count > 0;
+            if (sectorLabel != null) sectorLabel.text = Planet != null ? "SECTOR / " + Clean(Planet.name).ToUpperInvariant() : "SIN CATALOGO";
             if (Planet == null)
             {
-                var emptyMsg = CreateLabel(workspace, "NO HAY ARCHIVO PLANETARIO DISPONIBLE", 20, Vector2.zero, new Vector2(800, 40), InkWhite);
-                emptyMsg.alignment = TextAlignmentOptions.Center;
+                CreateLabel(workspace, "No hay un catalogo planetario asignado.", 24, Vector2.zero, new Vector2(1000, 60), InkWhite);
                 return;
             }
-
-            // Update bottom Android taskbar items (Bitacora, Checklist, Recetas)
-            var sections = new[] { "Bitacora", "Checklist", "Recetas" };
-            for (int i = 0; i < dockButtons.Count; i++)
-            {
-                bool active = (sections[i] == page);
-                dockPanels[i].color = active ? new Color(0.00f, 0.45f, 0.50f, 0.90f) : Color.clear;
-                dockLabels[i].color = active ? CyanAccent : InkWhite;
-            }
-
-            if (page == "Bitacora") RenderBitacora();
-            else if (page == "Checklist") RenderChecklist();
+            if (page != "Inicio")
+                CreateRoundedPanel(workspace, "b_Tablet_AppSurface", new Vector2(1150, 530), 24, new Color(0.025f, 0.045f, 0.075f, 0.97f));
+            if (page == "Inicio") RenderBitacora();
+            else if (page == "Tareas") RenderChecklist();
             else if (page == "Recetas") RenderRecipes();
-            else RenderBitacora();
+            else if (page == "Minerales") RenderMinerals();
+            else RenderPlanets();
         }
 
         // ================= PAGE 1: BITACORA (EXPEDITION LOGBOOK & OVERVIEW - MARS FOCUSED) =================
         private void RenderBitacora()
         {
-            // ----------------- LEFT HERO COLUMN: BITACORA DE EXPEDICION (700 x 470) -----------------
-            var heroCard = CreateRoundedPanel(workspace, "Hero_Bitacora", new Vector2(700, 470), 16, CardBg);
-            heroCard.anchoredPosition = new Vector2(-225, 0);
-
-            var heroOutline = heroCard.gameObject.AddComponent<Outline>();
-            heroOutline.effectColor = new Color(0.00f, 0.92f, 0.88f, 0.30f);
-            heroOutline.effectDistance = new Vector2(1, -1);
-
-            // Left vertical accent strip
-            var accentStrip = CreateRoundedPanel(heroCard, "AccentStrip", new Vector2(4, 450), 2, CyanAccent);
-            accentStrip.anchoredPosition = new Vector2(-344, 0);
-
-            // Top Header Line
-            CreateIcon(heroCard, skin != null ? skin.ship : null, new Vector2(-305, 205), new Vector2(26, 26), CyanAccent);
-            var mTitle = CreateLabel(heroCard, $"BITACORA DE EXPEDICION  -  SECTOR {Clean(Planet.name).ToUpperInvariant()}", 17,
-                new Vector2(-15, 205), new Vector2(530, 26), CyanAccent);
-            mTitle.alignment = TextAlignmentOptions.Left;
-
-            // Android Material Pill Badge: [ PRIORIDAD 1 ]
-            var prioBadge = CreateRoundedPanel(heroCard, "PrioBadge", new Vector2(110, 26), 13, new Color(0.35f, 0.10f, 0.10f, 0.90f));
-            prioBadge.anchoredPosition = new Vector2(280, 205);
-            var prioDot = CreateRoundedPanel(prioBadge, "Dot", new Vector2(6, 6), 3, new Color(1f, 0.45f, 0.35f));
-            prioDot.anchoredPosition = new Vector2(-38, 0);
-            var prioText = CreateLabel(prioBadge, "PRIORIDAD 1", 11, new Vector2(8, 0), new Vector2(85, 20), new Color(1f, 0.85f, 0.80f));
-            prioText.alignment = TextAlignmentOptions.Center;
-
-            // Objective Box
-            var objBox = CreateRoundedPanel(heroCard, "ObjectiveBox", new Vector2(660, 85), 12, InsetBg);
-            objBox.anchoredPosition = new Vector2(0, 135);
-            var objSub = CreateLabel(objBox, "OBJETIVO PRINCIPAL DE MISION:", 11, new Vector2(0, 26), new Vector2(620, 18), DimCyan);
-            objSub.alignment = TextAlignmentOptions.Left;
-            var objMain = CreateLabel(objBox, Clean(Planet.objective), 16, new Vector2(0, -12), new Vector2(620, 45), InkWhite);
-            objMain.alignment = TextAlignmentOptions.Left;
-
-            // Mission Log Entries Box (Field notes & telemetry log)
-            var logBox = CreateRoundedPanel(heroCard, "LogBox", new Vector2(660, 175), 12, InsetBg);
-            logBox.anchoredPosition = new Vector2(0, -12);
-
-            var logHeader = CreateLabel(logBox, "REGISTRO TELEMETRICO Y ENTRADAS DE CAMPO:", 12, new Vector2(0, 68), new Vector2(620, 20), MutedCyan);
-            logHeader.alignment = TextAlignmentOptions.Left;
-
-            string[] logEntries = {
-                "[SOL 14 // 08:30] Aterrizaje forzoso en Marte tras tormenta de arena.",
-                "[SOL 14 // 10:15] Danos criticos: Propulsor y soporte vital averiados.",
-                "[SOL 14 // 12:45] Detectados depositos de metal y mineral rojo en el sector.",
-                "[SOL 14 // ACTUAL] Protocolo activo: En espera de piezas de recambio."
-            };
-
-            for (int e = 0; e < logEntries.Length; e++)
-            {
-                bool isCurrent = (e == logEntries.Length - 1);
-                Color entryColor = isCurrent ? CyanAccent : (e == 0 ? InkWhite : MutedCyan);
-                var entryLabel = CreateLabel(logBox, logEntries[e], 12, new Vector2(0, 36 - e * 26), new Vector2(620, 22), entryColor);
-                entryLabel.enableWordWrapping = false;
-                entryLabel.alignment = TextAlignmentOptions.Left;
-            }
-
-            // Primary Call to Action: Go to Checklist
-            var (heroBtn, _) = CreatePillActionButton(heroCard, "ABRIR CHECKLIST DE REPARACION  >",
-                new Vector2(0, -185), new Vector2(660, 42), 14, () => ShowChecklist());
-
-            // ----------------- RIGHT COLUMN: COMPLEMENTARY WIDGETS (445 x 470) -----------------
-
-            // Widget 1: Próxima Reparación Crítica (Top-Right)
-            var widgetRepair = CreateRoundedPanel(workspace, "Widget_Repair", new Vector2(445, 225), 16, CardBg);
-            widgetRepair.anchoredPosition = new Vector2(360, 122);
-
-            var wrOutline = widgetRepair.gameObject.AddComponent<Outline>();
-            wrOutline.effectColor = new Color(0.00f, 0.92f, 0.88f, 0.20f);
-            wrOutline.effectDistance = new Vector2(1, -1);
-
-            CreateIcon(widgetRepair, skin != null ? skin.repair : null, new Vector2(-185, 82), new Vector2(22, 22), CyanAccent);
-            var wrTitle = CreateLabel(widgetRepair, "PROXIMA FABRICACION", 14, new Vector2(10, 82), new Vector2(350, 22), CyanAccent);
-            wrTitle.alignment = TextAlignmentOptions.Left;
-
-            var wrInset = CreateRoundedPanel(widgetRepair, "Repair_Inset", new Vector2(415, 85), 10, InsetBg);
-            wrInset.anchoredPosition = new Vector2(0, 16);
-
-            if (Planet.recipes != null && Planet.recipes.Length > 0)
-            {
-                var r0 = Planet.recipes[0];
-                var cLabel = CreateLabel(wrInset, Clean(r0.component).ToUpperInvariant(), 15, new Vector2(0, 20), new Vector2(390, 24), InkWhite);
-                cLabel.alignment = TextAlignmentOptions.Left;
-
-                var ingLabel = CreateLabel(wrInset, Ingredients(r0), 13, new Vector2(0, -18), new Vector2(390, 36), CyanAccent);
-                ingLabel.alignment = TextAlignmentOptions.Left;
-            }
-
-            var (wrBtn, _) = CreatePillActionButton(widgetRepair, "VER TODAS LAS RECETAS  >", new Vector2(0, -68), new Vector2(415, 34), 12, () => ShowRecipes());
-
-            // Widget 2: Telemetría Ambiental y Estado de Supervivencia (Bottom-Right)
-            var widgetTelem = CreateRoundedPanel(workspace, "Widget_Telemetry", new Vector2(445, 225), 16, CardBg);
-            widgetTelem.anchoredPosition = new Vector2(360, -122);
-
-            var wtOutline = widgetTelem.gameObject.AddComponent<Outline>();
-            wtOutline.effectColor = new Color(0.00f, 0.92f, 0.88f, 0.20f);
-            wtOutline.effectDistance = new Vector2(1, -1);
-
-            CreateIcon(widgetTelem, skin != null ? skin.ship : null, new Vector2(-185, 82), new Vector2(22, 22), CyanAccent);
-            var wtTitle = CreateLabel(widgetTelem, "TELEMETRIA DE SUPERFICIE", 14, new Vector2(10, 82), new Vector2(350, 22), CyanAccent);
-            wtTitle.alignment = TextAlignmentOptions.Left;
-
-            var wtInset = CreateRoundedPanel(widgetTelem, "Telem_Inset", new Vector2(415, 85), 10, InsetBg);
-            wtInset.anchoredPosition = new Vector2(0, 16);
-
-            var tLine1 = CreateLabel(wtInset, "ATMOSFERA: 95% CO2  //  PRESION: 0.6 kPa", 12, new Vector2(0, 22), new Vector2(390, 20), InkWhite);
-            tLine1.alignment = TextAlignmentOptions.Center;
-
-            var tLine2 = CreateLabel(wtInset, "GRAVEDAD: 0.38G  //  TEMPERATURA: -63 C", 12, new Vector2(0, -2), new Vector2(390, 20), CyanAccent);
-            tLine2.alignment = TextAlignmentOptions.Center;
-
-            var tLine3 = CreateLabel(wtInset, "RADIACION: 0.24 mSv/h  (TRAJE ESTABLE)", 11, new Vector2(0, -26), new Vector2(390, 18), DimCyan);
-            tLine3.alignment = TextAlignmentOptions.Center;
-
-            var (wtBtn, _) = CreatePillActionButton(widgetTelem, "IR AL CHECKLIST OPERATIVO  >", new Vector2(0, -68), new Vector2(415, 34), 12, () => ShowChecklist());
+            var title = CreateLabel(workspace, "Tu expedición, a mano.", 36, new Vector2(-190, 210), new Vector2(710, 58), InkWhite);
+            title.alignment = TextAlignmentOptions.Left;
+            var subtitle = CreateLabel(workspace, Clean(Planet.name) + " / Herramientas de exploracion", 19, new Vector2(-190, 163), new Vector2(710, 35), MutedCyan);
+            subtitle.alignment = TextAlignmentOptions.Left;
+            var mission = CreateRoundedPanel(workspace, "b_Tablet_MissionPreview", new Vector2(1050, 66), 18, new Color(0.04f, 0.065f, 0.10f, 0.88f));
+            mission.anchoredPosition = new Vector2(0, 95);
+            CreateLabel(mission, "MISION", 12, new Vector2(-450, 0), new Vector2(100, 28), CyanAccent);
+            var objective = CreateLabel(mission, Clean(Planet.objective), 20, new Vector2(45, 0), new Vector2(830, 48), InkWhite);
+            objective.alignment = TextAlignmentOptions.Left;
+            App("Misiones", "Tareas", skin != null ? skin.objectives : null, -390, new Color(0.88f,0.39f,0.20f), "Objetivos del viaje");
+            App("Recetario", "Recetas", skin != null ? skin.repair : null, -130, new Color(0.18f,0.48f,0.56f), "Materiales y reparacion");
+            App("Minerales", "Minerales", skin != null ? skin.mine : null, 130, new Color(0.43f,0.37f,0.65f), "Catalogo de recursos");
+            App("Planetas", "Planetas", skin != null ? skin.ship : null, 390, new Color(0.20f,0.47f,0.36f), "Archivos planetarios");
+            CreateLabel(workspace, "Selecciona una app para abrirla", 15, new Vector2(0, -225), new Vector2(1000, 28), MutedCyan);
         }
 
         // ================= PAGE 2: CHECKLIST (OPERATIONAL STEPS FOR MARS) =================
         private void RenderChecklist()
         {
-            var header = CreateLabel(workspace, $"CHECKLIST DE PROTOCOLO  -  SECTOR {Clean(Planet.name).ToUpperInvariant()}", 18,
-                new Vector2(0, 225), new Vector2(1150, 28), CyanAccent);
-            header.alignment = TextAlignmentOptions.Left;
-
-            var steps = new[] {
-                $"Localizar zona de impacto y diagnosticar sistemas de {Clean(Planet.name)}",
-                "Recolectar suministros en Marte: Metal, Mineral rojo y Circuitos",
-                "Reparar componentes en la estacion de ensamblaje (Propulsor, Filtros, Radar)",
-                "Completar la secuencia de ignicion y retorno seguro a la orbita"
-            };
-
+            PageHeader("Misiones", Clean(Planet.objective));
+            string[] steps = { "Reunir los materiales de " + Clean(Planet.name), "Consultar las recetas y reparar los componentes", "Preparar la nave para continuar el viaje" };
             for (int i = 0; i < steps.Length; i++)
             {
-                var row = CreateRoundedPanel(workspace, $"Checklist_Row_{i}", new Vector2(1150, 88), 14, CardBg);
-                row.anchoredPosition = new Vector2(0, 140 - i * 105);
-
-                var rowOutline = row.gameObject.AddComponent<Outline>();
-                rowOutline.effectColor = new Color(0.00f, 0.92f, 0.88f, 0.20f);
-                rowOutline.effectDistance = new Vector2(1, -1);
-
-                // Slot with check icon
-                var slot = CreateRoundedPanel(row, "Slot", new Vector2(42, 42), 10, SlotBg);
-                slot.anchoredPosition = new Vector2(-525, 0);
-                if (skin != null && skin.checkIcon != null)
-                {
-                    CreateIcon(slot, skin.checkIcon, Vector2.zero, new Vector2(24, 24), i == 0 ? CyanAccent : DimCyan);
-                }
-
-                // Step index
-                var numLabel = CreateLabel(row, (i + 1).ToString("00"), 18, new Vector2(-470, 0), new Vector2(45, 36), i == 1 ? CyanAccent : InkWhite);
-                numLabel.alignment = TextAlignmentOptions.Center;
-
-                // Step description
-                var stepDesc = CreateLabel(row, steps[i], 15, new Vector2(50, 0), new Vector2(850, 50), i == 1 ? InkWhite : (i == 0 ? MutedCyan : DimCyan));
-                stepDesc.alignment = TextAlignmentOptions.Left;
-
-                // Status tag inset (Material pill)
-                var tag = CreateRoundedPanel(row, "Tag", new Vector2(120, 30), 10, InsetBg);
-                tag.anchoredPosition = new Vector2(495, 0);
-                var tagLabel = CreateLabel(tag, i == 1 ? "[EN CURSO]" : (i == 0 ? "[COMPLETO]" : "[PENDIENTE]"), 11,
-                    Vector2.zero, new Vector2(115, 22), i == 1 ? CyanAccent : (i == 0 ? InkWhite : DimCyan));
-                tagLabel.alignment = TextAlignmentOptions.Center;
+                var row = CreateRoundedPanel(workspace, "b_Mision_" + i, new Vector2(1050, 85), 16, CardBg);
+                row.anchoredPosition = new Vector2(0, 95 - i * 105);
+                CreateLabel(row, (i+1).ToString("00"), 24, new Vector2(-465, 0), new Vector2(70, 50), CyanAccent);
+                var label = CreateLabel(row, steps[i], 22, new Vector2(50, 0), new Vector2(880, 65), InkWhite);
+                label.alignment = TextAlignmentOptions.Left;
             }
-
-            var note = CreateLabel(workspace, "SEGUIMIENTO OPERATIVO // ACTUALIZACION TELEMETRICA EN TIEMPO REAL", 11,
-                new Vector2(0, -245), new Vector2(1150, 20), DimCyan);
-            note.alignment = TextAlignmentOptions.Center;
+            PageNote("Guia de mision / " + Clean(Planet.name));
         }
 
         // ================= PAGE 3: RECETAS (ENGINEERING BLUEPRINTS - MARS) =================
         private void RenderRecipes()
         {
-            var header = CreateLabel(workspace, $"RECETAS DE FABRICACION  -  SECTOR {Clean(Planet.name).ToUpperInvariant()}", 18,
-                new Vector2(0, 225), new Vector2(1150, 28), CyanAccent);
-            header.alignment = TextAlignmentOptions.Left;
-
-            for (int i = 0; i < Planet.recipes.Length; i++)
+            PageHeader("Recetario", "Componentes y materiales / " + Clean(Planet.name));
+            var recipes = Planet.recipes;
+            if (recipes == null || recipes.Length == 0) { PageNote("No hay recetas registradas para este planeta."); return; }
+            var content = AppList("b_Recetas", recipes.Length, 110f);
+            for (int i = 0; i < recipes.Length; i++)
             {
-                var recipe = Planet.recipes[i];
-                var row = CreateRoundedPanel(workspace, $"Recipe_{i}", new Vector2(1150, 95), 14, CardBg);
-                row.anchoredPosition = new Vector2(0, 135 - i * 115);
-
-                var rowOutline = row.gameObject.AddComponent<Outline>();
-                rowOutline.effectColor = new Color(0.00f, 0.92f, 0.88f, 0.20f);
-                rowOutline.effectDistance = new Vector2(1, -1);
-
-                // Slot with repair gear icon
-                var slot = CreateRoundedPanel(row, "Slot", new Vector2(46, 46), 10, SlotBg);
-                slot.anchoredPosition = new Vector2(-520, 0);
-                if (skin != null && skin.repair != null)
-                {
-                    CreateIcon(slot, skin.repair, Vector2.zero, new Vector2(26, 26), CyanAccent);
-                }
-
-                // Component index & name
-                var nameLabel = CreateLabel(row, $"[0{i + 1}]  {Clean(recipe.component).ToUpperInvariant()}", 16,
-                    new Vector2(-260, 0), new Vector2(430, 38), InkWhite);
-                nameLabel.alignment = TextAlignmentOptions.Left;
-
-                // Inset container with materials
-                var ingInset = CreateRoundedPanel(row, "Ing_Inset", new Vector2(500, 55), 10, InsetBg);
-                ingInset.anchoredPosition = new Vector2(230, 0);
-                var ingLabel = CreateLabel(ingInset, Ingredients(recipe), 14, Vector2.zero, new Vector2(480, 44), CyanAccent);
-                ingLabel.alignment = TextAlignmentOptions.Center;
-
-                // Status tag
-                var tag = CreateRoundedPanel(row, "Tag", new Vector2(110, 30), 10, InsetBg);
-                tag.anchoredPosition = new Vector2(495, 0);
-                var tagLabel = CreateLabel(tag, i < 2 ? "[CRITICO]" : "[REQUERIDO]", 11, Vector2.zero, new Vector2(105, 22),
-                    i < 2 ? new Color(1f, 0.45f, 0.35f) : CyanAccent);
-                tagLabel.alignment = TextAlignmentOptions.Center;
+                var row = CreateRoundedPanel(content, "b_Receta_" + i, new Vector2(1035, 94), 16, CardBg);
+                row.anchorMin = row.anchorMax = new Vector2(0.5f, 1f);
+                row.anchoredPosition = new Vector2(0, -50 - i * 110);
+                CreateIcon(row, skin != null ? skin.repair : null, new Vector2(-470, 0), new Vector2(32,32), CyanAccent);
+                var name = CreateLabel(row, Clean(recipes[i].component), 22, new Vector2(-240, 0), new Vector2(370, 70), InkWhite);
+                name.alignment = TextAlignmentOptions.Left;
+                var ingredients = CreateLabel(row, Ingredients(recipes[i]), 19, new Vector2(245, 0), new Vector2(490, 75), MutedCyan);
+                ingredients.alignment = TextAlignmentOptions.Left;
             }
-
-            var note = CreateLabel(workspace, "LOS COMPONENTES SE FABRICAN CON SUMINISTROS EN LA MESA DE CRAFTEO", 11,
-                new Vector2(0, -245), new Vector2(1150, 20), DimCyan);
-            note.alignment = TextAlignmentOptions.Center;
+            PageNote("Guia de reparacion / Materiales necesarios por componente.");
         }
 
-        // ================= UI HELPER BUILDERS (ANDROID MATERIAL & UGUI BEST PRACTICES) =================
+        public void GoHome()
+        {
+            pageHistory.Clear();
+            page = "Inicio";
+            if (workspace != null) RenderPage();
+        }
+
+        public void GoBack()
+        {
+            if (pageHistory.Count == 0) return;
+            page = pageHistory.Pop();
+            RenderPage();
+        }
+
+        private void PageHeader(string title, string subtitle)
+        {
+            var heading = CreateLabel(workspace, title, 30, new Vector2(0, 215), new Vector2(1050, 48), InkWhite);
+            heading.alignment = TextAlignmentOptions.Left;
+            var sub = CreateLabel(workspace, subtitle, 17, new Vector2(0, 169), new Vector2(1050, 38), MutedCyan);
+            sub.alignment = TextAlignmentOptions.Left;
+        }
+
+        private void PageNote(string text) => CreateLabel(workspace, text, 13, new Vector2(0,-239), new Vector2(1050,30), DimCyan);
+
+        private void App(string title, string destination, Sprite icon, float x, Color tint, string description)
+        {
+            var tile = CreateRoundedPanel(workspace, "b_App_" + title, new Vector2(220,210), 22, Color.clear);
+            tile.anchoredPosition = new Vector2(x, -65);
+            var graphic = tile.GetComponent<TabletRoundedPanel>();
+            graphic.color = new Color(1f, 1f, 1f, 0.12f);
+            graphic.raycastTarget = true;
+            var button = tile.gameObject.AddComponent<Button>();
+            button.targetGraphic = graphic;
+            var colors = button.colors;
+            colors.normalColor = new Color(1f,1f,1f,0f);
+            colors.highlightedColor = Color.white;
+            colors.selectedColor = Color.white;
+            colors.pressedColor = new Color(0.8f,0.8f,0.8f,1f);
+            button.colors = colors;
+            button.onClick.AddListener(() => ShowPage(destination));
+            var shadow = CreateRoundedPanel(tile, "App shadow", new Vector2(108,108), 28, new Color(0,0,0,0.25f));
+            shadow.anchoredPosition = new Vector2(0,32);
+            var iconPanel = CreateRoundedPanel(tile, "App icon", new Vector2(104,104), 26, tint);
+            iconPanel.anchoredPosition = new Vector2(0,38);
+            if (icon != null) CreateIcon(iconPanel, icon, Vector2.zero, new Vector2(54,54), InkWhite);
+            else CreateLabel(iconPanel, title.Substring(0,1), 42, Vector2.zero, new Vector2(80,80), InkWhite);
+            CreateLabel(tile, title, 23, new Vector2(0,-40), new Vector2(220,38), InkWhite);
+            CreateLabel(tile, description, 14, new Vector2(0,-76), new Vector2(220,35), MutedCyan);
+        }
+
+        private RectTransform AppList(string name, int count, float rowHeight)
+        {
+            var viewport = CreateRoundedPanel(workspace, name, new Vector2(1070,350), 0, Color.clear);
+            viewport.anchoredPosition = new Vector2(0,-32);
+            viewport.gameObject.AddComponent<RectMask2D>();
+            viewport.GetComponent<TabletRoundedPanel>().raycastTarget = true;
+            var content = new GameObject("Content", typeof(RectTransform)).GetComponent<RectTransform>();
+            content.SetParent(viewport, false);
+            content.anchorMin = new Vector2(0,1); content.anchorMax = new Vector2(1,1);
+            content.pivot = new Vector2(0.5f,1);
+            content.sizeDelta = new Vector2(0, Mathf.Max(350, count * rowHeight));
+            var scroll = viewport.gameObject.AddComponent<ScrollRect>();
+            scroll.viewport = viewport; scroll.content = content; scroll.horizontal = false;
+            scroll.movementType = ScrollRect.MovementType.Clamped; scroll.scrollSensitivity = 28;
+            return content;
+        }
+
+        private void RenderMinerals()
+        {
+            PageHeader("Minerales", "Recursos conocidos / " + Clean(Planet.name));
+            var minerals = Planet.minerals;
+            if (minerals == null || minerals.Length == 0) { PageNote("No hay minerales registrados."); return; }
+            var content = AppList("b_Minerales", minerals.Length, 110);
+            for (int i = 0; i < minerals.Length; i++)
+            {
+                var row = CreateRoundedPanel(content, "b_Mineral_" + i, new Vector2(1035, 94), 16, CardBg);
+                row.anchorMin = row.anchorMax = new Vector2(0.5f, 1);
+                row.anchoredPosition = new Vector2(0, -50 - i * 110);
+                CreateIcon(row, skin != null ? skin.mine : null, new Vector2(-470, 0), new Vector2(40, 40), Planet.accent);
+                var label = CreateLabel(row, Clean(minerals[i]), 23, new Vector2(-200, 0), new Vector2(430, 60), InkWhite);
+                label.alignment = TextAlignmentOptions.Left;
+                CreateLabel(row, "Usado en " + CountRecipes(minerals[i]) + " recetas", 18, new Vector2(300, 0), new Vector2(360, 50), MutedCyan);
+            }
+            PageNote("Recursos del planeta / Consulta las recetas para conocer sus usos.");
+        }
+
+        private void RenderPlanets()
+        {
+            PageHeader("Planetas", "Selecciona el archivo que quieres consultar");
+            var planets = catalog.planets;
+            var content = AppList("b_Planetas", planets.Length, 110);
+            for (int i = 0; i < planets.Length; i++)
+            {
+                int index = i;
+                var row = CreateRoundedPanel(content, "b_Planeta_" + i, new Vector2(1035, 94), 18, CardBg);
+                row.anchorMin = row.anchorMax = new Vector2(0.5f, 1);
+                row.anchoredPosition = new Vector2(0, -50 - i * 110);
+                row.GetComponent<TabletRoundedPanel>().raycastTarget = true;
+                var button = row.gameObject.AddComponent<Button>(); button.targetGraphic = row.GetComponent<TabletRoundedPanel>();
+                button.onClick.AddListener(() => SelectPlanet(index));
+                var planet = CreateRoundedPanel(row, "Planet icon", new Vector2(48, 48), 24, planets[i].accent);
+                planet.anchoredPosition = new Vector2(-465, 0);
+                var label = CreateLabel(row, Clean(planets[i].name), 24, new Vector2(-220, 0), new Vector2(370, 60), InkWhite);
+                label.alignment = TextAlignmentOptions.Left;
+                CreateLabel(row, i == planetIndex ? "SELECCIONADO" : "ABRIR ARCHIVO", 14, new Vector2(345, 0), new Vector2(260, 40), i == planetIndex ? CyanAccent : MutedCyan);
+            }
+            PageNote("El archivo seleccionado se aplica a todas las apps de la guia.");
+        }
 
         private RectTransform CreateRoundedPanel(Transform parent, string name, Vector2 size, float radius, Color color)
         {
@@ -741,7 +640,7 @@ namespace GameJam.Tablet
             tmp.text = text;
             tmp.fontSize = fontSize;
             tmp.color = color;
-            tmp.raycastTarget = false; // Skill rule: disable raycastTarget on text
+            tmp.raycastTarget = false;
             tmp.textWrappingMode = TextWrappingModes.Normal;
             tmp.alignment = TextAlignmentOptions.Center;
             return tmp;
@@ -765,123 +664,12 @@ namespace GameJam.Tablet
             return img;
         }
 
-        private (Button button, TextMeshProUGUI label) CreatePillActionButton(Transform parent, string text, Vector2 position, Vector2 size, float radius, UnityAction action)
-        {
-            var go = new GameObject(text, typeof(RectTransform), typeof(TabletRoundedPanel), typeof(Button));
-            go.transform.SetParent(parent, false);
-            var rect = (RectTransform)go.transform;
-            rect.anchorMin = rect.anchorMax = new Vector2(0.5f, 0.5f);
-            rect.sizeDelta = size;
-            rect.anchoredPosition = position;
-
-            var pnl = go.GetComponent<TabletRoundedPanel>();
-            pnl.radius = radius;
-            pnl.color = new Color(0.00f, 0.35f, 0.45f, 0.95f);
-            pnl.raycastTarget = true;
-
-            var outline = go.AddComponent<Outline>();
-            outline.effectColor = CyanAccent;
-            outline.effectDistance = new Vector2(1, -1);
-
-            var btn = go.GetComponent<Button>();
-            btn.targetGraphic = pnl;
-            var colors = btn.colors;
-            colors.normalColor = Color.white;
-            colors.highlightedColor = new Color(1.25f, 1.25f, 1.35f);
-            colors.pressedColor = new Color(0.85f, 0.90f, 1.0f);
-            btn.colors = colors;
-            btn.onClick.AddListener(action);
-
-            var lbl = CreateLabel(rect, text, 14, Vector2.zero, size - new Vector2(16, 4), InkWhite);
-            lbl.alignment = TextAlignmentOptions.Center;
-            return (btn, lbl);
-        }
-
-        private (Button button, TextMeshProUGUI label, TabletRoundedPanel panel) CreatePillTab(Transform parent, string text, Vector2 position, Vector2 size, UnityAction action)
-        {
-            var go = new GameObject("Tab_" + text, typeof(RectTransform), typeof(TabletRoundedPanel), typeof(Button));
-            go.transform.SetParent(parent, false);
-            var rect = (RectTransform)go.transform;
-            rect.anchorMin = rect.anchorMax = new Vector2(0.5f, 0.5f);
-            rect.sizeDelta = size;
-            rect.anchoredPosition = position;
-
-            var pnl = go.GetComponent<TabletRoundedPanel>();
-            pnl.radius = 12;
-            pnl.color = new Color(0.03f, 0.05f, 0.08f, 0.80f);
-            pnl.raycastTarget = true;
-
-            var outline = go.AddComponent<Outline>();
-            outline.effectColor = new Color(0.00f, 0.92f, 0.88f, 0.35f);
-            outline.effectDistance = new Vector2(1, -1);
-
-            var btn = go.GetComponent<Button>();
-            btn.targetGraphic = pnl;
-            btn.onClick.AddListener(action);
-
-            var lbl = CreateLabel(rect, text, 13, Vector2.zero, size - new Vector2(8, 4), MutedCyan);
-            lbl.alignment = TextAlignmentOptions.Center;
-            return (btn, lbl, pnl);
-        }
-
-        private (Button button, TextMeshProUGUI label, TabletRoundedPanel panel) CreateDockItem(Transform parent, string text, Vector2 position, Vector2 size, UnityAction action)
-        {
-            var go = new GameObject("Dock_" + text, typeof(RectTransform), typeof(TabletRoundedPanel), typeof(Button));
-            go.transform.SetParent(parent, false);
-            var rect = (RectTransform)go.transform;
-            rect.anchorMin = rect.anchorMax = new Vector2(0.5f, 0.5f);
-            rect.sizeDelta = size;
-            rect.anchoredPosition = position;
-
-            var pnl = go.GetComponent<TabletRoundedPanel>();
-            pnl.radius = 14;
-            pnl.color = Color.clear;
-            pnl.raycastTarget = true;
-
-            var btn = go.GetComponent<Button>();
-            btn.targetGraphic = pnl;
-            btn.onClick.AddListener(action);
-
-            var lbl = CreateLabel(rect, text, 14, Vector2.zero, size - new Vector2(10, 4), InkWhite);
-            lbl.alignment = TextAlignmentOptions.Center;
-            return (btn, lbl, pnl);
-        }
-
-        private Button CreateCircularChipButton(Transform parent, string text, Vector2 position, Vector2 size, UnityAction action)
-        {
-            var go = new GameObject("CloseChip", typeof(RectTransform), typeof(TabletRoundedPanel), typeof(Button));
-            go.transform.SetParent(parent, false);
-            var rect = (RectTransform)go.transform;
-            rect.anchorMin = rect.anchorMax = new Vector2(0.5f, 0.5f);
-            rect.sizeDelta = size;
-            rect.anchoredPosition = position;
-
-            var pnl = go.GetComponent<TabletRoundedPanel>();
-            pnl.radius = size.y * 0.5f; // Pure circular pill
-            pnl.color = new Color(0.35f, 0.10f, 0.12f, 0.85f);
-            pnl.raycastTarget = true;
-
-            var outline = go.AddComponent<Outline>();
-            outline.effectColor = new Color(1f, 0.40f, 0.45f, 0.50f);
-            outline.effectDistance = new Vector2(1, -1);
-
-            var btn = go.GetComponent<Button>();
-            btn.targetGraphic = pnl;
-            btn.onClick.AddListener(action);
-
-            var lbl = CreateLabel(rect, text, 14, Vector2.zero, size, InkWhite);
-            lbl.alignment = TextAlignmentOptions.Center;
-            return btn;
-        }
-
-        // ================= HELPERS & UPDATES =================
-
         private int CountRecipes(string mineral)
         {
             int count = 0;
             if (Planet == null || Planet.recipes == null) return count;
             foreach (var recipe in Planet.recipes)
-                foreach (var ingredient in recipe.ingredients)
+                foreach (var ingredient in recipe.ingredients ?? Array.Empty<TabletRecipeCatalog.Ingredient>())
                     if (ingredient.mineral == mineral) { count++; break; }
             return count;
         }
@@ -889,7 +677,7 @@ namespace GameJam.Tablet
         private static string Ingredients(TabletRecipeCatalog.Recipe recipe)
         {
             var result = new StringBuilder();
-            foreach (var ingredient in recipe.ingredients)
+            foreach (var ingredient in recipe.ingredients ?? Array.Empty<TabletRecipeCatalog.Ingredient>())
             {
                 if (result.Length > 0) result.Append("   +   ");
                 result.Append(ingredient.amount).Append(" x ").Append(Clean(ingredient.mineral).ToUpperInvariant());
@@ -915,6 +703,11 @@ namespace GameJam.Tablet
 
         private void Update()
         {
+            if (overlay == null || chassis == null) return;
+            pageFade = Mathf.MoveTowards(pageFade, 1f, Time.unscaledDeltaTime * 7f);
+            if (pageGroup != null) pageGroup.alpha = pageFade;
+            string minute = DateTime.Now.ToString("HH:mm");
+            if (osClockText != null && minute != clockMinute) { clockMinute = minute; osClockText.text = minute; }
             progress = Mathf.MoveTowards(progress, TargetOpen ? 1 : 0, Time.unscaledDeltaTime / 0.28f);
             float eased = progress * progress * (3 - 2 * progress); // Smoothstep easing
             overlay.alpha = eased;
