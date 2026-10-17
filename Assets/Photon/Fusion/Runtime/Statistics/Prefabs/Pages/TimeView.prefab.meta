@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: a1e670b12d157a24591e964a6da5f435
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 291051
+  packageName: Photon Fusion Starter - Multiplayer
+  packageVersion: 2.0.4f1
+  assetPath: Assets/Photon/Fusion/Runtime/Statistics/Prefabs/Pages/TimeView.prefab
+  uploadId: 988192
