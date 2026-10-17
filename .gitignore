@@ -112,3 +112,8 @@ InitTestScene*.unity*
 
 # Auto-generated cache in Assets folder
 /[Aa]ssets/[Ss]ceneDependencyCache*
+
+# Local MCP verification screenshots
+/Assets/Screenshots/screenshot-*.png
+/Assets/Screenshots/screenshot-*.png.meta
+/Assets/Screenshots.meta
