@@ -4,10 +4,12 @@ using GameJam.Multiplayer;
 using UnityEngine;
 
 // La autoridad de Fusion decide reposo, patrulla y persecucion. El resto de clientes reproduce la pose replicada.
-public sealed class GiantGolemEnemy : NetworkBehaviour
+public sealed class GiantGolemEnemy : NetworkBehaviour, ITakeDamage
 {
-    public enum Mode { Idle, Walk, Chase, Attack, Throw, Super }
+    public enum Mode { Idle, Walk, Chase, Attack, Throw, Super, Death }
 
+    [SerializeField] int maxHealth = 200;
+    [SerializeField] float deathDuration = 4.4f;
     [SerializeField] SphereCollider detectionSphere;
     [SerializeField] float detectionRange = 28f;
     [SerializeField] float attackRange = 6f;
@@ -35,6 +37,7 @@ public sealed class GiantGolemEnemy : NetworkBehaviour
 
     [Networked] private int ModeState { get; set; }
     [Networked] private float StateStarted { get; set; }
+    [Networked] public int Health { get; private set; }
     [Networked] private NetworkBool Walking { get; set; }
     [Networked] private Vector3 SyncedPosition { get; set; }
     [Networked] private Quaternion SyncedRotation { get; set; }
@@ -43,6 +46,7 @@ public sealed class GiantGolemEnemy : NetworkBehaviour
     static readonly int ActionId = Animator.StringToHash("Action");
 
     Animator animator;
+    Collider bodyCollider;
     Vector3 home;
     Vector3 patrolPoint;
     MarsFusionAvatar target;
@@ -55,6 +59,7 @@ public sealed class GiantGolemEnemy : NetworkBehaviour
     bool animatorReady;
     bool hitApplied;
     bool throwPoseStarted;
+    bool deathPoseStarted;
 
     public Mode CurrentMode => (Mode)ModeState;
     float CurrentTime => Runner != null ? Runner.SimulationTime : Time.time;
@@ -63,11 +68,13 @@ public sealed class GiantGolemEnemy : NetworkBehaviour
     public override void Spawned()
     {
         animator = GetComponentInChildren<Animator>();
+        bodyCollider = GetComponent<Collider>();
         hand = throwHand != null ? throwHand : FindDeepChild(transform, "B-hand.R");
         home = transform.position;
         EnsureDetectionSphere();
         if (HasStateAuthority)
         {
+            Health = maxHealth;
             StateStarted = CurrentTime;
             ModeState = (int)Mode.Idle;
             Walking = false;
@@ -106,6 +113,16 @@ public sealed class GiantGolemEnemy : NetworkBehaviour
 
     void Tick()
     {
+        if (CurrentMode == Mode.Death)
+        {
+            Walking = false;
+            if (bodyCollider != null)
+                bodyCollider.enabled = false;
+            if (Elapsed >= deathDuration && Object != null && Object.IsValid)
+                Runner.Despawn(Object);
+            return;
+        }
+
         if (CurrentTime >= scanAt)
         {
             scanAt = CurrentTime + 0.35f;
@@ -223,6 +240,23 @@ public sealed class GiantGolemEnemy : NetworkBehaviour
         delta.y = 0f;
         if (delta.magnitude > range || Vector3.Angle(transform.forward, delta) > 70f) return;
         ((ITakeDamage)target).TakeDamage(amount);
+    }
+
+    public void TakeDamage(int damage)
+    {
+        if (damage <= 0 || Object == null || !Object.IsValid)
+            return;
+        RPC_TakeDamage(damage);
+    }
+
+    [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
+    void RPC_TakeDamage(int damage)
+    {
+        if (damage <= 0 || CurrentMode == Mode.Death)
+            return;
+        Health = Mathf.Max(0, Health - damage);
+        if (Health <= 0)
+            SetMode(Mode.Death);
     }
 
     float FlatDistance(Vector3 point)
@@ -351,6 +385,11 @@ public sealed class GiantGolemEnemy : NetworkBehaviour
         }
         animator.SetBool(IsWalkingId, Walking);
         animator.SetInteger(ActionId, ActionValue);
+        if (CurrentMode == Mode.Death && !deathPoseStarted)
+        {
+            deathPoseStarted = true;
+            animator.Play("Dying", 0, 0f);
+        }
         if (CurrentMode == Mode.Throw && !throwPoseStarted)
         {
             throwPoseStarted = true;
@@ -427,6 +466,7 @@ public sealed class GiantGolemEnemy : NetworkBehaviour
     {
         get
         {
+            if (CurrentMode == Mode.Death) return 5;
             if (CurrentMode == Mode.Attack) return 2;
             if (CurrentMode == Mode.Throw) return 3;
             if (CurrentMode == Mode.Super) return 4;

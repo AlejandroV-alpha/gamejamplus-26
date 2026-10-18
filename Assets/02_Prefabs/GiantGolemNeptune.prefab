@@ -1631,6 +1631,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7c4e9a1b2d3f4e5a8b6c0d1e2f3a4b5c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GiantGolemEnemy
+  maxHealth: 200
+  deathDuration: 4.4
   detectionSphere: {fileID: 5918237461029384805}
   detectionRange: 28
   attackRange: 6

@@ -303,6 +303,14 @@ namespace GameJam.Combat
                 {
                     continue;
                 }
+                if (component is NetworkBehaviour networked
+                    && networked.Object != null
+                    && networked.Object.IsValid
+                    && networked.Runner == Runner)
+                {
+                    damageReceiver.TakeDamage(damage);
+                    return;
+                }
                 if (Runner.GameMode == GameMode.Single)
                 {
                     damageReceiver.TakeDamage(damage);
