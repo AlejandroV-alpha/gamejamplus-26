@@ -13411,7 +13411,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2694dc8cb4785d44b9fc91411ed14e19, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameJam.Multiplayer.MarsFusionSession
-  playerPrefab: {fileID: 3082566752617341179, guid: 2624f5be763fda24594426a730f70743, type: 3}
+  playerPrefab: {fileID: 3082566752617341179, guid: e5d558eea4e64f358291e57712b917d3, type: 3}
   runnerPrefab: {fileID: 2382109156329011261, guid: 8878f9c56c69e57429bba54e3662b05d, type: 3}
   spawnPoint: {fileID: 1044430306}
   maxPlayers: 4
@@ -129808,6 +129808,105 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 0e11b91f0c476f945b618f6d721bfffa, type: 3}
+--- !u!1001 &7800000000000000010
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 3155376062119755399, guid: 4eff7d3ec65e4dafb540521adb05d22a, type: 3}
+      propertyPath: m_Name
+      value: HealthPickup_01
+      objectReference: {fileID: 0}
+    - target: {fileID: 4704946858031448096, guid: 4eff7d3ec65e4dafb540521adb05d22a, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -12
+      objectReference: {fileID: 0}
+    - target: {fileID: 4704946858031448096, guid: 4eff7d3ec65e4dafb540521adb05d22a, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 11.6856
+      objectReference: {fileID: 0}
+    - target: {fileID: 4704946858031448096, guid: 4eff7d3ec65e4dafb540521adb05d22a, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: -71.27
+      objectReference: {fileID: 0}
+    - target: {fileID: 6383610594946232437, guid: 4eff7d3ec65e4dafb540521adb05d22a, type: 3}
+      propertyPath: SortKey
+      value: 2731501726
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 4eff7d3ec65e4dafb540521adb05d22a, type: 3}
+--- !u!1001 &7800000000000000020
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 3155376062119755399, guid: 4eff7d3ec65e4dafb540521adb05d22a, type: 3}
+      propertyPath: m_Name
+      value: HealthPickup_02
+      objectReference: {fileID: 0}
+    - target: {fileID: 4704946858031448096, guid: 4eff7d3ec65e4dafb540521adb05d22a, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -15
+      objectReference: {fileID: 0}
+    - target: {fileID: 4704946858031448096, guid: 4eff7d3ec65e4dafb540521adb05d22a, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 11.5322
+      objectReference: {fileID: 0}
+    - target: {fileID: 4704946858031448096, guid: 4eff7d3ec65e4dafb540521adb05d22a, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: -67
+      objectReference: {fileID: 0}
+    - target: {fileID: 6383610594946232437, guid: 4eff7d3ec65e4dafb540521adb05d22a, type: 3}
+      propertyPath: SortKey
+      value: 2979735892
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 4eff7d3ec65e4dafb540521adb05d22a, type: 3}
+--- !u!1001 &7800000000000000030
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 3155376062119755399, guid: 4eff7d3ec65e4dafb540521adb05d22a, type: 3}
+      propertyPath: m_Name
+      value: HealthPickup_03
+      objectReference: {fileID: 0}
+    - target: {fileID: 4704946858031448096, guid: 4eff7d3ec65e4dafb540521adb05d22a, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -3.36
+      objectReference: {fileID: 0}
+    - target: {fileID: 4704946858031448096, guid: 4eff7d3ec65e4dafb540521adb05d22a, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 10.7207
+      objectReference: {fileID: 0}
+    - target: {fileID: 4704946858031448096, guid: 4eff7d3ec65e4dafb540521adb05d22a, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: -70
+      objectReference: {fileID: 0}
+    - target: {fileID: 6383610594946232437, guid: 4eff7d3ec65e4dafb540521adb05d22a, type: 3}
+      propertyPath: SortKey
+      value: 3227970058
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 4eff7d3ec65e4dafb540521adb05d22a, type: 3}
 --- !u!1001 &8179394953324359220
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -130029,3 +130128,6 @@ SceneRoots:
   - {fileID: 1133600300}
   - {fileID: 1142762359}
   - {fileID: 1334024326}
+  - {fileID: 7800000000000000010}
+  - {fileID: 7800000000000000020}
+  - {fileID: 7800000000000000030}
