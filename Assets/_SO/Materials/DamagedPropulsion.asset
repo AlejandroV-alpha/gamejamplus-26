@@ -15,5 +15,5 @@ MonoBehaviour:
   id: damaged_propulsion
   materialName: Turbina danada
   description: Pieza recuperada de la nave. Necesaria junto con minerales para reparar.
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: 7231047978794e578a7d132edc843ad1, type: 3}
   prefab: {fileID: 4949508669175806290, guid: 5eb9a2b36003d574dae2650e7818ce29, type: 3}

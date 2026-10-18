@@ -51,7 +51,7 @@ namespace GameJam.Multiplayer
 
         private void LateUpdate()
         {
-            if (avatar == null || avatar.Object == null || !avatar.Object.IsValid || label == null) return;
+            if (avatar == null || !avatar.IsNetworkReady || label == null) return;
             int index = avatar.HasAssignedColor ? avatar.SuitColorIndex : -2;
             if (index != appliedColor)
             {

@@ -15,5 +15,5 @@ MonoBehaviour:
   id: damaged_intake
   materialName: Toma de aire danada
   description: Pieza recuperada de la nave. Necesaria junto con minerales para reparar.
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: a6443460ee6e4438a33ed9461e06bb33, type: 3}
   prefab: {fileID: 8144542567883019482, guid: 5d0c53ab56a949a4b947000b10707e7d, type: 3}

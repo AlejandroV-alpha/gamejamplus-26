@@ -17,6 +17,8 @@ namespace GameJam.Localization
         private TMP_Text tmpText;
         private Text legacyText;
 
+        public string Prefix { get; set; } = "";
+
         public string Key
         {
             get => translationKey;
@@ -59,7 +61,7 @@ namespace GameJam.Localization
             if (legacyText == null) legacyText = GetComponent<Text>() ?? GetComponentInChildren<Text>(true);
             if (pixelButton == null) pixelButton = GetComponent<HeyHeyThere.PixelUISciFiFree.PixelButton>();
 
-            string translated = GameLocalization.Get(translationKey, fallbackText);
+            string translated = Prefix + GameLocalization.Get(translationKey, fallbackText);
             if (pixelButton != null)
             {
                 pixelButton.text = translated;

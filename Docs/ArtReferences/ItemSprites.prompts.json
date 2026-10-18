@@ -1,0 +1,82 @@
+{
+  "tool": "Built-in image_gen.imagegen",
+  "transparent_background": true,
+  "referenced_image_paths": [
+    "Assets/06j_Models/Nave_Puerta_Animada_Unity/Nave_Puerta_Animada/Puerta_Cerrada.png",
+    "Assets/03_Sprites/Items/metal_recuperado.png"
+  ],
+  "items": [
+    {
+      "id": "toma_aire_danada",
+      "output": "Assets/03_Sprites/Items/toma_aire_danada.png",
+      "scriptableObject": "Assets/_SO/Materials/DamagedIntake.asset",
+      "prompt": "Use case: stylized-concept. Asset type: ONE standalone inventory sprite for a Unity cooperative space survival game. Reference image 1 is the ACTUAL SHIP MODEL, use its construction shapes and cream/teal/amber/dark gunmetal materials. Reference image 2 is an EXISTING ITEM SPRITE, match its centered three-quarter studio object presentation and material legibility. Render exactly one isolated complete component, bold silhouette readable at 64px, fills 80% of square, full object visible, transparent alpha background, no ground plane, no background, no drop shadow outside object, no frame, no lettering, no UI, no watermark. Crisp 3D game prop, restrained surface detail, soft upper-left studio light. Damaged spacecraft air intake matching the ship's front rectangular grille: thick ivory rectangular bevel frame with muted teal top cap, eight dark horizontal slats, one bent/broken slat and chipped corner, subtle scorch damage. Front three-quarter view, grille is dominant. The original pickup prefab consists of front grille slats."
+    },
+    {
+      "id": "panel_casco_danado",
+      "output": "Assets/03_Sprites/Items/panel_casco_danado.png",
+      "scriptableObject": "Assets/_SO/Materials/DamagedPanel.asset",
+      "prompt": "Use case: stylized-concept. Asset type: ONE standalone inventory sprite for a Unity cooperative space survival game. Reference image 1 is the ACTUAL SHIP MODEL, use its construction shapes and cream/teal/amber/dark gunmetal materials. Reference image 2 is an EXISTING ITEM SPRITE, match its centered three-quarter studio object presentation and material legibility. Render exactly one isolated complete component, bold silhouette readable at 64px, fills 80% of square, full object visible, transparent alpha background, no ground plane, no background, no drop shadow outside object, no frame, no lettering, no UI, no watermark. Crisp 3D game prop, restrained surface detail, soft upper-left studio light. Damaged spacecraft hull panel matching the ship's flat segmented teal roof plating: one long flat rectangular slightly bent armor slab with clipped corners, cream underside and muted teal top, two attachment brackets and small scratch/scorch area. Clearly a thin panel, not a crate or engine."
+    },
+    {
+      "id": "turbina_danada",
+      "output": "Assets/03_Sprites/Items/turbina_danada.png",
+      "scriptableObject": "Assets/_SO/Materials/DamagedPropulsion.asset",
+      "prompt": "Use case: stylized-concept. Asset type: ONE standalone inventory sprite for a Unity cooperative space survival game. Reference image 1 is the ACTUAL SHIP MODEL, use its construction shapes and cream/teal/amber/dark gunmetal materials. Reference image 2 is an EXISTING ITEM SPRITE, match its centered three-quarter studio object presentation and material legibility. Render exactly one isolated complete component, bold silhouette readable at 64px, fills 80% of square, full object visible, transparent alpha background, no ground plane, no background, no drop shadow outside object, no frame, no lettering, no UI, no watermark. Crisp 3D game prop, restrained surface detail, soft upper-left studio light. Damaged spacecraft vertical thruster assembly matching the ship's corner engines: ochre cream rectangular upper motor cover with teal band, dark charcoal stepped cylindrical nozzle underneath with two metallic concentric collars and dim cyan interior ring. Slight bent collar and soot at nozzle edge. Single compact engine, no wings, no ship."
+    },
+    {
+      "id": "filtro_aire",
+      "output": "Assets/03_Sprites/Items/filtro_aire.png",
+      "scriptableObject": "Assets/_SO/Recipes/Mars/FiltroDeAire.asset",
+      "prompt": "Use case: stylized-concept. Asset type: ONE standalone crafting-result inventory sprite for a Unity space survival game. Reference 1 is the actual ship: use its cream and desaturated teal panels, amber fittings, dark gunmetal collars and cyan lights. Reference 2 is an existing inventory sprite: match its three-quarter isolated 3D object presentation with easily readable silhouette. Exactly ONE complete component centered, occupies 80% of square with margin, transparent alpha background, no ground plane or external cast shadow, no labels, no text, no frame or UI, no watermark. Soft upper-left studio light, crisp medium-poly game prop, restrained detail readable at 64px. Functional REPAIRED component, no battle damage, do not show a whole ship. A compact spacecraft AIR FILTER cassette inspired by the actual ship's rectangular front grille: ivory chamfered frame with teal top rail, six dark charcoal horizontal slats with pale filter mesh behind, small copper connector on one side. Clearly filter, not engine."
+    },
+    {
+      "id": "propulsor",
+      "output": "Assets/03_Sprites/Items/propulsor.png",
+      "scriptableObject": "Assets/_SO/Recipes/Mars/Propulsor.asset",
+      "prompt": "Use case: stylized-concept. Asset type: ONE standalone crafting-result inventory sprite for a Unity space survival game. Reference 1 is the actual ship: use its cream and desaturated teal panels, amber fittings, dark gunmetal collars and cyan lights. Reference 2 is an existing inventory sprite: match its three-quarter isolated 3D object presentation with easily readable silhouette. Exactly ONE complete component centered, occupies 80% of square with margin, transparent alpha background, no ground plane or external cast shadow, no labels, no text, no frame or UI, no watermark. Soft upper-left studio light, crisp medium-poly game prop, restrained detail readable at 64px. Functional REPAIRED component, no battle damage, do not show a whole ship. A spacecraft AUXILIARY THRUSTER inspired by the corner engines on the ship: amber rectangular upper cover with a teal stripe and cream mounting bracket, dark gunmetal stepped bell nozzle below with two silver concentric collars, restrained cyan interior glow. One compact nozzle assembly."
+    },
+    {
+      "id": "radar",
+      "output": "Assets/03_Sprites/Items/radar.png",
+      "scriptableObject": "Assets/_SO/Recipes/Mars/Radar.asset",
+      "prompt": "Use case: stylized-concept. Asset type: ONE standalone crafting-result inventory sprite for a Unity space survival game. Reference 1 is the actual ship: use its cream and desaturated teal panels, amber fittings, dark gunmetal collars and cyan lights. Reference 2 is an existing inventory sprite: match its three-quarter isolated 3D object presentation with easily readable silhouette. Exactly ONE complete component centered, occupies 80% of square with margin, transparent alpha background, no ground plane or external cast shadow, no labels, no text, no frame or UI, no watermark. Soft upper-left studio light, crisp medium-poly game prop, restrained detail readable at 64px. Functional REPAIRED component, no battle damage, do not show a whole ship. A spacecraft RADAR sensor component: one compact shallow teal and cream parabolic dish tilted upward, short ivory support arm and dark rectangular mounting base, central copper feed horn. A ship-mounted sensor, no large ground station."
+    },
+    {
+      "id": "blindaje",
+      "output": "Assets/03_Sprites/Items/blindaje.png",
+      "scriptableObject": "Assets/_SO/Recipes/Neptune/Blindaje.asset",
+      "prompt": "Use case: stylized-concept. Asset type: ONE standalone crafting-result inventory sprite for a Unity space survival game. Reference 1 is the actual ship: use its cream and desaturated teal panels, amber fittings, dark gunmetal collars and cyan lights. Reference 2 is an existing inventory sprite: match its three-quarter isolated 3D object presentation with easily readable silhouette. Exactly ONE complete component centered, occupies 80% of square with margin, transparent alpha background, no ground plane or external cast shadow, no labels, no text, no frame or UI, no watermark. Soft upper-left studio light, crisp medium-poly game prop, restrained detail readable at 64px. Functional REPAIRED component, no battle damage, do not show a whole ship. A spacecraft ARMOR assembly inspired by the ship hull: two stacked broad flat ivory and muted teal armor plates with clipped corners, visible dark reinforced edge layers and four corner mounting sockets. Single coherent panel component, not a pile of scrap."
+    },
+    {
+      "id": "motor",
+      "output": "Assets/03_Sprites/Items/motor.png",
+      "scriptableObject": "Assets/_SO/Recipes/Neptune/Motor.asset",
+      "prompt": "Use case: stylized-concept. Asset type: ONE standalone crafting-result inventory sprite for a Unity space survival game. Reference 1 is the actual ship: use its cream and desaturated teal panels, amber fittings, dark gunmetal collars and cyan lights. Reference 2 is an existing inventory sprite: match its three-quarter isolated 3D object presentation with easily readable silhouette. Exactly ONE complete component centered, occupies 80% of square with margin, transparent alpha background, no ground plane or external cast shadow, no labels, no text, no frame or UI, no watermark. Soft upper-left studio light, crisp medium-poly game prop, restrained detail readable at 64px. Functional REPAIRED component, no battle damage, do not show a whole ship. A spacecraft MAIN ENGINE block: compact chunky horizontal gunmetal cylinder with concentric ribs, ivory and muted teal protective casing on top, two small amber housings, short dark rear exhaust port with cyan ring. More substantial than a simple thruster, a single self-contained engine block."
+    },
+    {
+      "id": "navegador",
+      "output": "Assets/03_Sprites/Items/navegador.png",
+      "scriptableObject": "Assets/_SO/Recipes/Neptune/Navegador.asset",
+      "prompt": "Use case: stylized-concept. Asset type: ONE standalone crafting-result inventory sprite for a Unity space survival game. Reference 1 is the actual ship: use its cream and desaturated teal panels, amber fittings, dark gunmetal collars and cyan lights. Reference 2 is an existing inventory sprite: match its three-quarter isolated 3D object presentation with easily readable silhouette. Exactly ONE complete component centered, occupies 80% of square with margin, transparent alpha background, no ground plane or external cast shadow, no labels, no text, no frame or UI, no watermark. Soft upper-left studio light, crisp medium-poly game prop, restrained detail readable at 64px. Functional REPAIRED component, no battle damage, do not show a whole ship. A spacecraft NAVIGATION COMPUTER module: compact ivory and desaturated teal rectangular avionics box, recessed slanted dark display with abstract cyan trajectory line and dots only, NO letters or numbers, small copper sockets along side and black mounting feet. No hand-held tablet, no keyboard."
+    },
+    {
+      "id": "estabilizador",
+      "output": "Assets/03_Sprites/Items/estabilizador.png",
+      "scriptableObject": "Assets/_SO/Recipes/Saturn/Estabilizador.asset",
+      "prompt": "Use case: stylized-concept. Asset type: ONE standalone crafting-result inventory sprite for a Unity space survival game. Reference 1 is the actual ship: use its cream and desaturated teal panels, amber fittings, dark gunmetal collars and cyan lights. Reference 2 is an existing inventory sprite: match its three-quarter isolated 3D object presentation with easily readable silhouette. Exactly ONE complete component centered, occupies 80% of square with margin, transparent alpha background, no ground plane or external cast shadow, no labels, no text, no frame or UI, no watermark. Soft upper-left studio light, crisp medium-poly game prop, restrained detail readable at 64px. Functional REPAIRED component, no battle damage, do not show a whole ship. A spacecraft STABILIZER assembly inspired by the ship's teal corner fins: one large angular muted teal trapezoid fin attached to a short ivory mechanical bracket, visible dark pivot collar and amber hinge. Single robust ship component, unmistakable fin silhouette."
+    },
+    {
+      "id": "hiperpropulsor",
+      "output": "Assets/03_Sprites/Items/hiperpropulsor.png",
+      "scriptableObject": "Assets/_SO/Recipes/Saturn/Hiperpropulsor.asset",
+      "prompt": "Use case: stylized-concept. Asset type: ONE standalone crafting-result inventory sprite for a Unity space survival game. Reference 1 is the actual ship: use its cream and desaturated teal panels, amber fittings, dark gunmetal collars and cyan lights. Reference 2 is an existing inventory sprite: match its three-quarter isolated 3D object presentation with easily readable silhouette. Exactly ONE complete component centered, occupies 80% of square with margin, transparent alpha background, no ground plane or external cast shadow, no labels, no text, no frame or UI, no watermark. Soft upper-left studio light, crisp medium-poly game prop, restrained detail readable at 64px. Functional REPAIRED component, no battle damage, do not show a whole ship. A spacecraft HYPERDRIVE propulsion module: one compact paired-nozzle gunmetal assembly sharing a chunky cream and muted teal housing, two short stepped nozzles side by side, controlled violet energy rings inside nozzles and small amber fittings. Clearly distinct from single auxiliary thruster and main engine."
+    },
+    {
+      "id": "nucleo_energetico",
+      "output": "Assets/03_Sprites/Items/nucleo_energetico.png",
+      "scriptableObject": "Assets/_SO/Recipes/Saturn/NucleoEnergetico.asset",
+      "prompt": "Use case: stylized-concept. Asset type: ONE standalone crafting-result inventory sprite for a Unity space survival game. Reference 1 is the actual ship: use its cream and desaturated teal panels, amber fittings, dark gunmetal collars and cyan lights. Reference 2 is an existing inventory sprite: match its three-quarter isolated 3D object presentation with easily readable silhouette. Exactly ONE complete component centered, occupies 80% of square with margin, transparent alpha background, no ground plane or external cast shadow, no labels, no text, no frame or UI, no watermark. Soft upper-left studio light, crisp medium-poly game prop, restrained detail readable at 64px. Functional REPAIRED component, no battle damage, do not show a whole ship. A spacecraft ENERGY CORE module: one thick vertical short gunmetal cylinder with cream and teal protective rings above and below, an inset glowing violet faceted energy crystal visible through a protected central window, three copper retaining struts, modest violet glow contained within object. Single solid physical engine-room component, no floating magic sphere."
+    }
+  ]
+}

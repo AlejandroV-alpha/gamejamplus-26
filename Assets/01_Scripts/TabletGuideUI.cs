@@ -77,9 +77,6 @@ namespace GameJam.Tablet
 
             gameObject.AddComponent<GraphicRaycaster>();
 
-            // Bottom-right equipment hint badge: "[TAB] TABLET"
-            CreateEquipmentHint();
-
             // Fullscreen backdrop overlay root
             var root = new GameObject("Local Tablet Overlay", typeof(RectTransform));
             root.transform.SetParent(transform, false);
@@ -173,7 +170,6 @@ namespace GameJam.Tablet
             }
         }
 
-        private TextMeshProUGUI equipmentHintLabel;
         private TextMeshProUGUI statusFieldGuideLabel;
         private TextMeshProUGUI statusArchiveLabel;
 
@@ -189,33 +185,12 @@ namespace GameJam.Tablet
 
         private void HandleLanguageChanged()
         {
-            if (equipmentHintLabel != null)
-                equipmentHintLabel.text = Clean(GameJam.Localization.GameLocalization.Get("tablet.equipped"));
             if (statusFieldGuideLabel != null)
                 statusFieldGuideLabel.text = Clean(GameJam.Localization.GameLocalization.Get("tablet.status_bar"));
             if (statusArchiveLabel != null)
                 statusArchiveLabel.text = Clean(GameJam.Localization.GameLocalization.Get("tablet.local_archive"));
             if (workspace != null)
                 RenderPage();
-        }
-
-        private void CreateEquipmentHint()
-        {
-            var hint = CreateRoundedPanel(transform, "Equipment hint", new Vector2(280, 42), 12, InsetBg);
-            hint.anchorMin = hint.anchorMax = new Vector2(1, 0);
-            hint.anchoredPosition = new Vector2(-155, 30);
-
-            var outline = hint.gameObject.AddComponent<Outline>();
-            outline.effectColor = new Color(0.00f, 0.92f, 0.88f, 0.35f);
-            outline.effectDistance = new Vector2(1, -1);
-
-            if (skin != null && skin.objectives != null)
-            {
-                CreateIcon(hint, skin.objectives, new Vector2(-110, 0), new Vector2(20, 20), CyanAccent);
-            }
-
-            equipmentHintLabel = CreateLabel(hint, Clean(GameJam.Localization.GameLocalization.Get("tablet.equipped")), 14, new Vector2(14, 0), new Vector2(230, 26), CyanAccent);
-            equipmentHintLabel.alignment = TextAlignmentOptions.Center;
         }
 
         // 1A. Heavy-Duty Protective Corner Bumpers (Makes total sense on an astronaut field tablet)

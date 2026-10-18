@@ -12,6 +12,7 @@ namespace GameJam.Survival
         [SerializeField, Min(0.01f)] private float recoveryThreshold = 25f;
 
         [Networked] public NetworkBool IsExhausted { get; private set; }
+        public float MaximumStamina => maximumStamina;
 
         /// <summary>
         /// Inicializa la stamina propia sin duplicar el estado del avatar.

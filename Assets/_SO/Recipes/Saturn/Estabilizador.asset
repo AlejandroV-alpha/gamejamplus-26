@@ -16,7 +16,7 @@ MonoBehaviour:
   recipeName: Estabilizador
   description: Componente para estabilizar la nave.
   planet: 1
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: 80629bc77af245b8851ec55926f1117a, type: 3}
   ingredients:
   - material: {fileID: 11400000, guid: 8dd30e445ddc45a68953ca9ff2a2f1ef, type: 2}
     amount: 3

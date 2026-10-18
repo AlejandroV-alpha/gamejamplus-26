@@ -16,7 +16,7 @@ MonoBehaviour:
   recipeName: Filtro de aire
   description: Filtro para el sistema de aire de la nave.
   planet: 2
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: eece272cbd934f60a5837638ee2d34ea, type: 3}
   ingredients:
   - material: {fileID: 11400000, guid: 7ec212f3fbb1eef4f9d6494a2b8d86a0, type: 2}
     amount: 2
