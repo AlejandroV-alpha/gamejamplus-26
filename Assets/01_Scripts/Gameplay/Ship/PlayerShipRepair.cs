@@ -44,7 +44,7 @@ namespace GameJam.Ship
                 foreach(var station in FindObjectsByType<ShipRepairStation>(FindObjectsSortMode.None))
                 {
                     if(station.Object==null || !station.Object.IsValid || station.Runner!=Runner || station.IsRepaired()) continue;
-                    float distance=(station.transform.position-transform.position).sqrMagnitude;
+                    float distance=station.DistanceSquared(transform.position);
                     if(distance<nearest){nearest=distance;promptStation=station;}
                 }
             }
@@ -54,7 +54,8 @@ namespace GameJam.Ship
                 return;
             }
 
-            if (keyboard.fKey.wasPressedThisFrame)
+            var survivalRepair = GetComponent<GameJam.Survival.SurvivalShipRepair>();
+            if ((survivalRepair == null || !survivalRepair.enabled) && keyboard.qKey.wasPressedThisFrame)
             {
                 TryRepairNearest();
             }
@@ -62,9 +63,10 @@ namespace GameJam.Ship
 
         private void OnGUI()
         {
+            if (GetComponent<GameJam.Survival.SurvivalShipRepair>()?.enabled ?? false) return;
             if (promptStation==null || player==null || !player.CanCraftLocally()) return;
             if(promptStation.Object==null || !promptStation.Object.IsValid || promptStation.IsRepaired())return;
-            GUI.Box(new Rect(Screen.width*.5f-140,Screen.height*.84f,280,32),"F  |  " + GameJam.Localization.GameLocalization.Get("hud.repair_ship"));
+            GUI.Box(new Rect(Screen.width*.5f-240,Screen.height*.84f,480,48),"Q  |  " + GameJam.Localization.GameLocalization.Get("hud.repair_ship") + " · " + promptStation.ProgressLabel);
         }
 
         /// <summary>
@@ -79,18 +81,14 @@ namespace GameJam.Ship
 
             ShipRepairStation nearestStation = null;
             float nearestDistanceSquared = interactionDistance * interactionDistance;
-            Collider[] colliders = Physics.OverlapSphere(transform.position, interactionDistance,
-                Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore);
-
-            foreach (Collider nearbyCollider in colliders)
+            foreach (var station in FindObjectsByType<ShipRepairStation>(FindObjectsSortMode.None))
             {
-                ShipRepairStation station = nearbyCollider.GetComponentInParent<ShipRepairStation>();
                 if (station == null || station.Runner != Runner)
                 {
                     continue;
                 }
 
-                float distanceSquared = (station.transform.position - transform.position).sqrMagnitude;
+                float distanceSquared = station.DistanceSquared(transform.position);
                 if (distanceSquared < nearestDistanceSquared)
                 {
                     nearestDistanceSquared = distanceSquared;

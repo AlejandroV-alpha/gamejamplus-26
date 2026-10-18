@@ -21,6 +21,8 @@ namespace GameJam.Multiplayer
         private Starter.ThirdPersonCharacter.PlayerInput input;
         private float startingHealth, nextSpark;
         private Transform spine, upperArm, lowerArm, hand;
+        private GameObject weldingTool;
+        private Material weldingMaterial;
         private Renderer[] weaponRenderers;
         private readonly Dictionary<Renderer,bool> weaponVisibility=new Dictionary<Renderer,bool>();
         private readonly Dictionary<Transform,Quaternion> rest=new Dictionary<Transform,Quaternion>();
@@ -59,12 +61,13 @@ namespace GameJam.Multiplayer
         {
             if(!HasStateAuthority || !IsBusy) return;
             float range=ActionKind==1?2.5f:3;
+            var repairStation = ActionKind == 2 && target != null ? target.GetComponent<ShipRepairStation>() : null;
             if(avatar==null || !avatar.IsAlive || avatar.TabletOpen || target==null || !target.IsValid
-                || Vector3.Distance(transform.position,target.transform.position)>range
+                || (repairStation != null ? repairStation.DistanceSquared(transform.position)>range*range : Vector3.Distance(transform.position,target.transform.position)>range)
                 || (avatar.HealthSource!=null && avatar.HealthSource.CurrentHealth<startingHealth))
             {Cancel();return;}
             var player=GetComponent<Player>();
-            Vector3 direction=target.transform.position-transform.position;direction.y=0;
+            Vector3 direction=(repairStation != null ? repairStation.InteractionPoint(transform.position) : target.transform.position)-transform.position;direction.y=0;
             if(player!=null && player.KCC!=null && direction.sqrMagnitude>.01f)
                 player.KCC.SetLookRotation(Quaternion.Slerp(player.KCC.TransformRotation,Quaternion.LookRotation(direction),Runner.DeltaTime*8).eulerAngles);
             if(!deadline.Expired(Runner))return;
@@ -100,17 +103,59 @@ namespace GameJam.Multiplayer
             float work=ActionKind==2?Mathf.Sin(p*Mathf.PI*12)*8:0;
             BendForward(spine,(ActionKind==1?32:18)*weight);
             Vector3 point=target!=null?target.transform.position+Vector3.up*(ActionKind==1?.3f:.9f):transform.position+transform.forward;
+            if (ActionKind == 2 && target != null)
+            {
+                var station = target.GetComponent<ShipRepairStation>();
+                if (station != null) point = station.InteractionPoint(transform.position) + Vector3.up * .65f;
+            }
             point+=Vector3.up*work*.012f;
+            if (ActionKind == 2 && hand != null)
+            {
+                if (weldingTool == null) CreateWeldingTool();
+                weldingTool.SetActive(true);
+                Vector3 aim = point - hand.position;
+                weldingTool.transform.SetPositionAndRotation(hand.position,
+                    aim.sqrMagnitude > .001f ? Quaternion.LookRotation(aim) : transform.rotation);
+            }
+            else if (weldingTool != null) weldingTool.SetActive(false);
             Reach(upperArm,lowerArm,point,weight*.85f);
             Reach(lowerArm,hand,point,weight*.8f);
             if(ActionKind==2 && Time.time>=nextSpark && target!=null)
             {
                 nextSpark=Time.time+.4f;
-                InteractionFeedback.Burst(target.transform.position+Vector3.up*.8f,feedbackMaterial,new Color(1,.65f,.15f),3);
+                InteractionFeedback.Burst(point,feedbackMaterial,new Color(1,.65f,.15f),3);
             }
         }
+        private void CreateWeldingTool()
+        {
+            weldingTool = new GameObject("Local welding tool");
+            weldingTool.transform.SetParent(transform, false);
+            weldingMaterial = new Material(Shader.Find("Universal Render Pipeline/Lit"));
+            weldingMaterial.SetColor("_BaseColor", new Color(.12f,.16f,.18f));
+            var grip = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            grip.name = "Welder grip";
+            grip.transform.SetParent(weldingTool.transform, false);
+            grip.transform.localPosition = new Vector3(0,0,.07f);
+            grip.transform.localScale = new Vector3(.045f,.045f,.16f);
+            grip.GetComponent<Collider>().enabled = false;
+            Destroy(grip.GetComponent<Collider>());
+            grip.GetComponent<Renderer>().sharedMaterial = weldingMaterial;
+            var tip = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            tip.name = "Welder nozzle";
+            tip.transform.SetParent(weldingTool.transform, false);
+            tip.transform.localPosition = new Vector3(0,0,.17f);
+            tip.transform.localScale = new Vector3(.018f,.018f,.05f);
+            tip.GetComponent<Collider>().enabled = false;
+            Destroy(tip.GetComponent<Collider>());
+            tip.GetComponent<Renderer>().sharedMaterial = feedbackMaterial != null ? feedbackMaterial : weldingMaterial;
+        }
+        private void OnDestroy()
+        {
+            if (weldingTool != null) Destroy(weldingTool);
+            if (weldingMaterial != null) Destroy(weldingMaterial);
+        }
         private void RestorePose(){foreach(var entry in rest)if(entry.Key!=null)entry.Key.localRotation=entry.Value;rest.Clear();}
-        private void RestoreWeapon(){foreach(var entry in weaponVisibility)if(entry.Key!=null)entry.Key.enabled=entry.Value;weaponVisibility.Clear();}
+        private void RestoreWeapon(){if(weldingTool!=null)weldingTool.SetActive(false);foreach(var entry in weaponVisibility)if(entry.Key!=null)entry.Key.enabled=entry.Value;weaponVisibility.Clear();}
         private void OnDisable(){RestorePose();RestoreWeapon();}
         public override void Despawned(NetworkRunner runner,bool hasState){RestorePose();RestoreWeapon();}
         private void OnGUI()

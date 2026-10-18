@@ -5,7 +5,7 @@ using UnityEngine;
 namespace GameJam.Ship
 {
     /// <summary>
-    /// Sincroniza una reparacion por estacion tras completar las tres recetas.
+    /// Instala componentes fabricados uno por uno desde cualquier superficie de la nave.
     /// </summary>
     [DisallowMultipleComponent]
     [RequireComponent(typeof(NetworkObject), typeof(BoxCollider))]
@@ -18,7 +18,37 @@ namespace GameJam.Ship
         [Networked] private NetworkBool Repaired { get; set; }
         [Networked] private TickTimer ReturnToLobbyTimer { get; set; }
 
+        [Networked] private int installedComponents { get; set; }
+        private ShipRepairPresentation ship;
+        private Collider[] hullColliders;
         private bool repairAnnounced;
+
+        public GameJam.Crafting.RecipeData GetComponentRecipe(int index) => craftingTable != null ? craftingTable.GetRecipe(index) : null;
+        public bool IsComponentInstalled(int index) => IsReady() && index >= 0 && index < 3 && (installedComponents & (1 << index)) != 0;
+        public int InstalledCount => !IsReady() ? 0 : ((installedComponents & 1) != 0 ? 1 : 0) + ((installedComponents & 2) != 0 ? 1 : 0) + ((installedComponents & 4) != 0 ? 1 : 0);
+        public string ProgressLabel => "Instaladas " + InstalledCount + "/3 · Faltan " + (3 - InstalledCount);
+        private int NextReadyComponent()
+        {
+            if (!IsReady() || craftingTable == null || craftingTable.Runner != Runner) return -1;
+            for (int i = 0; i < 3; i++) if (!IsComponentInstalled(i) && craftingTable.IsComponentCompleted(i)) return i;
+            return -1;
+        }
+        public Vector3 InteractionPoint(Vector3 position)
+        {
+            Vector3 result = transform.position;
+            float best = float.PositiveInfinity;
+            if (hullColliders != null)
+                foreach (var collider in hullColliders)
+                {
+                    if (collider == null || !collider.enabled || !collider.gameObject.activeInHierarchy || collider.isTrigger) continue;
+                    Vector3 point = collider is MeshCollider mesh && !mesh.convex
+                        ? collider.bounds.ClosestPoint(position) : collider.ClosestPoint(position);
+                    float distance = (point - position).sqrMagnitude;
+                    if (distance < best) { best = distance; result = point; }
+                }
+            return result;
+        }
+        public float DistanceSquared(Vector3 position) => (InteractionPoint(position) - position).sqrMagnitude;
 
         /// <summary>
         /// Reinicia solamente el aviso local al aparecer en la simulacion.
@@ -26,6 +56,16 @@ namespace GameJam.Ship
         public override void Spawned()
         {
             repairAnnounced = false;
+            foreach (var presentation in FindObjectsByType<ShipRepairPresentation>(FindObjectsSortMode.None))
+                if (presentation.station == this) { ship = presentation; break; }
+            if (ship != null)
+            {
+                hullColliders = ship.GetComponentsInChildren<Collider>(true);
+                // Keep the baked NetworkObject/controller; the graybox marker is no longer an interaction target.
+                foreach (var renderer in GetComponentsInChildren<Renderer>(true)) renderer.enabled = false;
+                var marker = GetComponent<Collider>();
+                if (marker != null) marker.enabled = false;
+            }
         }
 
         /// <summary>
@@ -48,8 +88,7 @@ namespace GameJam.Ship
 
         public bool CanBeginRepair()
         {
-            return IsReady() && !Repaired && craftingTable!=null && craftingTable.Runner==Runner
-                && craftingTable.IsPlanetCompleted() && GetValidPlayer(Runner.LocalPlayer)!=null;
+            return IsReady() && !Repaired && NextReadyComponent() >= 0 && GetValidPlayer(Runner.LocalPlayer)!=null;
         }
 
         public bool RequestRepair(bool finishingAnimation=false)
@@ -103,16 +142,23 @@ namespace GameJam.Ship
                 return;
             }
 
-            if (!craftingTable.IsPlanetCompleted())
+            int component = NextReadyComponent();
+            if (component < 0)
             {
-                RpcFeedback(requester, "Faltan componentes: " + craftingTable.GetCompletedCount() + "/3.");
+                RpcFeedback(requester, ProgressLabel + ". Fabrica otro componente en la mesa.");
                 return;
             }
-
-            // La siguiente peticion ya encuentra la nave reparada. No hay consumo.
-            Repaired = true;
-            ReturnToLobbyTimer = TickTimer.CreateFromSeconds(Runner, 8f);
-            RpcRepairEffect();
+            // Atomic on the station authority: two clients cannot install the same component twice.
+            installedComponents |= 1 << component;
+            var recipe = GetComponentRecipe(component);
+            RpcFeedback(requester, (recipe != null ? recipe.recipeName : "Componente") + " instalado. " + ProgressLabel);
+            var actor = GetValidPlayer(requester);
+            RpcRepairEffect(actor != null ? InteractionPoint(actor.transform.position) + Vector3.up * .5f : transform.position);
+            if (InstalledCount == 3)
+            {
+                Repaired = true;
+                ReturnToLobbyTimer = TickTimer.CreateFromSeconds(Runner, 8f);
+            }
         }
 
         public override void FixedUpdateNetwork()
@@ -162,9 +208,9 @@ namespace GameJam.Ship
 
 
         [Rpc(RpcSources.StateAuthority,RpcTargets.All)]
-        private void RpcRepairEffect()
+        private void RpcRepairEffect(Vector3 position)
         {
-            GameJam.Multiplayer.InteractionFeedback.Burst(transform.position+Vector3.up,feedbackMaterial,new Color(.25f,1,.6f));
+            GameJam.Multiplayer.InteractionFeedback.Burst(position,feedbackMaterial,new Color(.25f,1,.6f));
         }
 
         /// <summary>
@@ -218,7 +264,7 @@ namespace GameJam.Ship
                 return null;
             }
 
-            float distanceSquared = (playerObject.transform.position - transform.position).sqrMagnitude;
+            float distanceSquared = DistanceSquared(playerObject.transform.position);
             if (distanceSquared > interactionDistance * interactionDistance)
             {
                 return null;
