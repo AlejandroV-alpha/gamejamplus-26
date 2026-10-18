@@ -10,7 +10,7 @@ la compuerta. No carga Marte mientras se reproduce la cinemática.
    movimiento durante el video y se mantienen los cierres por fallo o bloqueo.
 4. La autoridad espera las confirmaciones de fin de los clientes activos. Hay
    un límite de 40 segundos para evitar que un reproductor defectuoso bloquee
-   al grupo. Después se produce un impacto de cámara de 1.25 segundos.
+   al grupo. Después se produce un impacto de cámara de 1.8 segundos.
 5. La puerta A se eleva durante 1.4 segundos y revela un portal animado. Cada
    jugador se acerca y cruza la zona delante de la compuerta.
 6. El jugador que entra queda esperando al resto. La autoridad valida la
@@ -50,3 +50,23 @@ Los logs `[Lobby departure]` muestran `alarm`, `cinematic`, `impact`,
 reproducción y motivo de cierre del clip. La textura y los eventos se liberan
 al terminar. El video conserva su comportamiento sin audio; la alarma se
 reproduce por separado.
+
+## Colisiones de meteoritos y aterrizaje
+
+El MP4 original no tiene pistas de audio. Los golpes del casco se reproducen
+por separado en los segundos 1.8, 3.6, 5.7 y 6.9 del tiempo real del VideoPlayer,
+no desde el inicio de la fase de preparación. Si el video se atasca o salta
+fotogramas no se acumulan golpes atrasados. Los tiempos y volúmenes se ajustan
+en `LobbyAlert` desde el Inspector.
+
+`MeteorHullImpact.wav` combina golpe grave, resonancias metálicas y traqueteo.
+`HardLanding.wav` añade una cola de vibración de 2.4 segundos. Son efectos
+originales sintetizados por `Tools/Generate-DepartureImpacts.py`, sin muestras
+externas; se importan como PCM precargado para evitar trabajo de decodificación
+durante la cinemática. La fase de impacto dispara el aterrizaje una sola vez,
+con un impulso de cámara más fuerte y amortiguación exponencial antes de abrir
+la puerta. La vibración sonora puede continuar brevemente durante la apertura.
+Los efectos de cámara son locales y no alteran la posición de red del jugador.
+
+Los logs `[Lobby departure audio]` distinguen cada cue de meteorito y el
+aterrizaje final.

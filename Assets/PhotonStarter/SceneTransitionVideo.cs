@@ -20,6 +20,13 @@ namespace GameJam.Multiplayer
         private long lastFrame = -1;
         private bool covering, preparing, playing, finished;
         public static bool IsPresent => current != null;
+        public static bool TryGetPlaybackTime(out double seconds)
+        {
+            seconds = 0;
+            if (current == null || current.player == null || !current.playing || current.finished) return false;
+            seconds = current.player.time;
+            return true;
+        }
         public static void CancelCurrent()
         {
             if (current != null) Destroy(current.gameObject);

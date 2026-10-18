@@ -18728,6 +18728,17 @@ MonoBehaviour:
   alertColor: {r: 1, g: 0.08, b: 0.04, a: 1}
   transitionVideo: {fileID: 32900000, guid: f62fe2b39d0b900408d275dd31d0a425, type: 3}
   portalMaterial: {fileID: 2100000, guid: e0836d3f36a13294b87f620326f40a26, type: 2}
+  meteorImpactSound: {fileID: 8300000, guid: c172ae4240bb9824d8392e8fd3b59108, type: 3}
+  landingImpactSound: {fileID: 8300000, guid: e0015e01c992e544abb79197b2637069, type: 3}
+  meteorImpactTimes:
+  - 1.8
+  - 3.6
+  - 5.7
+  - 6.9
+  meteorVolume: 0.55
+  landingVolume: 0.75
+  landingImpactSeconds: 1.8
+  landingShakeStrength: 0.65
   _DeparturePhase: 0
   _PortalEnteredCount: 0
 --- !u!114 &1876082761

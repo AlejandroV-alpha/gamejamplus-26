@@ -18,6 +18,14 @@ namespace GameJam.Multiplayer
         [Tooltip("Cinematic played inside the lobby before opening the exit portal.")]
         public UnityEngine.Video.VideoClip transitionVideo;
         public Material portalMaterial;
+        [Header("Collision sound and landing")]
+        public AudioClip meteorImpactSound;
+        public AudioClip landingImpactSound;
+        public float[] meteorImpactTimes = { 1.8f, 3.6f, 5.7f, 6.9f };
+        [Range(0,1)] public float meteorVolume = .55f;
+        [Range(0,1)] public float landingVolume = .75f;
+        [Min(.1f)] public float landingImpactSeconds = 1.8f;
+        [Range(0,1)] public float landingShakeStrength = .65f;
 
         private readonly List<(Light light, float intensity)> ceilingLights = new();
         private readonly List<Material> stripMaterials = new();
@@ -90,7 +98,7 @@ namespace GameJam.Multiplayer
             else if (DeparturePhase == 2 && (Runner.ActivePlayers.All(p => cinematicFinished.Contains(p)) || PhaseTimer.Expired(Runner)))
             {
                 DeparturePhase = 3;
-                PhaseTimer = TickTimer.CreateFromSeconds(Runner, 1.25f);
+                PhaseTimer = TickTimer.CreateFromSeconds(Runner, landingImpactSeconds);
                 Debug.Log("[Lobby departure] stage=impact");
             }
             else if (DeparturePhase == 3 && PhaseTimer.Expired(Runner))

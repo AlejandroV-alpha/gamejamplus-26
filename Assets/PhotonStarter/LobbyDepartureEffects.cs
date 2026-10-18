@@ -13,6 +13,8 @@ namespace GameJam.Multiplayer
         private GameObject portal;
         private AudioSource alarm;
         private AudioClip alarmClip;
+        private AudioSource collisions;
+        private int soundPhase, nextMeteor;
         private bool localEntered;
         private bool mustExitPortal;
         private float openAmount, nextEnterSend;
@@ -57,6 +59,10 @@ namespace GameJam.Multiplayer
             alarm.playOnAwake = false;
             alarm.spatialBlend = 0;
             alarm.volume = .2f;
+            collisions = gameObject.AddComponent<AudioSource>();
+            collisions.playOnAwake = false;
+            collisions.spatialBlend = 0;
+            collisions.volume = 1;
         }
 
         public bool ContainsPortal(Vector3 position)
@@ -77,6 +83,31 @@ namespace GameJam.Multiplayer
         {
             if (alert == null || !alert.DepartureActive) return;
             int phase = alert.DeparturePhase;
+            if (soundPhase != phase)
+            {
+                soundPhase = phase;
+                if (phase == 2) nextMeteor = 0;
+                if (phase == 3 && alert.landingImpactSound != null)
+                {
+                    collisions.pitch = 1;
+                    collisions.PlayOneShot(alert.landingImpactSound, alert.landingVolume);
+                    Debug.Log("[Lobby departure audio] stage=landing");
+                }
+            }
+            if (phase == 2 && SceneTransitionVideo.TryGetPlaybackTime(out double videoTime)
+                && alert.meteorImpactTimes != null)
+            {
+                int lastCue = -1;
+                while (nextMeteor < alert.meteorImpactTimes.Length && videoTime >= alert.meteorImpactTimes[nextMeteor])
+                    lastCue = nextMeteor++;
+                // Avoid a burst of old cues if decoding skipped several frames.
+                if (lastCue >= 0 && videoTime-alert.meteorImpactTimes[lastCue] < .4 && alert.meteorImpactSound != null)
+                {
+                    collisions.pitch = 1f + (lastCue % 3 - 1) * .08f;
+                    collisions.PlayOneShot(alert.meteorImpactSound, alert.meteorVolume);
+                    Debug.Log("[Lobby departure audio] stage=meteor cue=" + lastCue);
+                }
+            }
             if (phase < 4 && !alarm.isPlaying) alarm.Play();
             if (phase >= 4 && alarm.isPlaying) alarm.Stop();
             alarm.volume = phase == 2 ? .035f : .2f;
@@ -110,13 +141,18 @@ namespace GameJam.Multiplayer
         {
             if (current == null || current.alert == null || !current.alert.DepartureActive) return;
             int phase = current.alert.DeparturePhase;
-            float strength = phase == 1 ? .035f : phase == 3 ? .22f * Mathf.Clamp01(current.alert.PhaseRemaining/1.25f) : 0;
+            float elapsed = Mathf.Max(0,current.alert.landingImpactSeconds-current.alert.PhaseRemaining);
+            float strength = phase == 1 ? .035f : phase == 3
+                ? current.alert.landingShakeStrength * Mathf.Exp(-elapsed*2.2f)
+                    * Mathf.Clamp01(current.alert.PhaseRemaining/.25f) : 0;
             if (strength <= 0) return;
             float t = Time.unscaledTime * 20;
             float x = Mathf.PerlinNoise(t,7)-.5f;
             float y = Mathf.PerlinNoise(3,t)-.5f;
             camera.transform.position += camera.transform.right * (x*strength) + camera.transform.up * (y*strength);
             camera.transform.rotation *= Quaternion.Euler(y*strength*12,x*strength*7,x*strength*16);
+            if (phase == 3)
+                camera.transform.position -= camera.transform.forward * (Mathf.Cos(elapsed*28)*strength*.2f);
         }
 
         private void LateUpdate()
@@ -136,6 +172,7 @@ namespace GameJam.Multiplayer
         {
             if (current == this) current = null;
             if (alarm != null) alarm.Stop();
+            if (collisions != null) collisions.Stop();
             if (alarmClip != null) Destroy(alarmClip);
             if (portal != null) Destroy(portal);
         }
