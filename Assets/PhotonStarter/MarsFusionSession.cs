@@ -39,6 +39,11 @@ namespace GameJam.Multiplayer
             previousBackground = Application.runInBackground;
             Application.runInBackground = true;
             if (!string.IsNullOrEmpty(shutdownMessage)) { Status = shutdownMessage; shutdownMessage = null; }
+            if (FindFirstObjectByType<GameJam.UI.SciFiGameMenuManager>() == null)
+            {
+                var menuGo = new GameObject("SciFiGameMenuManager");
+                menuGo.AddComponent<GameJam.UI.SciFiGameMenuManager>();
+            }
             // Arriving from another scene of the same session (e.g. lobby -> mission): keep the running runner.
             foreach (var runner in NetworkRunner.Instances)
             {
@@ -177,19 +182,30 @@ namespace GameJam.Multiplayer
         public void SetMenu(bool visible)
         {
             MenuOpen = visible;
-            Cursor.lockState = visible ? CursorLockMode.None : CursorLockMode.Locked;
-            Cursor.visible = visible;
+            if (GameJam.UI.SciFiGameMenuManager.Instance != null)
+            {
+                if (Runner != null && Runner.IsRunning)
+                    GameJam.UI.SciFiGameMenuManager.Instance.SetPauseMenuVisible(visible);
+                else
+                    GameJam.UI.SciFiGameMenuManager.Instance.SetStartMenuVisible(visible);
+            }
+            else
+            {
+                Cursor.lockState = visible ? CursorLockMode.None : CursorLockMode.Locked;
+                Cursor.visible = visible;
+            }
         }
 
         private void Update()
         {
             if (SceneTransitionVideo.IsBlockingInput || PortalWhiteTransition.IsBlockingInput) return;
-            if (Runner != null && Runner.IsRunning && Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame)
+            if (GameJam.UI.SciFiGameMenuManager.Instance == null && Runner != null && Runner.IsRunning && Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame)
                 SetMenu(!MenuOpen);
         }
 
         private void OnGUI()
         {
+            if (GameJam.UI.SciFiGameMenuManager.Instance != null || FindFirstObjectByType<GameJam.UI.SciFiGameMenuManager>() != null) return;
             if (!MenuOpen) return;
             GUILayout.BeginArea(new Rect(20, 20, Mathf.Min(460, Screen.width - 40), 320), GUI.skin.box);
             GUILayout.Label(planetLabel + " · PHOTON FUSION");

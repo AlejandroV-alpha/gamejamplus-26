@@ -88,7 +88,8 @@ namespace GameJam.Multiplayer
                     }
                     colors[owner] = SuitColorIndex;
                 }
-                PlayerName = "Astronauta " + owner.PlayerId;
+                string customName = PlayerPrefs.GetString("GameJam.PlayerName", "").Trim();
+                PlayerName = !string.IsNullOrEmpty(customName) ? customName : ("Astronauta " + owner.PlayerId);
                 IdentityInitialized = true;
             }
             if (HasStateAuthority)

@@ -173,6 +173,32 @@ namespace GameJam.Tablet
             }
         }
 
+        private TextMeshProUGUI equipmentHintLabel;
+        private TextMeshProUGUI statusFieldGuideLabel;
+        private TextMeshProUGUI statusArchiveLabel;
+
+        private void OnEnable()
+        {
+            GameJam.Localization.GameLocalization.OnLanguageChanged += HandleLanguageChanged;
+        }
+
+        private void OnDisable()
+        {
+            GameJam.Localization.GameLocalization.OnLanguageChanged -= HandleLanguageChanged;
+        }
+
+        private void HandleLanguageChanged()
+        {
+            if (equipmentHintLabel != null)
+                equipmentHintLabel.text = Clean(GameJam.Localization.GameLocalization.Get("tablet.equipped"));
+            if (statusFieldGuideLabel != null)
+                statusFieldGuideLabel.text = Clean(GameJam.Localization.GameLocalization.Get("tablet.status_bar"));
+            if (statusArchiveLabel != null)
+                statusArchiveLabel.text = Clean(GameJam.Localization.GameLocalization.Get("tablet.local_archive"));
+            if (workspace != null)
+                RenderPage();
+        }
+
         private void CreateEquipmentHint()
         {
             var hint = CreateRoundedPanel(transform, "Equipment hint", new Vector2(280, 42), 12, InsetBg);
@@ -188,8 +214,8 @@ namespace GameJam.Tablet
                 CreateIcon(hint, skin.objectives, new Vector2(-110, 0), new Vector2(20, 20), CyanAccent);
             }
 
-            var label = CreateLabel(hint, "01  TABLET EQUIPADA  [TAB]", 14, new Vector2(14, 0), new Vector2(230, 26), CyanAccent);
-            label.alignment = TextAlignmentOptions.Center;
+            equipmentHintLabel = CreateLabel(hint, Clean(GameJam.Localization.GameLocalization.Get("tablet.equipped")), 14, new Vector2(14, 0), new Vector2(230, 26), CyanAccent);
+            equipmentHintLabel.alignment = TextAlignmentOptions.Center;
         }
 
         // 1A. Heavy-Duty Protective Corner Bumpers (Makes total sense on an astronaut field tablet)
@@ -360,9 +386,9 @@ namespace GameJam.Tablet
             bar.sizeDelta = new Vector2(0, 42);
             bar.anchoredPosition = Vector2.zero;
             osClockText = CreateLabel(bar, "", 16, new Vector2(-525, 0), new Vector2(90, 26), InkWhite);
-            CreateLabel(bar, "ORBIT / GUIA DE CAMPO", 13, new Vector2(-325, 0), new Vector2(280, 26), MutedCyan);
+            statusFieldGuideLabel = CreateLabel(bar, Clean(GameJam.Localization.GameLocalization.Get("tablet.status_bar")), 13, new Vector2(-325, 0), new Vector2(280, 26), MutedCyan);
             sectorLabel = CreateLabel(bar, "", 14, new Vector2(20, 0), new Vector2(300, 26), CyanAccent);
-            CreateLabel(bar, "ARCHIVO LOCAL", 12, new Vector2(405, 0), new Vector2(170, 26), MutedCyan);
+            statusArchiveLabel = CreateLabel(bar, Clean(GameJam.Localization.GameLocalization.Get("tablet.local_archive")), 12, new Vector2(405, 0), new Vector2(170, 26), MutedCyan);
             CreateNavigationButton(bar, "Cerrar tablet", TabletNavigationIcon.Symbol.Close, new Vector2(550, 0), close);
         }
 
@@ -454,27 +480,32 @@ namespace GameJam.Tablet
         // ================= PAGE 1: BITACORA (EXPEDITION LOGBOOK & OVERVIEW - MARS FOCUSED) =================
         private void RenderBitacora()
         {
-            var title = CreateLabel(workspace, "Tu expedición, a mano.", 36, new Vector2(-190, 210), new Vector2(710, 58), InkWhite);
+            var title = CreateLabel(workspace, Clean(GameJam.Localization.GameLocalization.Get("tablet.title")), 36, new Vector2(-190, 210), new Vector2(710, 58), InkWhite);
             title.alignment = TextAlignmentOptions.Left;
-            var subtitle = CreateLabel(workspace, Clean(Planet.name) + " / Herramientas de exploracion", 19, new Vector2(-190, 163), new Vector2(710, 35), MutedCyan);
+            var subtitle = CreateLabel(workspace, Clean(Planet.name) + " / " + Clean(GameJam.Localization.GameLocalization.Get("tablet.tools")), 19, new Vector2(-190, 163), new Vector2(710, 35), MutedCyan);
             subtitle.alignment = TextAlignmentOptions.Left;
             var mission = CreateRoundedPanel(workspace, "b_Tablet_MissionPreview", new Vector2(1050, 66), 18, new Color(0.04f, 0.065f, 0.10f, 0.88f));
             mission.anchoredPosition = new Vector2(0, 95);
-            CreateLabel(mission, "MISION", 12, new Vector2(-450, 0), new Vector2(100, 28), CyanAccent);
+            CreateLabel(mission, Clean(GameJam.Localization.GameLocalization.Get("tablet.mission")), 12, new Vector2(-450, 0), new Vector2(100, 28), CyanAccent);
             var objective = CreateLabel(mission, Clean(Planet.objective), 20, new Vector2(45, 0), new Vector2(830, 48), InkWhite);
             objective.alignment = TextAlignmentOptions.Left;
-            App("Misiones", "Tareas", skin != null ? skin.objectives : null, -390, new Color(0.88f,0.39f,0.20f), "Objetivos del viaje");
-            App("Recetario", "Recetas", skin != null ? skin.repair : null, -130, new Color(0.18f,0.48f,0.56f), "Materiales y reparacion");
-            App("Minerales", "Minerales", skin != null ? skin.mine : null, 130, new Color(0.43f,0.37f,0.65f), "Catalogo de recursos");
-            App("Planetas", "Planetas", skin != null ? skin.ship : null, 390, new Color(0.20f,0.47f,0.36f), "Archivos planetarios");
-            CreateLabel(workspace, "Selecciona una app para abrirla", 15, new Vector2(0, -225), new Vector2(1000, 28), MutedCyan);
+
+            // En Marte mostramos las aplicaciones esenciales solicitadas: Checklist y Recetario
+            App(Clean(GameJam.Localization.GameLocalization.Get("tablet.checklist")), "Tareas", skin != null ? skin.objectives : null, -200, new Color(0.88f,0.39f,0.20f), Clean(GameJam.Localization.GameLocalization.Get("tablet.mission_guide")));
+            App(Clean(GameJam.Localization.GameLocalization.Get("tablet.recipes")), "Recetas", skin != null ? skin.repair : null, 200, new Color(0.18f,0.48f,0.56f), Clean(GameJam.Localization.GameLocalization.Get("tablet.recipes_subtitle")));
+            CreateLabel(workspace, Clean(GameJam.Localization.GameLocalization.Get("tablet.apps_prompt")), 15, new Vector2(0, -225), new Vector2(1000, 28), MutedCyan);
         }
 
         // ================= PAGE 2: CHECKLIST (OPERATIONAL STEPS FOR MARS) =================
         private void RenderChecklist()
         {
-            PageHeader("Misiones", Clean(Planet.objective));
-            string[] steps = { "Reunir los materiales de " + Clean(Planet.name), "Consultar las recetas y reparar los componentes", "Preparar la nave para continuar el viaje" };
+            PageHeader(Clean(GameJam.Localization.GameLocalization.Get("tablet.checklist")), Clean(Planet.objective));
+            string pName = Clean(Planet.name);
+            string[] steps = {
+                string.Format(Clean(GameJam.Localization.GameLocalization.Get("tablet.step1")), pName),
+                Clean(GameJam.Localization.GameLocalization.Get("tablet.step2")),
+                Clean(GameJam.Localization.GameLocalization.Get("tablet.step3"))
+            };
             for (int i = 0; i < steps.Length; i++)
             {
                 var row = CreateRoundedPanel(workspace, "b_Mision_" + i, new Vector2(1050, 85), 16, CardBg);
@@ -483,15 +514,15 @@ namespace GameJam.Tablet
                 var label = CreateLabel(row, steps[i], 22, new Vector2(50, 0), new Vector2(880, 65), InkWhite);
                 label.alignment = TextAlignmentOptions.Left;
             }
-            PageNote("Guia de mision / " + Clean(Planet.name));
+            PageNote(Clean(GameJam.Localization.GameLocalization.Get("tablet.mission_guide")) + " / " + pName);
         }
 
         // ================= PAGE 3: RECETAS (ENGINEERING BLUEPRINTS - MARS) =================
         private void RenderRecipes()
         {
-            PageHeader("Recetario", "Componentes y materiales / " + Clean(Planet.name));
+            PageHeader(Clean(GameJam.Localization.GameLocalization.Get("tablet.recipes")), Clean(GameJam.Localization.GameLocalization.Get("tablet.recipes_subtitle")) + " / " + Clean(Planet.name));
             var recipes = Planet.recipes;
-            if (recipes == null || recipes.Length == 0) { PageNote("No hay recetas registradas para este planeta."); return; }
+            if (recipes == null || recipes.Length == 0) { PageNote(Clean(GameJam.Localization.GameLocalization.Get("tablet.no_recipes"))); return; }
             var content = AppList("b_Recetas", recipes.Length, 110f);
             for (int i = 0; i < recipes.Length; i++)
             {
@@ -504,7 +535,7 @@ namespace GameJam.Tablet
                 var ingredients = CreateLabel(row, Ingredients(recipes[i]), 19, new Vector2(245, 0), new Vector2(490, 75), MutedCyan);
                 ingredients.alignment = TextAlignmentOptions.Left;
             }
-            PageNote("Guia de reparacion / Materiales necesarios por componente.");
+            PageNote(Clean(GameJam.Localization.GameLocalization.Get("tablet.repair_guide")));
         }
 
         public void GoHome()
@@ -717,6 +748,13 @@ namespace GameJam.Tablet
                 .Replace('ó', 'o').Replace('Ó', 'O')
                 .Replace('ú', 'u').Replace('Ú', 'U')
                 .Replace('ñ', 'n').Replace('Ñ', 'N')
+                .Replace('ã', 'a').Replace('Ã', 'A')
+                .Replace('õ', 'o').Replace('Õ', 'O')
+                .Replace('ç', 'c').Replace('Ç', 'C')
+                .Replace('ê', 'e').Replace('Ê', 'E')
+                .Replace('ô', 'o').Replace('Ô', 'O')
+                .Replace('â', 'a').Replace('Â', 'A')
+                .Replace('à', 'a').Replace('À', 'A')
                 .Replace('·', '-')
                 .Replace('→', '>')
                 .Replace('➔', '>')

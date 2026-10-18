@@ -17,11 +17,34 @@ namespace GameJam.Multiplayer
         private AudioSource output;
         private Recorder recorder;
 
+        public static float MasterVoiceVolume = 1f;
+        private float individualVolume = 1f;
+
+        public float IndividualVolume => individualVolume;
+        public bool IsSpeaking => voice != null && (voice.IsLocal
+            ? (recorder != null && recorder.IsCurrentlyTransmitting)
+            : (output != null && output.isPlaying && !output.mute));
+
+        public void SetIndividualVolume(float volume)
+        {
+            individualVolume = Mathf.Clamp01(volume);
+            if (output != null) output.volume = individualVolume * MasterVoiceVolume;
+        }
+
+        public void SetPushToTalk(bool ptt)
+        {
+            pushToTalk = ptt;
+            if (recorder != null && !ptt) recorder.TransmitEnabled = (avatar == null || avatar.IsAlive);
+        }
+
         private void Awake()
         {
             voice = GetComponent<VoiceNetworkObject>();
             avatar = GetComponent<MarsFusionAvatar>();
             recorder = GetComponentInChildren<Recorder>(true);
+            pushToTalk = PlayerPrefs.GetInt("GameJam.VoiceMode", 1) == 1;
+            MasterVoiceVolume = PlayerPrefs.GetFloat("GameJam.MasterVoiceVolume", 1f);
+
             if (recorder != null && pushToTalk) recorder.TransmitEnabled = false;
             var speaker = GetComponentInChildren<Speaker>(true);
             output = speaker != null ? speaker.GetComponent<AudioSource>() : null;
@@ -32,6 +55,7 @@ namespace GameJam.Multiplayer
                 output.minDistance = 2f;
                 output.maxDistance = hearingDistance;
                 output.dopplerLevel = 0;
+                output.volume = individualVolume * MasterVoiceVolume;
             }
         }
 
@@ -57,6 +81,7 @@ namespace GameJam.Multiplayer
                 // A hard cutoff supplements the AudioSource rolloff and prevents distant leakage.
                 var local = voice.Runner.GetPlayerObject(voice.Runner.LocalPlayer);
                 output.mute = local == null || (local.transform.position - transform.position).sqrMagnitude > hearingDistance * hearingDistance;
+                output.volume = individualVolume * MasterVoiceVolume;
             }
         }
     }
