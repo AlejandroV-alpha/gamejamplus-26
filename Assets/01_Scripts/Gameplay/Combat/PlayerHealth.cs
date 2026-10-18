@@ -157,6 +157,19 @@ namespace GameJam.Combat
         }
 
         /// <summary>
+        /// Cura al jugador vivo desde su autoridad sin superar la salud maxima.
+        /// </summary>
+        protected bool HealAlive(int amount)
+        {
+            if (!IsReady() || !HasStateAuthority || !IsAlive || amount <= 0 || CurrentHealth >= MaxHealth)
+            {
+                return false;
+            }
+            CurrentHealth = Mathf.Min(MaxHealth, CurrentHealth + amount);
+            return true;
+        }
+
+        /// <summary>
         /// Comprueba que Fusion haya asignado el estado del objeto.
         /// </summary>
         private bool IsReady()

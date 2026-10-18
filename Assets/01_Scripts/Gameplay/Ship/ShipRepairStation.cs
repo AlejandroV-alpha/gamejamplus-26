@@ -129,20 +129,37 @@ namespace GameJam.Ship
             }
         }
 
+
+        /// <summary>
+        /// Muestra el mensaje de reparacion cuando el estado de red esta disponible.
+        /// </summary>
         private void OnGUI()
         {
-            if (Repaired && Object != null && Object.IsValid && ReturnToLobbyTimer.IsRunning)
+            if (!IsReady())
             {
-                float remaining = ReturnToLobbyTimer.RemainingTime(Runner) ?? 0;
-                var style = new GUIStyle(GUI.skin.box);
-                style.fontSize = 17;
-                style.fontStyle = FontStyle.Bold;
-                style.normal.textColor = new Color(0.2f, 1f, 0.45f);
-                style.alignment = TextAnchor.MiddleCenter;
-                GUI.Box(new Rect(Screen.width * 0.5f - 280, 40, 560, 54),
-                    $"¡MISIÓN COMPLETADA · NAVE REPARADA!\nRegresando a la nave nodriza en {Mathf.CeilToInt(remaining)}s...", style);
+                return;
             }
+
+            if (!Repaired || !ReturnToLobbyTimer.IsRunning)
+            {
+                return;
+            }
+
+            float remaining = ReturnToLobbyTimer.RemainingTime(Runner) ?? 0f;
+
+            GUIStyle style = new GUIStyle(GUI.skin.box);
+            style.fontSize = 17;
+            style.fontStyle = FontStyle.Bold;
+            style.normal.textColor = new Color(0.2f, 1f, 0.45f);
+            style.alignment = TextAnchor.MiddleCenter;
+
+            GUI.Box(
+                new Rect(Screen.width * 0.5f - 280, 40, 560, 54),
+                $"¡MISIÓN COMPLETADA · NAVE REPARADA!\nRegresando a la nave nodriza en {Mathf.CeilToInt(remaining)}s...",
+                style
+            );
         }
+
 
         [Rpc(RpcSources.StateAuthority,RpcTargets.All)]
         private void RpcRepairEffect()

@@ -88,10 +88,24 @@ namespace GameJam.Gameplay
             Collider[] nearbyColliders = Physics.OverlapSphere(transform.position, searchRadius,
                 collectionLayers, QueryTriggerInteraction.Ignore);
             MaterialPickup nearestPickup = null;
+            HealthPickup nearestHealthPickup = null;
             float nearestDistanceSquared = searchRadius * searchRadius;
 
             foreach (Collider nearbyCollider in nearbyColliders)
             {
+                HealthPickup healthPickup = nearbyCollider.GetComponentInParent<HealthPickup>();
+                if (healthPickup != null && healthPickup.CanCollect(Object))
+                {
+                    float healthDistanceSquared = (healthPickup.transform.position - transform.position).sqrMagnitude;
+                    if (healthDistanceSquared < nearestDistanceSquared)
+                    {
+                        nearestDistanceSquared = healthDistanceSquared;
+                        nearestHealthPickup = healthPickup;
+                        nearestPickup = null;
+                    }
+                    continue;
+                }
+
                 MaterialPickup pickup = nearbyCollider.GetComponentInParent<MaterialPickup>();
                 if (pickup == null)
                 {
@@ -108,7 +122,13 @@ namespace GameJam.Gameplay
                 {
                     nearestDistanceSquared = distanceSquared;
                     nearestPickup = pickup;
+                    nearestHealthPickup = null;
                 }
+            }
+
+            if (nearestHealthPickup != null)
+            {
+                return nearestHealthPickup.RequestCollection();
             }
 
             if (nearestPickup == null)
