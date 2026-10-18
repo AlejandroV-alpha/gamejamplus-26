@@ -849,15 +849,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4704946858031448096, guid: 0789f32f72cc85e419f652db4787c761, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -208.56819
+      value: -138.0
       objectReference: {fileID: 0}
     - target: {fileID: 4704946858031448096, guid: 0789f32f72cc85e419f652db4787c761, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 13.333288
+      value: 3.8699999999999997
       objectReference: {fileID: 0}
     - target: {fileID: 4704946858031448096, guid: 0789f32f72cc85e419f652db4787c761, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -238.59438
+      value: -111.0
       objectReference: {fileID: 0}
     - target: {fileID: 4704946858031448096, guid: 0789f32f72cc85e419f652db4787c761, type: 3}
       propertyPath: m_LocalRotation.w
@@ -2503,15 +2503,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4446055216052359214, guid: f25f12b9d6bf11345a95256d368cfb69, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 235.62599
+      value: -144.0
       objectReference: {fileID: 0}
     - target: {fileID: 4446055216052359214, guid: f25f12b9d6bf11345a95256d368cfb69, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 23.278715
+      value: 3.8699999999999997
       objectReference: {fileID: 0}
     - target: {fileID: 4446055216052359214, guid: f25f12b9d6bf11345a95256d368cfb69, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 150.75298
+      value: -107.536
       objectReference: {fileID: 0}
     - target: {fileID: 4446055216052359214, guid: f25f12b9d6bf11345a95256d368cfb69, type: 3}
       propertyPath: m_LocalRotation.w
@@ -2569,15 +2569,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4446055216052359214, guid: f25f12b9d6bf11345a95256d368cfb69, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -226.67924
+      value: 194.0
       objectReference: {fileID: 0}
     - target: {fileID: 4446055216052359214, guid: f25f12b9d6bf11345a95256d368cfb69, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 16.54529
+      value: 20.36
       objectReference: {fileID: 0}
     - target: {fileID: 4446055216052359214, guid: f25f12b9d6bf11345a95256d368cfb69, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 207.18262
+      value: 123.464
       objectReference: {fileID: 0}
     - target: {fileID: 4446055216052359214, guid: f25f12b9d6bf11345a95256d368cfb69, type: 3}
       propertyPath: m_LocalRotation.w
@@ -10469,7 +10469,7 @@ GameObject:
   - component: {fileID: 386908492}
   - component: {fileID: 386908491}
   m_Layer: 0
-  m_Name: Reksai_Spawn_3
+  m_Name: Guardia POI 1 - 1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -10483,12 +10483,12 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 386908489}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -249.72525, y: 20.752983, z: -277.191}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 9, y: 0.05, z: 2}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 885665255}
+  m_Father: {fileID: 8600000000000001001}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &386908491
 MonoBehaviour:
@@ -10502,6 +10502,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9eb728bb3476b01479612c709b01bd4f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ReksaiFusionAreaSpawner
+  activationDistance: 110
   enemyPrefab: {fileID: 1887384454739125388, guid: f10f1e738b264ec4c886d18dafade7d5, type: 3}
 --- !u!114 &386908492
 MonoBehaviour:
@@ -10515,7 +10516,7 @@ MonoBehaviour:
   m_Script: {fileID: -1552182283, guid: e725a070cec140c4caffb81624c8c787, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Fusion.Runtime.dll::Fusion.NetworkObject
-  SortKey: 58773137
+  SortKey: 3810000001
   SendPriority: 1
   EnableInterpolation: 1
   Flags: 262146
@@ -10745,15 +10746,15 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 7139049203281714733, guid: 9682ceed10905e94c8f7b1010debf6be, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -77.012566
+      value: -144.0
       objectReference: {fileID: 0}
     - target: {fileID: 7139049203281714733, guid: 9682ceed10905e94c8f7b1010debf6be, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 7.8151474
+      value: 3.8699999999999997
       objectReference: {fileID: 0}
     - target: {fileID: 7139049203281714733, guid: 9682ceed10905e94c8f7b1010debf6be, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -51.926292
+      value: -114.464
       objectReference: {fileID: 0}
     - target: {fileID: 7139049203281714733, guid: 9682ceed10905e94c8f7b1010debf6be, type: 3}
       propertyPath: m_LocalRotation.w
@@ -44883,15 +44884,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1014402420859652732, guid: d024b6c33a9a89542b31a3e17d809fae, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -65
+      value: -22
       objectReference: {fileID: 0}
     - target: {fileID: 1014402420859652732, guid: d024b6c33a9a89542b31a3e17d809fae, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 19.343464
+      value: 7.8999999999999995
       objectReference: {fileID: 0}
     - target: {fileID: 1014402420859652732, guid: d024b6c33a9a89542b31a3e17d809fae, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 165
+      value: -221
       objectReference: {fileID: 0}
     - target: {fileID: 1014402420859652732, guid: d024b6c33a9a89542b31a3e17d809fae, type: 3}
       propertyPath: m_LocalRotation.w
@@ -45548,15 +45549,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4446055216052359214, guid: f25f12b9d6bf11345a95256d368cfb69, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 259.85675
+      value: 114.0
       objectReference: {fileID: 0}
     - target: {fileID: 4446055216052359214, guid: f25f12b9d6bf11345a95256d368cfb69, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 27.537363
+      value: 35.19
       objectReference: {fileID: 0}
     - target: {fileID: 4446055216052359214, guid: f25f12b9d6bf11345a95256d368cfb69, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 125.60411
+      value: 187.464
       objectReference: {fileID: 0}
     - target: {fileID: 4446055216052359214, guid: f25f12b9d6bf11345a95256d368cfb69, type: 3}
       propertyPath: m_LocalRotation.w
@@ -48181,15 +48182,15 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 7139049203281714733, guid: 9682ceed10905e94c8f7b1010debf6be, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -121.711494
+      value: 194.0
       objectReference: {fileID: 0}
     - target: {fileID: 7139049203281714733, guid: 9682ceed10905e94c8f7b1010debf6be, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 5.0072975
+      value: 20.36
       objectReference: {fileID: 0}
     - target: {fileID: 7139049203281714733, guid: 9682ceed10905e94c8f7b1010debf6be, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -91.5176
+      value: 116.536
       objectReference: {fileID: 0}
     - target: {fileID: 7139049203281714733, guid: 9682ceed10905e94c8f7b1010debf6be, type: 3}
       propertyPath: m_LocalRotation.w
@@ -49438,15 +49439,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4446055216052359214, guid: f25f12b9d6bf11345a95256d368cfb69, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -240.3915
+      value: -148.49
       objectReference: {fileID: 0}
     - target: {fileID: 4446055216052359214, guid: f25f12b9d6bf11345a95256d368cfb69, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 21.040678
+      value: 3.8699999999999997
       objectReference: {fileID: 0}
     - target: {fileID: 4446055216052359214, guid: f25f12b9d6bf11345a95256d368cfb69, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -289.1057
+      value: -108.378
       objectReference: {fileID: 0}
     - target: {fileID: 4446055216052359214, guid: f25f12b9d6bf11345a95256d368cfb69, type: 3}
       propertyPath: m_LocalRotation.w
@@ -58800,10 +58801,7 @@ Transform:
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 1541027509}
-  - {fileID: 2024447033}
-  - {fileID: 386908490}
+  m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &890935876
@@ -60110,15 +60108,15 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 7139049203281714733, guid: 9682ceed10905e94c8f7b1010debf6be, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -23.922216
+      value: 114.0
       objectReference: {fileID: 0}
     - target: {fileID: 7139049203281714733, guid: 9682ceed10905e94c8f7b1010debf6be, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 17.943476
+      value: 35.19
       objectReference: {fileID: 0}
     - target: {fileID: 7139049203281714733, guid: 9682ceed10905e94c8f7b1010debf6be, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 131.9462
+      value: 180.536
       objectReference: {fileID: 0}
     - target: {fileID: 7139049203281714733, guid: 9682ceed10905e94c8f7b1010debf6be, type: 3}
       propertyPath: m_LocalRotation.w
@@ -64289,15 +64287,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4704946858031448096, guid: 0789f32f72cc85e419f652db4787c761, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -238.52266
+      value: 200.0
       objectReference: {fileID: 0}
     - target: {fileID: 4704946858031448096, guid: 0789f32f72cc85e419f652db4787c761, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 16.467249
+      value: 20.36
       objectReference: {fileID: 0}
     - target: {fileID: 4704946858031448096, guid: 0789f32f72cc85e419f652db4787c761, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 164.58684
+      value: 120.0
       objectReference: {fileID: 0}
     - target: {fileID: 4704946858031448096, guid: 0789f32f72cc85e419f652db4787c761, type: 3}
       propertyPath: m_LocalRotation.w
@@ -65780,15 +65778,15 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 7139049203281714733, guid: 9682ceed10905e94c8f7b1010debf6be, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -162.96118
+      value: -141.026
       objectReference: {fileID: 0}
     - target: {fileID: 7139049203281714733, guid: 9682ceed10905e94c8f7b1010debf6be, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 25.040863
+      value: 3.8699999999999997
       objectReference: {fileID: 0}
     - target: {fileID: 7139049203281714733, guid: 9682ceed10905e94c8f7b1010debf6be, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 253.98955
+      value: -117.932
       objectReference: {fileID: 0}
     - target: {fileID: 7139049203281714733, guid: 9682ceed10905e94c8f7b1010debf6be, type: 3}
       propertyPath: m_LocalRotation.w
@@ -68384,15 +68382,15 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 7139049203281714733, guid: 9682ceed10905e94c8f7b1010debf6be, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 98.14369
+      value: 196.974
       objectReference: {fileID: 0}
     - target: {fileID: 7139049203281714733, guid: 9682ceed10905e94c8f7b1010debf6be, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 18.901579
+      value: 20.36
       objectReference: {fileID: 0}
     - target: {fileID: 7139049203281714733, guid: 9682ceed10905e94c8f7b1010debf6be, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -90.54548
+      value: 113.068
       objectReference: {fileID: 0}
     - target: {fileID: 7139049203281714733, guid: 9682ceed10905e94c8f7b1010debf6be, type: 3}
       propertyPath: m_LocalRotation.w
@@ -68664,7 +68662,7 @@ GameObject:
   - component: {fileID: 1226455225}
   - component: {fileID: 1226455224}
   m_Layer: 0
-  m_Name: Reksai_Spawn_WormBasin
+  m_Name: Guardia POI 1 - 2
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -68679,11 +68677,11 @@ Transform:
   m_GameObject: {fileID: 1226455221}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -44.642857, y: 5.356163, z: -223.21428}
+  m_LocalPosition: {x: -8, y: 0.05, z: -6}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 0}
+  m_Father: {fileID: 8600000000000001001}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &1226455224
 MonoBehaviour:
@@ -68697,6 +68695,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9eb728bb3476b01479612c709b01bd4f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ReksaiFusionAreaSpawner
+  activationDistance: 110
   enemyPrefab: {fileID: 1887384454739125388, guid: f10f1e738b264ec4c886d18dafade7d5, type: 3}
 --- !u!114 &1226455225
 MonoBehaviour:
@@ -68710,7 +68709,7 @@ MonoBehaviour:
   m_Script: {fileID: -1552182283, guid: e725a070cec140c4caffb81624c8c787, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Fusion.Runtime.dll::Fusion.NetworkObject
-  SortKey: 1112496322
+  SortKey: 3810000002
   SendPriority: 1
   EnableInterpolation: 1
   Flags: 262146
@@ -69527,15 +69526,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4704946858031448096, guid: 0789f32f72cc85e419f652db4787c761, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -281.24493
+      value: 120.0
       objectReference: {fileID: 0}
     - target: {fileID: 4704946858031448096, guid: 0789f32f72cc85e419f652db4787c761, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 17.387281
+      value: 35.19
       objectReference: {fileID: 0}
     - target: {fileID: 4704946858031448096, guid: 0789f32f72cc85e419f652db4787c761, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -270.73932
+      value: 184.0
       objectReference: {fileID: 0}
     - target: {fileID: 4704946858031448096, guid: 0789f32f72cc85e419f652db4787c761, type: 3}
       propertyPath: m_LocalRotation.w
@@ -71721,15 +71720,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4704946858031448096, guid: 0789f32f72cc85e419f652db4787c761, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 240.78554
+      value: -136.484
       objectReference: {fileID: 0}
     - target: {fileID: 4704946858031448096, guid: 0789f32f72cc85e419f652db4787c761, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 23.50906
+      value: 3.8699999999999997
       objectReference: {fileID: 0}
     - target: {fileID: 4704946858031448096, guid: 0789f32f72cc85e419f652db4787c761, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 131.17787
+      value: -106.69
       objectReference: {fileID: 0}
     - target: {fileID: 4704946858031448096, guid: 0789f32f72cc85e419f652db4787c761, type: 3}
       propertyPath: m_LocalRotation.w
@@ -72891,15 +72890,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4704946858031448096, guid: 0789f32f72cc85e419f652db4787c761, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 266.96915
+      value: 201.516
       objectReference: {fileID: 0}
     - target: {fileID: 4704946858031448096, guid: 0789f32f72cc85e419f652db4787c761, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 23.823874
+      value: 20.36
       objectReference: {fileID: 0}
     - target: {fileID: 4704946858031448096, guid: 0789f32f72cc85e419f652db4787c761, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 156.79504
+      value: 124.31
       objectReference: {fileID: 0}
     - target: {fileID: 4704946858031448096, guid: 0789f32f72cc85e419f652db4787c761, type: 3}
       propertyPath: m_LocalRotation.w
@@ -85500,15 +85499,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4446055216052359214, guid: f25f12b9d6bf11345a95256d368cfb69, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -205.49948
+      value: 189.51
       objectReference: {fileID: 0}
     - target: {fileID: 4446055216052359214, guid: f25f12b9d6bf11345a95256d368cfb69, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 16.545256
+      value: 20.36
       objectReference: {fileID: 0}
     - target: {fileID: 4446055216052359214, guid: f25f12b9d6bf11345a95256d368cfb69, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 169.88486
+      value: 122.622
       objectReference: {fileID: 0}
     - target: {fileID: 4446055216052359214, guid: f25f12b9d6bf11345a95256d368cfb69, type: 3}
       propertyPath: m_LocalRotation.w
@@ -88272,7 +88271,7 @@ GameObject:
   - component: {fileID: 1541027511}
   - component: {fileID: 1541027510}
   m_Layer: 0
-  m_Name: Reksai_Spawn_1
+  m_Name: Guardia POI 2 - 1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -88286,12 +88285,12 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1541027508}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: 0.8660254, z: -0, w: -0.5}
-  m_LocalPosition: {x: -222.01244, y: 11.699317, z: -229.19101}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 9, y: 0.05, z: 2}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 885665255}
+  m_Father: {fileID: 8600000000000001011}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &1541027510
 MonoBehaviour:
@@ -88305,6 +88304,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9eb728bb3476b01479612c709b01bd4f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ReksaiFusionAreaSpawner
+  activationDistance: 110
   enemyPrefab: {fileID: 1887384454739125388, guid: f10f1e738b264ec4c886d18dafade7d5, type: 3}
 --- !u!114 &1541027511
 MonoBehaviour:
@@ -88318,7 +88318,7 @@ MonoBehaviour:
   m_Script: {fileID: -1552182283, guid: e725a070cec140c4caffb81624c8c787, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Fusion.Runtime.dll::Fusion.NetworkObject
-  SortKey: 4144133332
+  SortKey: 3810000003
   SendPriority: 1
   EnableInterpolation: 1
   Flags: 262146
@@ -88654,15 +88654,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5156871273177328864, guid: 5d0c53ab56a949a4b947000b10707e7d, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 105
+      value: 151
       objectReference: {fileID: 0}
     - target: {fileID: 5156871273177328864, guid: 5d0c53ab56a949a4b947000b10707e7d, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 14.131447
+      value: 21.35
       objectReference: {fileID: 0}
     - target: {fileID: 5156871273177328864, guid: 5d0c53ab56a949a4b947000b10707e7d, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -210
+      value: 29
       objectReference: {fileID: 0}
     - target: {fileID: 5156871273177328864, guid: 5d0c53ab56a949a4b947000b10707e7d, type: 3}
       propertyPath: m_LocalRotation.w
@@ -114150,15 +114150,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4704946858031448096, guid: 0789f32f72cc85e419f652db4787c761, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -211.73697
+      value: 121.516
       objectReference: {fileID: 0}
     - target: {fileID: 4704946858031448096, guid: 0789f32f72cc85e419f652db4787c761, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 16.54529
+      value: 35.19
       objectReference: {fileID: 0}
     - target: {fileID: 4704946858031448096, guid: 0789f32f72cc85e419f652db4787c761, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 204.30795
+      value: 188.31
       objectReference: {fileID: 0}
     - target: {fileID: 4704946858031448096, guid: 0789f32f72cc85e419f652db4787c761, type: 3}
       propertyPath: m_LocalRotation.w
@@ -119459,15 +119459,15 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 7139049203281714733, guid: 9682ceed10905e94c8f7b1010debf6be, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 170.33365
+      value: 116.974
       objectReference: {fileID: 0}
     - target: {fileID: 7139049203281714733, guid: 9682ceed10905e94c8f7b1010debf6be, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 30.252878
+      value: 35.19
       objectReference: {fileID: 0}
     - target: {fileID: 7139049203281714733, guid: 9682ceed10905e94c8f7b1010debf6be, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 196.5322
+      value: 177.068
       objectReference: {fileID: 0}
     - target: {fileID: 7139049203281714733, guid: 9682ceed10905e94c8f7b1010debf6be, type: 3}
       propertyPath: m_LocalRotation.w
@@ -120643,15 +120643,15 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 350302488324370644, guid: 5eb9a2b36003d574dae2650e7818ce29, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -170
+      value: -217
       objectReference: {fileID: 0}
     - target: {fileID: 350302488324370644, guid: 5eb9a2b36003d574dae2650e7818ce29, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 6.2913456
+      value: 16.57
       objectReference: {fileID: 0}
     - target: {fileID: 350302488324370644, guid: 5eb9a2b36003d574dae2650e7818ce29, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -165
+      value: 176
       objectReference: {fileID: 0}
     - target: {fileID: 350302488324370644, guid: 5eb9a2b36003d574dae2650e7818ce29, type: 3}
       propertyPath: m_LocalRotation.w
@@ -125589,7 +125589,7 @@ GameObject:
   - component: {fileID: 2024447035}
   - component: {fileID: 2024447034}
   m_Layer: 0
-  m_Name: Reksai_Spawn_2
+  m_Name: Guardia POI 2 - 2
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -125603,12 +125603,12 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2024447032}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: 0.86602545, z: -0, w: 0.49999994}
-  m_LocalPosition: {x: -277.43805, y: 14.858506, z: -229.19101}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -8, y: 0.05, z: -6}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 885665255}
+  m_Father: {fileID: 8600000000000001011}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &2024447034
 MonoBehaviour:
@@ -125622,6 +125622,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9eb728bb3476b01479612c709b01bd4f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ReksaiFusionAreaSpawner
+  activationDistance: 110
   enemyPrefab: {fileID: 1887384454739125388, guid: f10f1e738b264ec4c886d18dafade7d5, type: 3}
 --- !u!114 &2024447035
 MonoBehaviour:
@@ -125635,7 +125636,7 @@ MonoBehaviour:
   m_Script: {fileID: -1552182283, guid: e725a070cec140c4caffb81624c8c787, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Fusion.Runtime.dll::Fusion.NetworkObject
-  SortKey: 755581315
+  SortKey: 3810000004
   SendPriority: 1
   EnableInterpolation: 1
   Flags: 262146
@@ -127767,15 +127768,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4446055216052359214, guid: f25f12b9d6bf11345a95256d368cfb69, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -262.98874
+      value: 109.51
       objectReference: {fileID: 0}
     - target: {fileID: 4446055216052359214, guid: f25f12b9d6bf11345a95256d368cfb69, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 9.858094
+      value: 35.19
       objectReference: {fileID: 0}
     - target: {fileID: 4446055216052359214, guid: f25f12b9d6bf11345a95256d368cfb69, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -201.4128
+      value: 186.622
       objectReference: {fileID: 0}
     - target: {fileID: 4446055216052359214, guid: f25f12b9d6bf11345a95256d368cfb69, type: 3}
       propertyPath: m_LocalRotation.w
@@ -129857,6 +129858,794 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
+--- !u!1 &8600000000000010080
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8600000000000010081}
+  - component: {fileID: 8600000000000010082}
+  - component: {fileID: 8600000000000010083}
+  m_Layer: 0
+  m_Name: Guardia POI 3 - 1
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &8600000000000010081
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8600000000000010080}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 9, y: 0.05, z: 2}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 8600000000000001021}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &8600000000000010082
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8600000000000010080}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: -1552182283, guid: e725a070cec140c4caffb81624c8c787, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Fusion.Runtime.dll::Fusion.NetworkObject
+  SortKey: 3810000005
+  SendPriority: 1
+  EnableInterpolation: 1
+  Flags: 262146
+  NestedObjects: []
+  NetworkedBehaviours:
+  - {fileID: 8600000000000010083}
+  ForceRemoteRenderTimeframe: 0
+--- !u!114 &8600000000000010083
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8600000000000010080}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9eb728bb3476b01479612c709b01bd4f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ReksaiFusionAreaSpawner
+  activationDistance: 110
+  enemyPrefab: {fileID: 1887384454739125388, guid: f10f1e738b264ec4c886d18dafade7d5, type: 3}
+--- !u!1 &8600000000000010100
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8600000000000010101}
+  - component: {fileID: 8600000000000010102}
+  - component: {fileID: 8600000000000010103}
+  m_Layer: 0
+  m_Name: Guardia POI 4 - 1
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &8600000000000010101
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8600000000000010100}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 9, y: 0.05, z: 2}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 8600000000000001031}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &8600000000000010102
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8600000000000010100}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: -1552182283, guid: e725a070cec140c4caffb81624c8c787, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Fusion.Runtime.dll::Fusion.NetworkObject
+  SortKey: 3810000006
+  SendPriority: 1
+  EnableInterpolation: 1
+  Flags: 262146
+  NestedObjects: []
+  NetworkedBehaviours:
+  - {fileID: 8600000000000010103}
+  ForceRemoteRenderTimeframe: 0
+--- !u!114 &8600000000000010103
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8600000000000010100}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9eb728bb3476b01479612c709b01bd4f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ReksaiFusionAreaSpawner
+  activationDistance: 110
+  enemyPrefab: {fileID: 1887384454739125388, guid: f10f1e738b264ec4c886d18dafade7d5, type: 3}
+--- !u!1 &8600000000000010120
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8600000000000010121}
+  - component: {fileID: 8600000000000010122}
+  - component: {fileID: 8600000000000010123}
+  m_Layer: 0
+  m_Name: Guardia POI 4 - 2
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &8600000000000010121
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8600000000000010120}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -8, y: 0.05, z: -6}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 8600000000000001031}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &8600000000000010122
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8600000000000010120}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: -1552182283, guid: e725a070cec140c4caffb81624c8c787, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Fusion.Runtime.dll::Fusion.NetworkObject
+  SortKey: 3810000007
+  SendPriority: 1
+  EnableInterpolation: 1
+  Flags: 262146
+  NestedObjects: []
+  NetworkedBehaviours:
+  - {fileID: 8600000000000010123}
+  ForceRemoteRenderTimeframe: 0
+--- !u!114 &8600000000000010123
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8600000000000010120}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9eb728bb3476b01479612c709b01bd4f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ReksaiFusionAreaSpawner
+  activationDistance: 110
+  enemyPrefab: {fileID: 1887384454739125388, guid: f10f1e738b264ec4c886d18dafade7d5, type: 3}
+--- !u!1 &8600000000000010140
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8600000000000010141}
+  - component: {fileID: 8600000000000010142}
+  - component: {fileID: 8600000000000010143}
+  m_Layer: 0
+  m_Name: Guardia POI 5 - 1
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &8600000000000010141
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8600000000000010140}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 9, y: 0.05, z: 2}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 8600000000000001041}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &8600000000000010142
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8600000000000010140}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: -1552182283, guid: e725a070cec140c4caffb81624c8c787, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Fusion.Runtime.dll::Fusion.NetworkObject
+  SortKey: 3810000008
+  SendPriority: 1
+  EnableInterpolation: 1
+  Flags: 262146
+  NestedObjects: []
+  NetworkedBehaviours:
+  - {fileID: 8600000000000010143}
+  ForceRemoteRenderTimeframe: 0
+--- !u!114 &8600000000000010143
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8600000000000010140}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9eb728bb3476b01479612c709b01bd4f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ReksaiFusionAreaSpawner
+  activationDistance: 110
+  enemyPrefab: {fileID: 1887384454739125388, guid: f10f1e738b264ec4c886d18dafade7d5, type: 3}
+--- !u!1 &8600000000000010160
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8600000000000010161}
+  - component: {fileID: 8600000000000010162}
+  - component: {fileID: 8600000000000010163}
+  m_Layer: 0
+  m_Name: Guardia POI 5 - 2
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &8600000000000010161
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8600000000000010160}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -8, y: 0.05, z: -6}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 8600000000000001041}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &8600000000000010162
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8600000000000010160}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: -1552182283, guid: e725a070cec140c4caffb81624c8c787, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Fusion.Runtime.dll::Fusion.NetworkObject
+  SortKey: 3810000009
+  SendPriority: 1
+  EnableInterpolation: 1
+  Flags: 262146
+  NestedObjects: []
+  NetworkedBehaviours:
+  - {fileID: 8600000000000010163}
+  ForceRemoteRenderTimeframe: 0
+--- !u!114 &8600000000000010163
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8600000000000010160}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9eb728bb3476b01479612c709b01bd4f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ReksaiFusionAreaSpawner
+  activationDistance: 110
+  enemyPrefab: {fileID: 1887384454739125388, guid: f10f1e738b264ec4c886d18dafade7d5, type: 3}
+--- !u!1 &8600000000000010180
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8600000000000010181}
+  - component: {fileID: 8600000000000010182}
+  - component: {fileID: 8600000000000010183}
+  m_Layer: 0
+  m_Name: Guardia POI 6 - 1
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &8600000000000010181
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8600000000000010180}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 9, y: 0.05, z: 2}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 8600000000000001051}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &8600000000000010182
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8600000000000010180}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: -1552182283, guid: e725a070cec140c4caffb81624c8c787, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Fusion.Runtime.dll::Fusion.NetworkObject
+  SortKey: 3810000010
+  SendPriority: 1
+  EnableInterpolation: 1
+  Flags: 262146
+  NestedObjects: []
+  NetworkedBehaviours:
+  - {fileID: 8600000000000010183}
+  ForceRemoteRenderTimeframe: 0
+--- !u!114 &8600000000000010183
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8600000000000010180}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9eb728bb3476b01479612c709b01bd4f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ReksaiFusionAreaSpawner
+  activationDistance: 110
+  enemyPrefab: {fileID: 1887384454739125388, guid: f10f1e738b264ec4c886d18dafade7d5, type: 3}
+--- !u!1 &8600000000000010200
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8600000000000010201}
+  - component: {fileID: 8600000000000010202}
+  - component: {fileID: 8600000000000010203}
+  m_Layer: 0
+  m_Name: Guardia POI 6 - 2
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &8600000000000010201
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8600000000000010200}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -8, y: 0.05, z: -6}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 8600000000000001051}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &8600000000000010202
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8600000000000010200}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: -1552182283, guid: e725a070cec140c4caffb81624c8c787, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Fusion.Runtime.dll::Fusion.NetworkObject
+  SortKey: 3810000011
+  SendPriority: 1
+  EnableInterpolation: 1
+  Flags: 262146
+  NestedObjects: []
+  NetworkedBehaviours:
+  - {fileID: 8600000000000010203}
+  ForceRemoteRenderTimeframe: 0
+--- !u!114 &8600000000000010203
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8600000000000010200}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9eb728bb3476b01479612c709b01bd4f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ReksaiFusionAreaSpawner
+  activationDistance: 110
+  enemyPrefab: {fileID: 1887384454739125388, guid: f10f1e738b264ec4c886d18dafade7d5, type: 3}
+--- !u!1 &8600000000000001000
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8600000000000001001}
+  - component: {fileID: 8600000000000001002}
+  m_Layer: 0
+  m_Name: POI 1 - Campamento abandonado
+  m_TagString: Untagged
+  m_IsActive: 1
+--- !u!4 &8600000000000001001
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8600000000000001000}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -217, y: 16.52, z: 176}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 386908490}
+  - {fileID: 1226455223}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &8600000000000001002
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8600000000000001000}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 53c8b85e65874b468d3bb3f158a55ee0, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::GameJam.Mars.MarsInterestZone
+  zoneName: POI 1 - Campamento abandonado
+  landmark: j_AbandonedCamp
+  terrain: {fileID: 1328898109}
+  groundObjects:
+  - {fileID: 1896154558}
+  - {fileID: 386908490}
+  - {fileID: 1226455223}
+  recognizableRadius: 22
+--- !u!1 &8600000000000001010
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8600000000000001011}
+  - component: {fileID: 8600000000000001012}
+  m_Layer: 0
+  m_Name: POI 2 - Refugio de Marte
+  m_TagString: Untagged
+  m_IsActive: 1
+--- !u!4 &8600000000000001011
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8600000000000001010}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 151, y: 21.3, z: 29}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 1541027509}
+  - {fileID: 2024447033}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &8600000000000001012
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8600000000000001010}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 53c8b85e65874b468d3bb3f158a55ee0, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::GameJam.Mars.MarsInterestZone
+  zoneName: POI 2 - Refugio de Marte
+  landmark: j_MarsHouse1_Review
+  terrain: {fileID: 1328898109}
+  groundObjects:
+  - {fileID: 1550130596}
+  - {fileID: 1541027509}
+  - {fileID: 2024447033}
+  recognizableRadius: 22
+--- !u!1 &8600000000000001020
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8600000000000001021}
+  - component: {fileID: 8600000000000001022}
+  m_Layer: 0
+  m_Name: POI 3 - Cuenca del gusano
+  m_TagString: Untagged
+  m_IsActive: 1
+--- !u!4 &8600000000000001021
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8600000000000001020}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -22, y: 7.85, z: -221}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 8600000000000010081}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &8600000000000001022
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8600000000000001020}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 53c8b85e65874b468d3bb3f158a55ee0, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::GameJam.Mars.MarsInterestZone
+  zoneName: POI 3 - Cuenca del gusano
+  landmark: j_WormBasin
+  terrain: {fileID: 1328898109}
+  groundObjects:
+  - {fileID: 524239680}
+  - {fileID: 8600000000000010081}
+  recognizableRadius: 22
+--- !u!1 &8600000000000001030
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8600000000000001031}
+  - component: {fileID: 8600000000000001032}
+  m_Layer: 0
+  m_Name: POI 4 - Yacimiento arco oeste
+  m_TagString: Untagged
+  m_IsActive: 1
+--- !u!4 &8600000000000001031
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8600000000000001030}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -142, y: 3.82, z: -111}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 8600000000000010101}
+  - {fileID: 8600000000000010121}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &8600000000000001032
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8600000000000001030}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 53c8b85e65874b468d3bb3f158a55ee0, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::GameJam.Mars.MarsInterestZone
+  zoneName: POI 4 - Yacimiento arco oeste
+  landmark: j_RockArch_2
+  terrain: {fileID: 1328898109}
+  groundObjects:
+  - {fileID: 28730192}
+  - {fileID: 98977598}
+  - {fileID: 396286986}
+  - {fileID: 704438525}
+  - {fileID: 1138990719}
+  - {fileID: 1321584178}
+  - {fileID: 8600000000000010101}
+  - {fileID: 8600000000000010121}
+  recognizableRadius: 22
+--- !u!1 &8600000000000001040
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8600000000000001041}
+  - component: {fileID: 8600000000000001042}
+  m_Layer: 0
+  m_Name: POI 5 - Yacimiento arco este
+  m_TagString: Untagged
+  m_IsActive: 1
+--- !u!4 &8600000000000001041
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8600000000000001040}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 196, y: 20.31, z: 120}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 8600000000000010141}
+  - {fileID: 8600000000000010161}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &8600000000000001042
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8600000000000001040}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 53c8b85e65874b468d3bb3f158a55ee0, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::GameJam.Mars.MarsInterestZone
+  zoneName: POI 5 - Yacimiento arco este
+  landmark: j_RockArch
+  terrain: {fileID: 1328898109}
+  groundObjects:
+  - {fileID: 99209253}
+  - {fileID: 639637311}
+  - {fileID: 1084617345}
+  - {fileID: 1221700356}
+  - {fileID: 1343613856}
+  - {fileID: 1486071654}
+  - {fileID: 8600000000000010141}
+  - {fileID: 8600000000000010161}
+  recognizableRadius: 22
+--- !u!1 &8600000000000001050
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8600000000000001051}
+  - component: {fileID: 8600000000000001052}
+  m_Layer: 0
+  m_Name: POI 6 - Yacimiento arco norte
+  m_TagString: Untagged
+  m_IsActive: 1
+--- !u!4 &8600000000000001051
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8600000000000001050}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 116, y: 35.14, z: 184}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 8600000000000010181}
+  - {fileID: 8600000000000010201}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &8600000000000001052
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8600000000000001050}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 53c8b85e65874b468d3bb3f158a55ee0, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::GameJam.Mars.MarsInterestZone
+  zoneName: POI 6 - Yacimiento arco norte
+  landmark: j_RockArch_3
+  terrain: {fileID: 1328898109}
+  groundObjects:
+  - {fileID: 555417953}
+  - {fileID: 933174181}
+  - {fileID: 1239965629}
+  - {fileID: 1685469701}
+  - {fileID: 1861142536}
+  - {fileID: 2122331668}
+  - {fileID: 8600000000000010181}
+  - {fileID: 8600000000000010201}
+  recognizableRadius: 22
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
@@ -129892,7 +130681,6 @@ SceneRoots:
   - {fileID: 1987106011}
   - {fileID: 1987106021}
   - {fileID: 1987106031}
-  - {fileID: 1226455223}
   - {fileID: 885665255}
   - {fileID: 1061137792}
   - {fileID: 628354484}
@@ -129905,3 +130693,9 @@ SceneRoots:
   - {fileID: 7800000000000000020}
   - {fileID: 7800000000000000030}
   - {fileID: 1274831968}
+  - {fileID: 8600000000000001001}
+  - {fileID: 8600000000000001011}
+  - {fileID: 8600000000000001021}
+  - {fileID: 8600000000000001031}
+  - {fileID: 8600000000000001041}
+  - {fileID: 8600000000000001051}
