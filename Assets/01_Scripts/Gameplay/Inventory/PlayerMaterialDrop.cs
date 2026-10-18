@@ -141,7 +141,7 @@ namespace GameJam.Inventory
                 return false;
             }
 
-            if (Object == null || !Object.IsValid || !HasStateAuthority || Runner == null || !Runner.IsRunning)
+            if (Object == null || !Object.IsValid || !HasStateAuthority || !MarsFusionSession.CanSpawnNow(Runner))
             {
                 return false;
             }
@@ -151,13 +151,15 @@ namespace GameJam.Inventory
                 return false;
             }
 
+            if ((GetComponent<GameJam.Environment.Mars.PlayerSandstorm>()?.IsDowned ?? false)) return false;
+
             if (avatar.TabletOpen || (interactionAction != null && interactionAction.IsBusy))
             {
                 return false;
             }
 
             if ((hurtReaction != null && hurtReaction.IsReacting) ||
-                (revive != null && (revive.IsRecovering || revive.IsLeavingRescue || revive.IsEmoting)))
+                (revive != null && (revive.IsRecovering || revive.IsLeavingRescue || revive.IsEmoting || revive.IsRescuing)))
             {
                 return false;
             }
