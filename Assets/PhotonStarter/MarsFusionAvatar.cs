@@ -183,7 +183,7 @@ namespace GameJam.Multiplayer
         {
             if (Object == null || !Object.IsValid || !HasStateAuthority) return;
             var keyboard = Keyboard.current;
-            bool menu = session != null && session.MenuOpen;
+            bool menu = (session != null && session.MenuOpen) || GameJam.Crafting.CraftingBox.IsBlockingInput;
             if (keyboard != null && !menu && !SceneTransitionVideo.IsBlockingInput && !LobbyDepartureEffects.IsBlockingInput && !PortalWhiteTransition.IsBlockingInput)
             {
                 if (keyboard.tabKey.wasPressedThisFrame) ToggleTablet();
