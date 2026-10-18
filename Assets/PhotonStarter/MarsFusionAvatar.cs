@@ -25,6 +25,10 @@ namespace GameJam.Multiplayer
         [Networked] public NetworkBool TabletOpen { get; private set; }
         [Networked] public byte VoiceLevel { get; private set; }
         [Networked] private uint HurtSequence { get; set; }
+        [Networked] public byte SuitColorIndex { get; private set; }
+        [Networked] public NetworkString<_32> PlayerName { get; private set; }
+        [Networked] private NetworkBool IdentityInitialized { get; set; }
+        private MarsPlayerIdentityView identityView;
         private PlayerInput input;
         private MarsFusionSession session;
         private TabletGuideUI ui;
@@ -46,6 +50,26 @@ namespace GameJam.Multiplayer
                 foreach (var component in GetComponents<MonoBehaviour>())
                     if (component is IPlayerHealth) { healthSource = component; break; }
             if (HasStateAuthority) Stamina = 100;
+            if (HasStateAuthority && !IdentityInitialized)
+            {
+                SuitColorIndex = (byte)Random.Range(0, MarsPlayerIdentityView.Palette.Length);
+                // Prefer an unused color among players already present in this session.
+                var players = FindObjectsByType<MarsFusionAvatar>(FindObjectsSortMode.None);
+                for (int offset = 0; offset < MarsPlayerIdentityView.Palette.Length; offset++)
+                {
+                    byte candidate = (byte)((SuitColorIndex + offset) % MarsPlayerIdentityView.Palette.Length);
+                    bool used = false;
+                    foreach (var other in players)
+                        if (other != this && other.Runner == Runner && other.Object != null && other.Object.IsValid
+                            && other.IdentityInitialized && other.SuitColorIndex == candidate) { used = true; break; }
+                    if (!used) { SuitColorIndex = candidate; break; }
+                }
+                var owner = Runner.GameMode == GameMode.Shared ? Object.StateAuthority : Object.InputAuthority;
+                PlayerName = "Astronauta " + owner.PlayerId;
+                IdentityInitialized = true;
+            }
+            identityView = gameObject.AddComponent<MarsPlayerIdentityView>();
+            identityView.Initialize(this);
             previousHealth = HealthSource?.CurrentHealth;
             previousHurt = HurtSequence;
             nextBlink = Time.time + Random.Range(2f, 5f);
@@ -70,6 +94,14 @@ namespace GameJam.Multiplayer
         {
             if (Object != null && Object.IsValid && HasStateAuthority && IsAlive && tablet != null)
                 TabletOpen = !TabletOpen;
+        }
+
+        // Later the name-entry UI can call this on the locally owned astronaut.
+        public void SetPlayerName(string value)
+        {
+            if (Object == null || !Object.IsValid || !HasStateAuthority || string.IsNullOrWhiteSpace(value)) return;
+            string clean = value.Replace("\n", " ").Replace("\r", " ").Trim();
+            PlayerName = clean.Length > 24 ? clean.Substring(0, 24) : clean;
         }
         public void CloseTablet()
         {
@@ -183,6 +215,7 @@ namespace GameJam.Multiplayer
         private void OnDestroy() => CleanUp();
         private void CleanUp()
         {
+            if (identityView != null) Destroy(identityView);
             if (ui != null) Destroy(ui.gameObject);
             if (heldTablet != null) Destroy(heldTablet);
         }
