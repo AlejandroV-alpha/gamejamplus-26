@@ -182,6 +182,7 @@ namespace GameJam.Multiplayer
 
         private void Update()
         {
+            if (SceneTransitionVideo.IsBlockingInput || PortalWhiteTransition.IsBlockingInput) return;
             if (Runner != null && Runner.IsRunning && Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame)
                 SetMenu(!MenuOpen);
         }

@@ -93,6 +93,7 @@ namespace Starter.ThirdPersonCharacter
             if (Physics.SphereCast(origin, .15f, delta.normalized, out var hit, delta.magnitude, 1, QueryTriggerInteraction.Ignore))
                 position = origin + delta.normalized * Mathf.Max(.15f, hit.distance - .08f);
             _camera.transform.SetPositionAndRotation(position, CameraHandle.rotation);
+            GameJam.Multiplayer.LobbyDepartureEffects.ApplyCameraShake(_camera);
         }
 
         private void ProcessInput(GameplayInput input)

@@ -27,6 +27,7 @@ namespace GameJam.Multiplayer
         [Networked] private uint HurtSequence { get; set; }
         [Networked] public byte SuitColorIndex { get; private set; }
         [Networked] public NetworkString<_32> PlayerName { get; private set; }
+        [Networked] public NetworkBool LobbyReady { get; private set; }
         [Networked] private NetworkBool IdentityInitialized { get; set; }
         private MarsPlayerIdentityView identityView;
         private PlayerInput input;
@@ -96,6 +97,11 @@ namespace GameJam.Multiplayer
                 TabletOpen = !TabletOpen;
         }
 
+        public void SetLobbyReady(bool ready)
+        {
+            if (Object != null && Object.IsValid && HasStateAuthority) LobbyReady = ready;
+        }
+
         // Later the name-entry UI can call this on the locally owned astronaut.
         public void SetPlayerName(string value)
         {
@@ -151,7 +157,7 @@ namespace GameJam.Multiplayer
             if (Object == null || !Object.IsValid || !HasStateAuthority) return;
             var keyboard = Keyboard.current;
             bool menu = session != null && session.MenuOpen;
-            if (keyboard != null && !menu)
+            if (keyboard != null && !menu && !SceneTransitionVideo.IsBlockingInput && !LobbyDepartureEffects.IsBlockingInput && !PortalWhiteTransition.IsBlockingInput)
             {
                 if (keyboard.tabKey.wasPressedThisFrame) ToggleTablet();
                 if (Application.isEditor || Debug.isDebugBuild)
@@ -166,7 +172,7 @@ namespace GameJam.Multiplayer
                 if (VoiceLevel != level) VoiceLevel = level;
             }
             bool tabletVisible = TabletOpen || (ui != null && ui.IsVisible);
-            input.ControlsEnabled = !menu && !tabletVisible && IsAlive;
+            input.ControlsEnabled = !menu && !tabletVisible && IsAlive && !SceneTransitionVideo.IsBlockingInput && !LobbyDepartureEffects.IsBlockingInput && !PortalWhiteTransition.IsBlockingInput;
             bool cursor = menu || tabletVisible || !IsAlive;
             Cursor.lockState = cursor ? CursorLockMode.None : CursorLockMode.Locked;
             Cursor.visible = cursor;
@@ -206,6 +212,7 @@ namespace GameJam.Multiplayer
 
         private void OnGUI()
         {
+            if (PortalWhiteTransition.IsBlockingInput || SceneTransitionVideo.IsBlockingInput) return;
             if (Object == null || !Object.IsValid || !HasStateAuthority || TabletOpen || (session != null && session.MenuOpen)) return;
             string healthText = HealthSource != null ? $"Salud: {HealthSource.CurrentHealth:0} / {HealthSource.MaxHealth:0}\n" : "";
             GUI.Box(new Rect(20, Screen.height - 85, 280, 65), $"{healthText}Energía: {Stamina:0} / 100   ·   Tab: tablet");
