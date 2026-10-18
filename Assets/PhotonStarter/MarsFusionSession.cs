@@ -218,7 +218,11 @@ namespace GameJam.Multiplayer
 
         private void OnGUI()
         {
-            if (GameJam.UI.SciFiGameMenuManager.Instance != null || FindFirstObjectByType<GameJam.UI.SciFiGameMenuManager>() != null) return;
+            bool sciFiMenu = GameJam.UI.SciFiGameMenuManager.Instance != null || FindFirstObjectByType<GameJam.UI.SciFiGameMenuManager>() != null;
+            // El menu SciFi solo ofrece iniciar sesion en el Lobby; en escenas de mision sin sesion
+            // se muestran estos botones para poder probar la escena directamente con Play.
+            bool needsStartButtons = Runner == null && !GameJam.UI.SciFiGameMenuManager.IsLobbyScene;
+            if (sciFiMenu && !needsStartButtons) return;
             if (!MenuOpen) return;
             GUILayout.BeginArea(new Rect(20, 20, Mathf.Min(460, Screen.width - 40), 320), GUI.skin.box);
             GUILayout.Label(planetLabel + " · PHOTON FUSION");

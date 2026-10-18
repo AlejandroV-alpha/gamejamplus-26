@@ -1,0 +1,31 @@
+JUNGLE NIGHTMARE FROST — GAMEPLAY ACTUALIZADO
+
+Importa JungleNightmare_Frost_Gameplay.unitypackage mediante Assets > Import Package > Custom Package. Actualiza los assets de JungleNightmare; no hace falta importar el paquete anterior.
+Abre Assets/JungleNightmare/Scenes/FrostDemo.unity y pulsa Play. La demo incluye botones Atacar, Recibir daño y Morir. Para repetir tras morir, detén Play y vuelve a iniciarlo.
+
+Las cinco animaciones de tu jungle_pets_gameplay.glb están integradas en el personaje oscuro:
+Idle, Run, Attack (2.17 s), Hit (0.55 s) y Death (2.15 s).
+Run reemplaza al ciclo anterior. Idle y Attack son ahora los estados principales. Se conservan los otros clips, incluido Frost_Lunge como alternativa disponible.
+Se mantienen cuernos, espinas, colmillos, ojos rojos, huellas, polvo y cristales de hielo.
+Death no tiene salida ni bucle: conserva la pose final. Tras morir se bloquean Attack y ReceiveDamage, y se detienen las nuevas huellas.
+
+CONTROL DESDE TU CODIGO
+Componente: JungleNightmare.FrostActor, ya configurado en el prefab.
+- Attack(): ataque principal nuevo.
+- ReceiveDamage(): reacción Hit, puede interrumpir el ataque.
+- Die(): muerte y pose final sostenida.
+- SetMoveSpeed(metrosPorSegundo): movimiento medido en metros por segundo.
+- SetSpeed(valorDe0a1): alternativa normalizada, equivalente a la interfaz del script que compartiste.
+Si envías la velocidad desde tu controlador, desactiva Measure Movement.
+El componente anima y genera efectos. No administra salud, enemigos, navegación ni desplazamiento físico.
+El evento On Attack Impact permite conectar daño. La descarga de hielo se dispara al 40% del clip Attack (aprox. 0.87 s); se puede ajustar en los eventos del AnimationClip.
+
+TU SCRIPT JunglePetAnimator.cs
+Se revisó su interfaz y se integraron sus cinco acciones en FrostActor y Frost.controller. No añadas JunglePetAnimator al mismo Animator: utiliza Playables y competiría con el controlador del prefab. El archivo original que compartiste no se ha modificado.
+
+SUELO Y RENDER
+El suelo necesita Collider; Ground Mask debe incluir su capa. Escala recomendada del prefab: 1. Efectos configurables en FrostGroundFX.
+Paquete nativo, sin dependencia de glTFast ni VFX Graph. Verificado en Unity 6000.5.6f1 con Built-in. URP/HDRP no se han validado.
+
+GLB OPCIONAL
+jungle_nightmare_frost_gameplay.glb contiene la geometría oscura con las animaciones transferidas (25 clips en total, sin duplicar Run). Los efectos de Unity y la máquina de estados van en el unitypackage.

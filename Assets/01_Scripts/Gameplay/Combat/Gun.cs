@@ -273,6 +273,18 @@ namespace GameJam.Combat
                 enemy.TakeDamage(damage);
                 return;
             }
+            var worm = target.GetComponentInParent<GusanoExcavadorFusion>();
+            if (worm != null && worm.Runner == Runner)
+            {
+                worm.TakeDamage(damage);
+                return;
+            }
+            var jungle = target.GetComponentInParent<JungleNightmareFusionEnemy>();
+            if (jungle != null && jungle.Runner == Runner)
+            {
+                jungle.TakeDamage(damage);
+                return;
+            }
             MarsFusionAvatar targetAvatar = target.GetComponentInParent<MarsFusionAvatar>();
             if (targetAvatar != null)
             {
