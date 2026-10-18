@@ -283,7 +283,8 @@ namespace GameJam.Multiplayer
             nextColorRequest = Time.unscaledTime + .5f;
             if (Runner.GameMode != GameMode.Shared) { AssignColorLocally(ColorOwner); return; }
             NetworkObject masterPlayer;
-            if (!Runner.TryGetPlayerObject(Runner.GetMasterClient(), out masterPlayer)) return;
+            if (!Runner.TryGetPlayerObject(Runner.GetMasterClient(), out masterPlayer)
+                || masterPlayer == null || !masterPlayer.IsValid) return;
             var coordinator = masterPlayer.GetComponent<MarsFusionAvatar>();
             if (coordinator != null) coordinator.RPC_RequestSessionColor();
         }

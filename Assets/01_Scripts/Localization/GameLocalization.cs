@@ -124,6 +124,11 @@ namespace GameJam.Localization
             },
 
             // === MENÚ DE INICIO / CONEXIÓN DE SALA ===
+            ["menu.connection_hint"] = new() {
+                [GameLanguage.Spanish] = "Comparte el mismo código de sala con tu tripulación.",
+                [GameLanguage.English] = "Share the same room code with your crew.",
+                [GameLanguage.Portuguese] = "Compartilhe o mesmo código de sala com sua tripulação."
+            },
             ["menu.main_title"] = new() {
                 [GameLanguage.Spanish] = "TERMINAL DE EXPEDICIÓN",
                 [GameLanguage.English] = "EXPEDITION TERMINAL",

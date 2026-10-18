@@ -120,3 +120,6 @@ InitTestScene*.unity*
 /Assets/Screenshots/screenshot-*.png
 /Assets/Screenshots/screenshot-*.png.meta
 /Assets/Screenshots.meta
+
+# Local UI compile checks and layout previews
+/.local/MenuValidation/

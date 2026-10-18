@@ -36,6 +36,12 @@ namespace GameJam.UI
 
         // Raíces y Grupos de Canvas
         private Canvas rootCanvas;
+        private GameObject backdropObject;
+        private RectTransform startChassis, pauseChassis;
+        private static TMP_FontAsset headingFont;
+        private bool portraitLayout, runnerWasRunning;
+        private Vector2 lastCanvasSize;
+        private int lastScreenWidth, lastScreenHeight;
         private CanvasGroup startMenuGroup;
         private CanvasGroup pauseMenuGroup;
 
@@ -107,8 +113,8 @@ namespace GameJam.UI
         // Colores de Tipografía y Señales
         private static readonly Color InkWhite = new(0.96f, 0.98f, 1.00f, 1f);       // Texto principal blanco nítido
         private static readonly Color MutedCyan = new(0.48f, 0.68f, 0.80f, 1f);      // Subtítulo técnico
-        private static readonly Color DimCyan = new(0.26f, 0.40f, 0.50f, 1f);        // Marcas secundarias
-        private static readonly Color CyanAccent = new(0.00f, 0.92f, 0.88f, 1f);     // Acento neón cian
+        private static readonly Color DimCyan = new(0.48f, 0.60f, 0.69f, 1f);        // Marcas secundarias
+        private static readonly Color CyanAccent = new(1.00f, 0.65f, 0.35f, 1f);     // Acento neón cian
         private static readonly Color AmberAccent = new(1.00f, 0.65f, 0.35f, 1f);    // Acento cálido ámbar
         private static readonly Color SpeakingGreen = new(0.18f, 0.92f, 0.45f, 1f);  // Transmisión de voz activa
         private static readonly Color DangerRed = new(0.92f, 0.25f, 0.25f, 1f);      // Desconectar / Salir
@@ -151,6 +157,17 @@ namespace GameJam.UI
             if (fontAsset == null)
                 fontAsset = TMP_Settings.defaultFontAsset;
 
+            if (headingFont == null)
+            {
+                var source = Resources.Load<Font>("UI/Menu/JetBrainsMono-Regular");
+                if (source != null)
+                {
+                    headingFont = TMP_FontAsset.CreateFontAsset(source);
+                    headingFont.name = "Menu JetBrains Mono SDF";
+                    if (headingFont.fallbackFontAssetTable == null) headingFont.fallbackFontAssetTable = new List<TMP_FontAsset>();
+                    if (fontAsset != null) headingFont.fallbackFontAssetTable.Add(fontAsset);
+                }
+            }
             BuildMenuHierarchy();
         }
 
@@ -194,6 +211,9 @@ namespace GameJam.UI
                 SetPauseMenuVisible(false);
             }
 
+            runnerWasRunning = session != null && session.Runner != null && session.Runner.IsRunning;
+            SyncCanvasVisibility();
+            FitDatapads();
             isInitialized = true;
         }
 
@@ -206,6 +226,17 @@ namespace GameJam.UI
         private void Update()
         {
             if (!isInitialized) return;
+            if (session == null) session = FindFirstObjectByType<MarsFusionSession>();
+            bool running = session != null && session.Runner != null && session.Runner.IsRunning;
+            if (running != runnerWasRunning)
+            {
+                runnerWasRunning = running;
+                session.SetMenu(!running);
+            }
+            // A successful connection must never leave the initial terminal over gameplay.
+            if (running && startMenuGroup != null && startMenuGroup.gameObject.activeSelf)
+                SetStartMenuVisible(false);
+            UpdateResponsiveLayout();
 
             // Manejo de tecla Escape para pausar / reanudar
             if (Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame)
@@ -250,12 +281,12 @@ namespace GameJam.UI
             if (rootCanvas == null) rootCanvas = gameObject.AddComponent<Canvas>();
             rootCanvas.renderMode = RenderMode.ScreenSpaceOverlay;
             rootCanvas.sortingOrder = 200;
-            rootCanvas.pixelPerfect = true;
+            rootCanvas.pixelPerfect = false;
 
             var scaler = gameObject.GetComponent<CanvasScaler>();
             if (scaler == null) scaler = gameObject.AddComponent<CanvasScaler>();
             scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-            scaler.referenceResolution = new Vector2(1920, 1080);
+            scaler.referenceResolution = new Vector2(1600, 1000);
             scaler.matchWidthOrHeight = 0.5f;
 
             if (gameObject.GetComponent<GraphicRaycaster>() == null)
@@ -266,6 +297,7 @@ namespace GameJam.UI
             var backdropImg = backdrop.gameObject.AddComponent<Image>();
             backdropImg.color = new Color(0.01f, 0.015f, 0.025f, 0.70f);
             backdropImg.raycastTarget = false;
+            backdropObject = backdrop.gameObject;
 
             // ==================== 1. TERMINAL DE INICIO (LOBBY) ====================
             var startRoot = CreateRect("StartMenuRoot", transform, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
@@ -276,6 +308,9 @@ namespace GameJam.UI
             var pauseRoot = CreateRect("PauseMenuRoot", transform, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
             pauseMenuGroup = pauseRoot.gameObject.AddComponent<CanvasGroup>();
             BuildPauseDatapad(pauseRoot.transform);
+            SetGroup(startMenuGroup, false);
+            SetGroup(pauseMenuGroup, false);
+            SyncCanvasVisibility();
         }
 
         private void EnsureEventSystem()
@@ -297,111 +332,75 @@ namespace GameJam.UI
 
         private void BuildStartTerminalDatapad(Transform parent)
         {
-            Vector2 chassisSize = new(720, 800);
-            Vector2 displaySize = new(650, 710);
-
-            // Chasis exterior de titanio
-            var rim = CreateRoundedPanel(parent, "TerminalRim", chassisSize, 32, ChassisRim);
-            rim.anchoredPosition = Vector2.zero;
-
-            // Cuerpo aleación oscura mate
-            var body = CreateRoundedPanel(rim, "TerminalBody", chassisSize - new Vector2(8, 8), 28, ChassisMatte);
-            body.anchoredPosition = Vector2.zero;
-
-            // 4 Protectores de esquina rugosos con tornillos hexagonales
-            CreateArmorCornerBumpers(body, (chassisSize - new Vector2(8, 8)) * 0.5f);
-
-            // Sensores superiores y marcas inferiores de hardware
-            CreateTopHardwareSensors(body, chassisSize.x);
-            CreateBottomHardwareDock(body, chassisSize.x, "TERMINAL-EXP // DOCK-01");
-
-            // Bisel de pantalla embutida
-            var bezel = CreateRoundedPanel(body, "ScreenBezel", displaySize + new Vector2(10, 10), 22, ChassisBezel);
-            bezel.anchoredPosition = new Vector2(0, -6);
-
-            // Pantalla de cristal oscuro
-            var display = CreateRoundedPanel(bezel, "GlassDisplay", displaySize, 20, GlassDisplay);
-            display.anchoredPosition = Vector2.zero;
+            portraitLayout = Screen.width < Screen.height * 1.15f;
+            Vector2 chassisSize = portraitLayout ? new Vector2(720, 920) : new Vector2(1120, 760);
+            Vector2 displaySize = chassisSize - new Vector2(72, 96);
+            var rim = CreateRoundedPanel(parent, "TerminalRim", chassisSize, 30, ChassisRim);
+            startChassis = rim;
+            var body = CreateRoundedPanel(rim, "TerminalBody", chassisSize - new Vector2(8, 8), 26, ChassisMatte);
+            CreateArmorCornerBumpers(body, (chassisSize-new Vector2(8,8))*.5f);
+            CreateTopHardwareSensors(body,chassisSize.x);
+            CreateBottomHardwareDock(body,chassisSize.x,"ORBIT // FIELD TERMINAL 04");
+            var bezel = CreateRoundedPanel(body,"TerminalBezel",displaySize+new Vector2(10,10),22,ChassisBezel);
+            var display = CreateRoundedPanel(bezel,"TerminalDisplay",displaySize,18,GlassDisplay);
             display.gameObject.AddComponent<RectMask2D>();
+            var accent = CreateRoundedPanel(display,"AmberRail",new Vector2(displaySize.x-48,3),1.5f,AmberAccent);
+            accent.anchoredPosition=new Vector2(0,displaySize.y*.5f-18);
 
-            // --- HEADER DE LA TERMINAL ---
-            var badge = CreateLabel(display, "ORBIT AEROSPACE // EXP-TERMINAL MK-IV", 10, new Vector2(0, 318), new Vector2(580, 18), DimCyan);
-            badge.alignment = TextAlignmentOptions.Center;
-
-            var title = CreateLabel(display, "menu.main_title", 22, new Vector2(0, 292), new Vector2(580, 32), InkWhite, true);
-            title.alignment = TextAlignmentOptions.Center;
-            title.fontStyle = FontStyles.Bold;
-
-            var subtitle = CreateLabel(display, "menu.subtitle", 12, new Vector2(0, 268), new Vector2(580, 20), MutedCyan, true);
-            subtitle.alignment = TextAlignmentOptions.Center;
-
-            // --- SELECTOR DE IDIOMA ---
-            var langCard = CreateCard(display, "LanguageCard", new Vector2(590, 72), new Vector2(0, 210));
-            var langLabel = CreateLabel(langCard, "lang.title", 11, new Vector2(0, 18), new Vector2(550, 18), AmberAccent, true);
-            langLabel.alignment = TextAlignmentOptions.Center;
-
-            var langRow = CreateRect("LangRow", langCard, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0, -12), new Vector2(560, 32));
-            btnStartLangEs = CreateDatapadButton(langRow, "BtnLangES", "ES · Español", new Vector2(-180, 0), new Vector2(170, 30), () => SelectLanguage(GameLanguage.Spanish), out btnStartLangEsBg);
-            btnStartLangEn = CreateDatapadButton(langRow, "BtnLangEN", "EN · English", new Vector2(0, 0), new Vector2(170, 30), () => SelectLanguage(GameLanguage.English), out btnStartLangEnBg);
-            btnStartLangPt = CreateDatapadButton(langRow, "BtnLangPT", "PT · Brasil", new Vector2(180, 0), new Vector2(170, 30), () => SelectLanguage(GameLanguage.Portuguese), out btnStartLangPtBg);
-
-            // --- NOMBRE DEL ASTRONAUTA ---
-            var nameCard = CreateCard(display, "NameCard", new Vector2(590, 74), new Vector2(0, 126));
-            var nameHeader = CreateLabel(nameCard, "menu.player_name", 11, new Vector2(0, 18), new Vector2(550, 18), MutedCyan, true);
-            nameHeader.alignment = TextAlignmentOptions.Left;
-
-            string savedName = PlayerPrefs.GetString("GameJam.PlayerName", "Astronauta").Trim();
-            if (string.IsNullOrEmpty(savedName)) savedName = "Astronauta";
-            playerNameInput = CreateInputField(nameCard, "PlayerNameInput", savedName, "menu.player_name_placeholder", new Vector2(0, -12), new Vector2(550, 34));
-            playerNameInput.onValueChanged.AddListener(val =>
+            if(!portraitLayout)
             {
-                PlayerPrefs.SetString("GameJam.PlayerName", val.Trim());
-                PlayerPrefs.Save();
-            });
-
-            // --- CÓDIGO DE SALA ---
-            var roomCard = CreateCard(display, "RoomCard", new Vector2(590, 74), new Vector2(0, 42));
-            var roomHeader = CreateLabel(roomCard, "menu.room_code", 11, new Vector2(0, 18), new Vector2(550, 18), MutedCyan, true);
-            roomHeader.alignment = TextAlignmentOptions.Left;
-
-            string savedRoom = PlayerPrefs.GetString("GameJam.RoomName", "MARTE-01").Trim();
-            if (string.IsNullOrEmpty(savedRoom)) savedRoom = "MARTE-01";
-            if (session != null) session.roomName = savedRoom;
-
-            roomCodeInput = CreateInputField(roomCard, "RoomCodeInput", savedRoom, "menu.room_code_placeholder", new Vector2(0, -12), new Vector2(550, 34));
-            roomCodeInput.onValueChanged.AddListener(val =>
-            {
-                string r = val.Trim();
-                PlayerPrefs.SetString("GameJam.RoomName", r);
-                PlayerPrefs.Save();
-                if (session != null) session.roomName = r;
-            });
-
-            // --- BOTONES DE CONEXIÓN ---
-            btnOnlineStart = CreateDatapadButton(display, "BtnOnline", "menu.btn_join_online", new Vector2(0, -42), new Vector2(590, 48), OnClickStartOnline, out var onlineBg, true);
-            onlineBg.color = new Color(0.00f, 0.45f, 0.52f, 0.95f);
-            var onlineTxt = btnOnlineStart.GetComponentInChildren<TextMeshProUGUI>();
-            if (onlineTxt != null) { onlineTxt.fontSize = 14; onlineTxt.fontStyle = FontStyles.Bold; }
-
-            btnSoloStart = CreateDatapadButton(display, "BtnSolo", "menu.btn_solo", new Vector2(0, -100), new Vector2(590, 44), OnClickStartSolo, out var soloBg, true);
-            soloBg.color = new Color(0.10f, 0.15f, 0.22f, 0.95f);
-            var soloTxt = btnSoloStart.GetComponentInChildren<TextMeshProUGUI>();
-            if (soloTxt != null) { soloTxt.fontSize = 13; soloTxt.fontStyle = FontStyles.Normal; }
-
-            // --- BARRA DE ESTADO DE FUSION ---
-            var statusBox = CreateRoundedPanel(display, "StatusBox", new Vector2(590, 44), 10, InsetBg);
-            statusBox.anchoredPosition = new Vector2(0, -164);
-
-            var dotRect = CreateRoundedPanel(statusBox, "StatusDot", new Vector2(10, 10), 5, CyanAccent);
-            dotRect.anchoredPosition = new Vector2(-265, 0);
-            statusDot = dotRect.GetComponent<TabletRoundedPanel>();
-
-            statusLabel = CreateLabel(statusBox, "menu.status_ready", 12, new Vector2(14, 0), new Vector2(520, 24), InkWhite, true);
-            statusLabel.alignment = TextAlignmentOptions.Left;
-
-            // --- CONTROLES RÁPIDOS INFORMATIVOS ---
-            var controlsHint = CreateLabel(display, "WASD: Desplazamiento · E: Interactuar · Tab: Tablet · Esc: Pausa", 11, new Vector2(0, -215), new Vector2(580, 24), DimCyan);
-            controlsHint.alignment = TextAlignmentOptions.Center;
+                var side=CreateRoundedPanel(display,"MissionIdentity",new Vector2(296,584),16,CardBg);
+                side.anchoredPosition=new Vector2(-338,0);
+                var brand=CreateLabel(side,"ORBIT",48,new Vector2(0,224),new Vector2(252,64),InkWhite);
+                brand.font=headingFont??fontAsset;brand.fontStyle=FontStyles.Bold;
+                CreateLabel(side,"FIELD OPERATIONS / 04",14,new Vector2(0,178),new Vector2(252,30),AmberAccent);
+                var orbit=CreateRoundedPanel(side,"OrbitRing",new Vector2(194,194),97,ChassisRim);
+                orbit.anchoredPosition=new Vector2(0,22);
+                CreateRoundedPanel(orbit,"OrbitInset",new Vector2(190,190),95,CardBg);
+                CreateRoundedPanel(orbit,"PlanetDisc",new Vector2(124,124),62,new Color(.55f,.26f,.15f));
+                var moon=CreateRoundedPanel(orbit,"Moon",new Vector2(22,22),11,AmberAccent);moon.anchoredPosition=new Vector2(77,59);
+                var path=CreateRoundedPanel(orbit,"FlightPath",new Vector2(242,2),1,MutedCyan);path.localRotation=Quaternion.Euler(0,0,22);
+                CreateLabel(side,"menu.subtitle",18,new Vector2(0,-136),new Vector2(246,64),InkWhite,true);
+                CreateLabel(side,"menu.connection_hint",17,new Vector2(0,-225),new Vector2(246,84),MutedCyan,true);
+            }
+            var form=CreateRect("ConnectionForm",display,new Vector2(.5f,.5f),new Vector2(.5f,.5f),
+                new Vector2(portraitLayout?0:166,0),new Vector2(600,displaySize.y));
+            float badgeY=portraitLayout?382:302;
+            var badge=CreateLabel(form,"EXPEDITION LINK / MK.04",14,new Vector2(0,badgeY),new Vector2(590,24),AmberAccent);
+            badge.font=headingFont??fontAsset;
+            var title=CreateLabel(form,"menu.main_title",portraitLayout?32:34,new Vector2(0,portraitLayout?334:250),new Vector2(600,62),InkWhite,true);
+            title.font=headingFont??fontAsset;title.fontStyle=FontStyles.Bold;
+            CreateLabel(form,"menu.subtitle",18,new Vector2(0,portraitLayout?292:210),new Vector2(590,30),MutedCyan,true);
+            float langY=portraitLayout?226:144;
+            var languages=CreateCard(form,"LanguageCard",new Vector2(600,88),new Vector2(0,langY));
+            CreateLabel(languages,"lang.title",16,new Vector2(0,25),new Vector2(560,24),MutedCyan,true);
+            var row=CreateRect("LanguageOptions",languages,new Vector2(.5f,.5f),new Vector2(.5f,.5f),new Vector2(0,-15),new Vector2(560,38));
+            btnStartLangEs=CreateDatapadButton(row,"BtnLangES","ES / Español",new Vector2(-190,0),new Vector2(180,38),()=>SelectLanguage(GameLanguage.Spanish),out btnStartLangEsBg);
+            btnStartLangEn=CreateDatapadButton(row,"BtnLangEN","EN / English",Vector2.zero,new Vector2(180,38),()=>SelectLanguage(GameLanguage.English),out btnStartLangEnBg);
+            btnStartLangPt=CreateDatapadButton(row,"BtnLangPT","PT / Brasil",new Vector2(190,0),new Vector2(180,38),()=>SelectLanguage(GameLanguage.Portuguese),out btnStartLangPtBg);
+            float nameY=portraitLayout?112:34, roomY=portraitLayout?-12:-78;
+            var nameCard=CreateCard(form,"NameCard",new Vector2(600,100),new Vector2(0,nameY));
+            var nameLabel=CreateLabel(nameCard,"menu.player_name",17,new Vector2(0,28),new Vector2(560,24),MutedCyan,true);nameLabel.alignment=TextAlignmentOptions.Left;
+            string savedName=PlayerPrefs.GetString("GameJam.PlayerName","Astronauta").Trim();
+            playerNameInput=CreateInputField(nameCard,"PlayerNameInput",string.IsNullOrEmpty(savedName)?"Astronauta":savedName,"menu.player_name_placeholder",new Vector2(0,-14),new Vector2(560,48));
+            playerNameInput.characterLimit=24;
+            playerNameInput.onValueChanged.AddListener(value=>PlayerPrefs.SetString("GameJam.PlayerName",value.Trim()));
+            var roomCard=CreateCard(form,"RoomCard",new Vector2(600,100),new Vector2(0,roomY));
+            var roomLabel=CreateLabel(roomCard,"menu.room_code",17,new Vector2(0,28),new Vector2(560,24),MutedCyan,true);roomLabel.alignment=TextAlignmentOptions.Left;
+            string savedRoom=PlayerPrefs.GetString("GameJam.RoomName","MARTE-01").Trim();if(string.IsNullOrEmpty(savedRoom))savedRoom="MARTE-01";
+            if(session!=null)session.roomName=savedRoom;
+            roomCodeInput=CreateInputField(roomCard,"RoomCodeInput",savedRoom,"menu.room_code_placeholder",new Vector2(0,-14),new Vector2(560,48));
+            roomCodeInput.onValueChanged.AddListener(value=>{PlayerPrefs.SetString("GameJam.RoomName",value.Trim());if(session!=null)session.roomName=value.Trim();});
+            btnOnlineStart=CreateDatapadButton(form,"BtnOnline","menu.btn_join_online",new Vector2(0,portraitLayout?-128:-170),new Vector2(600,58),OnClickStartOnline,out var onlineBg,true);
+            onlineBg.color=new Color(.96f,.56f,.27f);
+            var onlineText=btnOnlineStart.GetComponentInChildren<TextMeshProUGUI>();onlineText.fontSize=22;onlineText.color=ChassisBezel;onlineText.fontStyle=FontStyles.Bold;
+            btnSoloStart=CreateDatapadButton(form,"BtnSolo","menu.btn_solo",new Vector2(0,portraitLayout?-202:-236),new Vector2(600,50),OnClickStartSolo,out var soloBg,true);
+            soloBg.color=SlotBg;btnSoloStart.GetComponentInChildren<TextMeshProUGUI>().fontSize=20;
+            var status=CreateRoundedPanel(form,"StatusBox",new Vector2(600,44),10,InsetBg);status.anchoredPosition=new Vector2(0,portraitLayout?-276:-296);
+            var dot=CreateRoundedPanel(status,"StatusDot",new Vector2(10,10),5,AmberAccent);dot.anchoredPosition=new Vector2(-276,0);statusDot=dot.GetComponent<TabletRoundedPanel>();
+            statusLabel=CreateLabel(status,"menu.status_ready",17,new Vector2(12,0),new Vector2(540,32),InkWhite,true);statusLabel.alignment=TextAlignmentOptions.Left;
+            if(portraitLayout)CreateLabel(form,"menu.connection_hint",17,new Vector2(0,-350),new Vector2(580,64),MutedCyan,true);
+            UpdateLanguageButtonsHighlight();
         }
 
         #endregion
@@ -416,6 +415,7 @@ namespace GameJam.UI
             // Chasis exterior de titanio
             var rim = CreateRoundedPanel(parent, "PauseRim", chassisSize, 32, ChassisRim);
             rim.anchoredPosition = Vector2.zero;
+            pauseChassis = rim;
 
             // Cuerpo mate
             var body = CreateRoundedPanel(rim, "PauseBody", chassisSize - new Vector2(8, 8), 28, ChassisMatte);
@@ -434,7 +434,7 @@ namespace GameJam.UI
             display.gameObject.AddComponent<RectMask2D>();
 
             // --- HEADER DE PAUSA ---
-            var title = CreateLabel(display, "pause.title", 20, new Vector2(0, 268), new Vector2(700, 28), InkWhite, true);
+            var title = CreateLabel(display, "pause.title", 28, new Vector2(0, 268), new Vector2(700, 42), InkWhite, true);
             title.alignment = TextAlignmentOptions.Center;
             title.fontStyle = FontStyles.Bold;
 
@@ -472,7 +472,7 @@ namespace GameJam.UI
             var btnResume = CreateDatapadButton(parent, "BtnResume", "pause.btn_resume", new Vector2(0, 150), new Vector2(520, 48), ResumeGame, out var resumeBg, true);
             resumeBg.color = new Color(0.00f, 0.45f, 0.52f, 0.95f);
             var resumeTxt = btnResume.GetComponentInChildren<TextMeshProUGUI>();
-            if (resumeTxt != null) { resumeTxt.fontSize = 14; resumeTxt.fontStyle = FontStyles.Bold; }
+            if (resumeTxt != null) { resumeTxt.fontSize = 20; resumeTxt.fontStyle = FontStyles.Bold; }
 
             // Botón Volver al Lobby
             var btnReturnLobby = CreateDatapadButton(parent, "BtnReturnLobby", "pause.btn_return_lobby", new Vector2(0, 92), new Vector2(520, 44), OnClickReturnToLobby, out var lobbyBg, true);
@@ -604,7 +604,7 @@ namespace GameJam.UI
             var card = CreateRoundedPanel(parent, name, size, 14, CardBg);
             card.anchoredPosition = anchoredPos;
             var outline = card.gameObject.AddComponent<Outline>();
-            outline.effectColor = new Color(0.00f, 0.92f, 0.88f, 0.25f);
+            outline.effectColor = new Color(0.5f, 0.65f, 0.75f, 0.15f);
             outline.effectDistance = new Vector2(1, -1);
             return card;
         }
@@ -629,7 +629,7 @@ namespace GameJam.UI
             };
             if (onClick != null) btn.onClick.AddListener(onClick);
 
-            var label = CreateLabel(rect, textOrKey, 12, Vector2.zero, size - new Vector2(12, 6), InkWhite, isLocalized);
+            var label = CreateLabel(rect, textOrKey, 18, Vector2.zero, size - new Vector2(12, 6), InkWhite, isLocalized);
             label.alignment = TextAlignmentOptions.Center;
 
             return btn;
@@ -640,21 +640,21 @@ namespace GameJam.UI
             var bgRect = CreateRoundedPanel(parent, name, size, 8, InsetBg);
             bgRect.anchoredPosition = anchoredPos;
             var outline = bgRect.gameObject.AddComponent<Outline>();
-            outline.effectColor = new Color(0.00f, 0.92f, 0.88f, 0.20f);
+            outline.effectColor = new Color(1f, 0.65f, 0.35f, 0.20f);
             outline.effectDistance = new Vector2(1, -1);
 
             var textRect = CreateRect("Text", bgRect, Vector2.zero, Vector2.one, Vector2.zero, new Vector2(-20, -8));
             var textComp = textRect.gameObject.AddComponent<TextMeshProUGUI>();
             textComp.font = fontAsset ?? TMP_Settings.defaultFontAsset;
-            textComp.fontSize = 13;
+            textComp.fontSize = 24;
             textComp.color = InkWhite;
             textComp.alignment = TextAlignmentOptions.Left;
 
             var phRect = CreateRect("Placeholder", bgRect, Vector2.zero, Vector2.one, Vector2.zero, new Vector2(-20, -8));
             var phComp = phRect.gameObject.AddComponent<TextMeshProUGUI>();
             phComp.font = fontAsset ?? TMP_Settings.defaultFontAsset;
-            phComp.fontSize = 13;
-            phComp.color = DimCyan;
+            phComp.fontSize = 22;
+            phComp.color = MutedCyan;
             phComp.alignment = TextAlignmentOptions.Left;
             var loc = phComp.gameObject.AddComponent<LocalizedText>();
             loc.Key = placeholderKey;
@@ -664,6 +664,13 @@ namespace GameJam.UI
             input.placeholder = phComp;
             input.text = initialText;
             input.characterLimit = 32;
+            input.lineType = TMP_InputField.LineType.SingleLine;
+            input.customCaretColor = true;
+            input.caretColor = AmberAccent;
+            input.selectionColor = new Color(1f,.65f,.35f,.28f);
+            input.targetGraphic = bgRect.GetComponent<TabletRoundedPanel>();
+            textComp.raycastTarget = false;
+            phComp.raycastTarget = false;
 
             return input;
         }
@@ -706,7 +713,10 @@ namespace GameJam.UI
             var rect = CreateRect("Label", parent, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), anchoredPos, size);
             var tmp = rect.gameObject.AddComponent<TextMeshProUGUI>();
             tmp.font = fontAsset ?? TMP_Settings.defaultFontAsset;
-            tmp.fontSize = fontSize;
+            tmp.fontSize = Mathf.Max(16, fontSize);
+            tmp.alignment = TextAlignmentOptions.Center;
+            tmp.textWrappingMode = size.y >= 48 ? TextWrappingModes.Normal : TextWrappingModes.NoWrap;
+            tmp.overflowMode = TextOverflowModes.Ellipsis;
             tmp.color = color;
             tmp.raycastTarget = false;
 
@@ -798,64 +808,66 @@ namespace GameJam.UI
 
         #region Control de Visibilidad y Pestañas
 
+        private static void SetGroup(CanvasGroup group,bool visible)
+        {
+            if(group==null)return;
+            group.alpha=visible?1:0;group.blocksRaycasts=visible;group.interactable=visible;
+            group.gameObject.SetActive(visible);
+        }
+        private void SyncCanvasVisibility()
+        {
+            bool visible=(startMenuGroup!=null && startMenuGroup.gameObject.activeSelf)
+                || (pauseMenuGroup!=null && pauseMenuGroup.gameObject.activeSelf);
+            if(rootCanvas!=null)rootCanvas.enabled=visible;
+            var raycaster=GetComponent<GraphicRaycaster>();if(raycaster!=null)raycaster.enabled=visible;
+            if(backdropObject!=null)backdropObject.SetActive(visible);
+        }
+        public void ApplySessionMenuState(bool visible,bool connected)
+        {
+            SetGroup(startMenuGroup,visible && !connected && IsLobbyScene);
+            SetGroup(pauseMenuGroup,visible && connected);
+            SyncCanvasVisibility();
+            bool menuVisible=(startMenuGroup!=null && startMenuGroup.gameObject.activeSelf)
+                || (pauseMenuGroup!=null && pauseMenuGroup.gameObject.activeSelf);
+            if(menuVisible){Cursor.lockState=CursorLockMode.None;Cursor.visible=true;}
+            else if(connected){Cursor.lockState=CursorLockMode.Locked;Cursor.visible=false;}
+            if(visible && connected)SwitchTab("Mission");
+        }
         public void SetStartMenuVisible(bool visible)
         {
-            // La terminal de inicio NUNCA debe mostrarse fuera del Lobby
-            if (visible && !IsLobbyScene)
-            {
-                visible = false;
-            }
-
-            if (startMenuGroup != null)
-            {
-                startMenuGroup.alpha = visible ? 1f : 0f;
-                startMenuGroup.blocksRaycasts = visible;
-                startMenuGroup.interactable = visible;
-            }
-
-            if (visible)
-            {
-                Cursor.lockState = CursorLockMode.None;
-                Cursor.visible = true;
-            }
-            else if (pauseMenuGroup == null || pauseMenuGroup.alpha < 0.5f)
-            {
-                if (session != null && session.Runner != null && session.Runner.IsRunning)
-                {
-                    Cursor.lockState = CursorLockMode.Locked;
-                    Cursor.visible = false;
-                }
-            }
+            bool connected=session!=null && session.Runner!=null && session.Runner.IsRunning;
+            SetGroup(startMenuGroup,visible && IsLobbyScene && !connected);
+            SyncCanvasVisibility();
         }
-
         public void SetPauseMenuVisible(bool visible)
         {
-            if (pauseMenuGroup != null)
-            {
-                pauseMenuGroup.alpha = visible ? 1f : 0f;
-                pauseMenuGroup.blocksRaycasts = visible;
-                pauseMenuGroup.interactable = visible;
-            }
-
-            if (visible)
-            {
-                Cursor.lockState = CursorLockMode.None;
-                Cursor.visible = true;
-                SwitchTab("Mission");
-            }
-            else if (startMenuGroup == null || startMenuGroup.alpha < 0.5f)
-            {
-                if (session != null && session.Runner != null && session.Runner.IsRunning)
-                {
-                    Cursor.lockState = CursorLockMode.Locked;
-                    Cursor.visible = false;
-                }
-            }
+            bool connected=session!=null && session.Runner!=null && session.Runner.IsRunning;
+            if (visible) ApplySessionMenuState(true,connected);
+            else { SetGroup(pauseMenuGroup,false); SyncCanvasVisibility(); }
         }
-
-        public void OpenPauseMenu() => SetPauseMenuVisible(true);
-
-        public void ResumeGame() => SetPauseMenuVisible(false);
+        public void OpenPauseMenu(){if(session!=null)session.SetMenu(true);}
+        public void ResumeGame(){if(session!=null)session.SetMenu(false);else ApplySessionMenuState(false,false);}
+        private void FitDatapads()
+        {
+            if(rootCanvas==null)return;
+            var size=((RectTransform)rootCanvas.transform).rect.size;
+            if(size.x<=0 || size.y<=0)return;
+            foreach(var rect in new[]{startChassis,pauseChassis})
+                if(rect!=null)rect.localScale=Vector3.one*Mathf.Min(1.4f,Mathf.Min(size.x*.94f/rect.sizeDelta.x,size.y*.90f/rect.sizeDelta.y));
+            lastCanvasSize=size;
+        }
+        private void UpdateResponsiveLayout()
+        {
+            bool portrait=Screen.width<Screen.height*1.15f;
+            if(portrait!=portraitLayout && startMenuGroup!=null && startMenuGroup.gameObject.activeSelf && (session==null || !session.Busy))
+            {
+                if(startChassis!=null){startChassis.gameObject.SetActive(false);Destroy(startChassis.gameObject);}
+                BuildStartTerminalDatapad(startMenuGroup.transform);
+            }
+            var size=((RectTransform)rootCanvas.transform).rect.size;
+            if(lastScreenWidth!=Screen.width || lastScreenHeight!=Screen.height || size!=lastCanvasSize)
+            {lastScreenWidth=Screen.width;lastScreenHeight=Screen.height;FitDatapads();}
+        }
 
         public void SwitchTab(string tabName)
         {
@@ -889,12 +901,14 @@ namespace GameJam.UI
             if (string.IsNullOrEmpty(room)) room = "MARTE-01";
             session.roomName = room;
 
+            PlayerPrefs.Save();
             _ = session.StartSession(false);
         }
 
         private void OnClickStartSolo()
         {
             if (session == null || session.Busy) return;
+            PlayerPrefs.Save();
             _ = session.StartSession(true);
         }
 
@@ -938,6 +952,11 @@ namespace GameJam.UI
             if (session == null) return;
 
             bool busy = session.Busy;
+            if (playerNameInput != null) playerNameInput.interactable = !busy;
+            if (roomCodeInput != null) roomCodeInput.interactable = !busy;
+            if (btnStartLangEs != null) btnStartLangEs.interactable = !busy;
+            if (btnStartLangEn != null) btnStartLangEn.interactable = !busy;
+            if (btnStartLangPt != null) btnStartLangPt.interactable = !busy;
             if (btnOnlineStart != null) btnOnlineStart.interactable = !busy;
             if (btnSoloStart != null) btnSoloStart.interactable = !busy;
 
@@ -1096,7 +1115,7 @@ namespace GameJam.UI
             widget.Root = rowCard.gameObject;
 
             var outline = rowCard.gameObject.AddComponent<Outline>();
-            outline.effectColor = new Color(0.00f, 0.92f, 0.88f, 0.20f);
+            outline.effectColor = new Color(1f, 0.65f, 0.35f, 0.20f);
             outline.effectDistance = new Vector2(1, -1);
 
             // Icono de casco

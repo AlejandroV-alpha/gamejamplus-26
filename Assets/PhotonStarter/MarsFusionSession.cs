@@ -200,10 +200,7 @@ namespace GameJam.Multiplayer
             MenuOpen = visible;
             if (GameJam.UI.SciFiGameMenuManager.Instance != null)
             {
-                if (Runner != null && Runner.IsRunning)
-                    GameJam.UI.SciFiGameMenuManager.Instance.SetPauseMenuVisible(visible);
-                else
-                    GameJam.UI.SciFiGameMenuManager.Instance.SetStartMenuVisible(visible);
+                GameJam.UI.SciFiGameMenuManager.Instance.ApplySessionMenuState(visible, Runner != null && Runner.IsRunning);
             }
             else
             {
