@@ -8,8 +8,10 @@ public sealed class ReksaiFusionAreaSpawner : NetworkBehaviour
 
     public override void FixedUpdateNetwork()
     {
+        if (!GameJam.Multiplayer.MarsFusionSession.CanSpawnNow(Runner)
+            || Object == null || !Object.IsValid || !StateBufferIsValid) return;
         if (!HasStateAuthority || DidSpawn || enemyPrefab == null) return;
-        Runner.Spawn(enemyPrefab, transform.position, transform.rotation);
-        DidSpawn = true;
+        var enemy = Runner.Spawn(enemyPrefab, transform.position, transform.rotation);
+        if (enemy != null) DidSpawn = true;
     }
 }

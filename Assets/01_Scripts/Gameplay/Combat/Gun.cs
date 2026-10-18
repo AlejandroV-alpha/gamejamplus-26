@@ -37,6 +37,9 @@ namespace GameJam.Combat
         [SerializeField, Min(0.01f)] private float recoilDuration = 0.12f;
         [SerializeField] private LayerMask hitLayers = ~0;
         [SerializeField] private bool allowFriendlyFire;
+        [SerializeField, Min(.2f)] private float reloadDuration = 1.6f;
+        [Networked] private TickTimer reloadTimer { get; set; }
+        public bool IsReloading => IsReady() && reloadTimer.IsRunning && !reloadTimer.Expired(Runner);
 
         // Fusion conserva la municion individual dentro del objeto del astronauta.
         [Networked] private int currentAmmo { get; set; }
@@ -74,6 +77,7 @@ namespace GameJam.Combat
         public override void Spawned()
         {
             nextShotTime = 0f;
+            if (HasStateAuthority) reloadTimer = TickTimer.None;
             if (HasStateAuthority)
             {
                 currentAmmo = Mathf.Max(1, magazineSize);
@@ -83,6 +87,20 @@ namespace GameJam.Combat
         /// <summary>
         /// Lee disparo y recarga despues de actualizar la camara del astronauta.
         /// </summary>
+        public override void FixedUpdateNetwork()
+        {
+            if (!HasStateAuthority || !reloadTimer.IsRunning) return;
+            if (avatar == null || !avatar.IsAlive)
+            {
+                reloadTimer = TickTimer.None;
+                return;
+            }
+            if (!reloadTimer.Expired(Runner)) return;
+            currentAmmo = Mathf.Max(1, magazineSize);
+            reloadTimer = TickTimer.None;
+            Debug.Log("[Gun] Recarga completada.", this);
+        }
+
         private void LateUpdate()
         {
             if (!CanUseGun())
@@ -111,7 +129,7 @@ namespace GameJam.Combat
         /// </summary>
         public void Shoot()
         {
-            if (!CanUseGun() || firePoint == null)
+            if (!CanUseGun() || reloadTimer.IsRunning || !character.IsAimReady || firePoint == null)
             {
                 return;
             }
@@ -153,18 +171,18 @@ namespace GameJam.Combat
         }
 
         /// <summary>
-        /// Llena el cargador al instante sin consumir reservas.
+        /// Inicia una recarga temporizada; entrega municion solamente al completarse.
         /// </summary>
         public void Reload()
         {
-            if (!CanUseGun() || currentAmmo >= magazineSize)
+            if (!CanUseGun() || reloadTimer.IsRunning || currentAmmo >= magazineSize)
             {
                 return;
             }
 
-            currentAmmo = Mathf.Max(1, magazineSize);
+            reloadTimer = TickTimer.CreateFromSeconds(Runner, Mathf.Max(.2f, reloadDuration));
             RpcReloadEffect();
-            Debug.Log("[Gun] Recarga: " + currentAmmo + " / " + magazineSize, this);
+            Debug.Log("[Gun] Recargando; disparo bloqueado hasta terminar.", this);
         }
 
         /// <summary>
@@ -276,10 +294,10 @@ namespace GameJam.Combat
             MarsFusionAvatar targetAvatar = target.GetComponentInParent<MarsFusionAvatar>();
             if (targetAvatar != null)
             {
-                if (!allowFriendlyFire || targetAvatar.Runner != Runner)
-                {
-                    return;
-                }
+                if (targetAvatar.Runner != Runner || targetAvatar == avatar) return;
+                // The victim's authority validates protection and applies its own KCC push.
+                targetAvatar.RequestFriendlyPush(avatar);
+                if (!allowFriendlyFire) return;
                 if (targetAvatar.Object == null || !targetAvatar.Object.IsValid)
                 {
                     return;
@@ -506,7 +524,8 @@ namespace GameJam.Combat
             {
                 return false;
             }
-            if (avatar.TabletOpen || characterInput == null)
+            if ((avatar.GetComponent<GameJam.Environment.Mars.PlayerSandstorm>()?.IsTumbling ?? false)
+                || avatar.TabletOpen || characterInput == null)
             {
                 return false;
             }

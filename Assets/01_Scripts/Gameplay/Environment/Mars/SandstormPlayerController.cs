@@ -214,6 +214,7 @@ namespace GameJam.Environment.Mars
             }
 
             // Una sola llamada conserva la gravedad, el salto y las colisiones.
+            if (avatar != null) finalVelocity = avatar.ApplyFriendlyPush(finalVelocity);
             KCC.Move(finalVelocity, jumpImpulse);
         }
 

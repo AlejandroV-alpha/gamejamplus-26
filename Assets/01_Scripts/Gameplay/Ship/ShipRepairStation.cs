@@ -131,7 +131,7 @@ namespace GameJam.Ship
 
         private void OnGUI()
         {
-            if (Repaired && Object != null && Object.IsValid && ReturnToLobbyTimer.IsRunning)
+            if (IsReady() && Repaired && ReturnToLobbyTimer.IsRunning)
             {
                 float remaining = ReturnToLobbyTimer.RemainingTime(Runner) ?? 0;
                 var style = new GUIStyle(GUI.skin.box);
@@ -220,7 +220,7 @@ namespace GameJam.Ship
                 return false;
             }
 
-            return StateBufferIsValid;
+            return Runner != null && Runner.IsRunning && StateBufferIsValid;
         }
     }
 }

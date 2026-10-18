@@ -68,7 +68,9 @@ namespace GameJam.Mars
             projector.enabled = false;
             var mark = instance.GetComponentInChildren<MeshRenderer>();
             mark.sharedMaterial = right ? profile.rightMark : profile.leftMark;
-            mark.transform.localScale = new Vector3(profile.footprintSize.x, profile.footprintSize.y, 1);
+            // The ground-facing quad is viewed from its back: compensate its mirrored X axis,
+            // preserving the anatomical left/right imprint and toe direction.
+            mark.transform.localScale = new Vector3(-profile.footprintSize.x, profile.footprintSize.y, 1);
             instance.transform.position = hit.point + hit.normal * .012f;
             Vector3 forward = Vector3.ProjectOnPlane(transform.forward, hit.normal).normalized;
             instance.transform.rotation = Quaternion.LookRotation(hit.normal, forward);

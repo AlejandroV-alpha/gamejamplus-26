@@ -94,7 +94,16 @@ namespace Starter.ThirdPersonCharacter
         public override void FixedUpdateNetwork()
         {
             if (!HasStateAuthority) return;
-            ProcessInput(PrepareMovementInput(PlayerInput.CurrentInput));
+            var movementInput = PrepareMovementInput(PlayerInput.CurrentInput);
+            if (_sandstorm != null && _sandstorm.IsTumbling)
+            {
+                movementInput.MoveDirection = Vector2.zero;
+                movementInput.Jump = false;
+                movementInput.Sprint = false;
+                movementInput.AimToggle = false;
+                _isAiming = false;
+            }
+            ProcessInput(movementInput);
 
             if (KCC.IsGrounded)
             {
@@ -330,8 +339,13 @@ namespace Starter.ThirdPersonCharacter
             }
 
             var finalVelocity = _sandstorm != null ? _sandstorm.ModifyMovementVelocity(_moveVelocity) : _moveVelocity;
+            if (_avatar != null) finalVelocity = _avatar.ApplyFriendlyPush(finalVelocity);
             KCC.Move(finalVelocity, jumpImpulse);
         }
+
+        // Match firing permission to the visible, settled aiming pose.
+        public bool IsAimReady => IsAimingPose() && _aimBlend >= CrosshairAimThreshold
+            && PlayerInput != null && PlayerInput.ControlsEnabled;
 
         private bool IsAimingPose()
         {

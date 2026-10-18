@@ -24,6 +24,12 @@ namespace GameJam.Multiplayer
         public bool HasHealthSource => HealthSource != null;
         // Until the health component is supplied, keep exploration and interaction enabled.
         public bool IsAlive => HealthSource == null || HealthSource.IsAlive;
+        [Networked] private TickTimer friendlyPushTimer { get; set; }
+        [Networked] private TickTimer friendlyPushProtection { get; set; }
+        [Networked] private Vector3 friendlyPushVelocity { get; set; }
+        private const float FriendlyPushDuration = .8f;
+        private const float FriendlyPushImmunity = 4f;
+        private const float FriendlyPushRange = 25f;
         [Networked] public float Stamina { get; protected set; }
         [Networked] public NetworkBool TabletOpen { get; private set; }
         [Networked] public byte VoiceLevel { get; private set; }
@@ -68,7 +74,12 @@ namespace GameJam.Multiplayer
             if (healthSource == null)
                 foreach (var component in GetComponents<MonoBehaviour>())
                     if (component is IPlayerHealth) { healthSource = component; break; }
-            if (HasStateAuthority) Stamina = 100;
+            if (HasStateAuthority)
+            {
+                Stamina = 100;
+                friendlyPushTimer = TickTimer.None;
+                friendlyPushProtection = TickTimer.CreateFromSeconds(Runner, 5f);
+            }
             if (HasStateAuthority && !IdentityInitialized)
             {
                 SuitColorIndex = byte.MaxValue; // Neutral until the room coordinator confirms a slot.
@@ -106,9 +117,49 @@ namespace GameJam.Multiplayer
             if (HasStateAuthority) Local = this;
         }
 
+        public void RequestFriendlyPush(MarsFusionAvatar shooter)
+        {
+            if (Object == null || !Object.IsValid || shooter == null || shooter == this
+                || shooter.Object == null || !shooter.Object.IsValid || !shooter.HasStateAuthority
+                || shooter.Runner != Runner) return;
+            RPC_RequestFriendlyPush(shooter.Object.Id);
+        }
+
+        [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
+        private void RPC_RequestFriendlyPush(NetworkId shooterId, RpcInfo info = default)
+        {
+            if (!IsAlive || TabletOpen || (friendlyPushProtection.IsRunning && !friendlyPushProtection.Expired(Runner))
+                || (input != null && !input.ControlsEnabled)
+                || (GetComponent<PlayerInteractionAction>()?.IsBusy ?? false)
+                || (GetComponent<PlayerHurtReaction>()?.IsReacting ?? false)
+                || (GetComponent<GameJam.Environment.Mars.PlayerSandstorm>()?.IsTumbling ?? false)) return;
+            if (!Runner.TryFindObject(shooterId, out var shooterObject) || shooterObject == Object
+                || shooterObject.StateAuthority != info.Source) return;
+            var shooter = shooterObject.GetComponent<MarsFusionAvatar>();
+            var kcc = GetComponent<Fusion.Addons.SimpleKCC.SimpleKCC>();
+            if (shooter == null || !shooter.IsAlive || kcc == null || !kcc.IsGrounded) return;
+            Vector3 direction = transform.position - shooter.transform.position;
+            if (direction.sqrMagnitude > FriendlyPushRange * FriendlyPushRange) return;
+            direction.y = 0f;
+            if (direction.sqrMagnitude < .01f) return;
+            friendlyPushVelocity = direction.normalized * 11f;
+            friendlyPushTimer = TickTimer.CreateFromSeconds(Runner, FriendlyPushDuration);
+            friendlyPushProtection = TickTimer.CreateFromSeconds(Runner, FriendlyPushImmunity);
+            Debug.Log("[Player push] Empujon recibido; protegido durante 4 segundos.", this);
+        }
+
+        // Add to the existing single KCC.Move; never teleport, stack impulses or disable controls.
+        public Vector3 ApplyFriendlyPush(Vector3 velocity)
+        {
+            if (!HasStateAuthority || !IsAlive || !friendlyPushTimer.IsRunning || friendlyPushTimer.Expired(Runner))
+                return velocity;
+            float weight = Mathf.Clamp01(friendlyPushTimer.RemainingTime(Runner).GetValueOrDefault() / FriendlyPushDuration);
+            return (GetComponent<GameJam.Environment.Mars.PlayerSandstorm>()?.IsDowned ?? false) ? Vector3.zero : velocity + friendlyPushVelocity * weight;
+        }
+
         public void ToggleTablet()
         {
-            if (Object != null && Object.IsValid && HasStateAuthority && IsAlive && tablet != null)
+            if (Object != null && Object.IsValid && HasStateAuthority && IsAlive && !(GetComponent<GameJam.Environment.Mars.PlayerSandstorm>()?.IsDowned ?? false) && tablet != null)
                 TabletOpen = !TabletOpen;
         }
 
@@ -201,7 +252,7 @@ namespace GameJam.Multiplayer
                 if (VoiceLevel != level) VoiceLevel = level;
             }
             bool tabletVisible = TabletOpen || (ui != null && ui.IsVisible);
-            input.ControlsEnabled = !menu && !tabletVisible && IsAlive && !SceneTransitionVideo.IsBlockingInput && !LobbyDepartureEffects.IsBlockingInput && !PortalWhiteTransition.IsBlockingInput && !(GetComponent<PlayerInteractionAction>()?.IsBusy ?? false) && !(GetComponent<GameJam.Combat.PlayerHurtReaction>()?.IsReacting ?? false);
+            input.ControlsEnabled = !menu && !tabletVisible && IsAlive && !(GetComponent<GameJam.Environment.Mars.PlayerSandstorm>()?.IsDowned ?? false) && !SceneTransitionVideo.IsBlockingInput && !LobbyDepartureEffects.IsBlockingInput && !PortalWhiteTransition.IsBlockingInput && !(GetComponent<PlayerInteractionAction>()?.IsBusy ?? false) && !(GetComponent<GameJam.Combat.PlayerHurtReaction>()?.IsReacting ?? false);
             bool cursor = menu || tabletVisible || !IsAlive;
             Cursor.lockState = cursor ? CursorLockMode.None : CursorLockMode.Locked;
             Cursor.visible = cursor;

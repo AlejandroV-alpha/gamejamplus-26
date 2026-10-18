@@ -90,9 +90,12 @@ namespace GameJam.Combat
             {
                 if (playing)
                 {
-                    body.localPosition = restPosition;
-                    body.localRotation = restRotation;
-                    body.localScale = restScale;
+                    if (!(GetComponent<GameJam.Environment.Mars.PlayerSandstorm>()?.IsDowned ?? false))
+                    {
+                        body.localPosition = restPosition;
+                        body.localRotation = restRotation;
+                        body.localScale = restScale;
+                    }
                     playing = false;
                 }
                 return;
@@ -131,9 +134,15 @@ namespace GameJam.Combat
             float hit = Mathf.Exp(-6f * t) * Mathf.Cos(t * Mathf.PI * 2.5f) * strength;
             float jitter = Mathf.Sin(t * 70f) * (1f - t) * shake * strength;
 
-            body.localPosition = restPosition - restRotation * Vector3.forward * recoilDistance * hit;
-            body.localRotation = restRotation * Quaternion.Euler(recoilAngle * hit, jitter, jitter * 0.5f);
-            float squash = 0.12f * Mathf.Max(0f, hit);
+            bool lying = GetComponent<GameJam.Environment.Mars.PlayerSandstorm>()?.IsDowned ?? false;
+            // The storm samples a prone humanoid pose before this reaction. Keep the
+            // root close to the floor and apply the existing pain mostly to the limbs.
+            float rootStrength = lying ? .2f : 1f;
+            Vector3 basePosition = lying ? body.localPosition : restPosition;
+            Quaternion baseRotation = lying ? body.localRotation : restRotation;
+            body.localPosition = basePosition - baseRotation * Vector3.forward * recoilDistance * hit * rootStrength;
+            body.localRotation = baseRotation * Quaternion.Euler(recoilAngle * hit * rootStrength, jitter * rootStrength, jitter * 0.5f * rootStrength);
+            float squash = (lying ? .025f : .12f) * Mathf.Max(0f, hit);
             body.localScale = Vector3.Scale(restScale, new Vector3(1f + squash, 1f - squash, 1f + squash));
 
             Rotate(spine, new Vector3(recoilAngle * 0.8f * hit, 0f, 0f));

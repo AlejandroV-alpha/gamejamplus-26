@@ -1571,6 +1571,7 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 4294967295
   allowFriendlyFire: 0
+  reloadDuration: 1.6
 --- !u!114 &8756546705487809127
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1587,6 +1588,7 @@ MonoBehaviour:
   _CurrentHealth: 0
   _MaxHealth: 0
   _IsAlive: 0
+  _DeathSequence: 0
 --- !u!114 &4433360274695362970
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1604,6 +1606,9 @@ MonoBehaviour:
   gustProbability: 0.15
   gustStrength: 2
   gustDuration: 0.35
+  standUpClip: {fileID: 7400000, guid: a7f55d5ad81116145bb68d53974eda9a, type: 2}
+  fallDuration: 0.55
+  airbornePushSpeed: 4.5
 --- !u!114 &6937095546844158768
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1719,6 +1724,26 @@ MonoBehaviour:
   decalPrefab: {fileID: 1961025457343015111, guid: 3fa22a2a6d8ea4c4086ed372255277c2, type: 3}
   leftFoot: {fileID: 2478181999759414505}
   rightFoot: {fileID: 3627647319763041435}
+--- !u!114 &874000000000000001
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3827797598262270737}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4b440753d0d84db68092a689a576a9c7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GameJam.Survival.SurvivalRevive
+  reviveDuration: 10
+  reviveRange: 2.5
+  reviveHealth: 30
+  confirmationInterval: 0.2
+  confirmationTimeout: 1
+  _Rescuer: {fileID: 0}
+  _ActiveAttempt: 0
+  _AuthorityGeneration: 0
 --- !u!1 &3836924219179165295
 GameObject:
   m_ObjectHideFlags: 0
@@ -3470,20 +3495,3 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 3548260476922820544, guid: cd976b636adfaeb4988ea2a014ea2581, type: 3}
   m_PrefabInstance: {fileID: 1199793683982394380}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &874000000000000001
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3827797598262270737}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4b440753d0d84db68092a689a576a9c7, type: 3}
-  m_Name:
-  m_EditorClassIdentifier: Assembly-CSharp::GameJam.Survival.SurvivalRevive
-  reviveDuration: 10
-  reviveRange: 2.5
-  reviveHealth: 30
-  confirmationInterval: 0.2
-  confirmationTimeout: 1

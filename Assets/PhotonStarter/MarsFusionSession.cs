@@ -49,6 +49,7 @@ namespace GameJam.Multiplayer
             {
                 if (runner == null || !runner.IsRunning) continue;
                 Runner = runner;
+                FusionLoadDiagnostics.Attach(runner);
                 runner.GetComponent<NetworkEvents>()?.OnShutdown.AddListener(OnShutdown);
                 Status = "Conectado — " + runner.SessionInfo.Name;
                 LogStage("runner-adopted", "scene=" + SceneManager.GetActiveScene().name);
@@ -85,6 +86,7 @@ namespace GameJam.Multiplayer
             Busy = true;
             var runner = Instantiate(runnerPrefab);
             Runner = runner;
+            FusionLoadDiagnostics.Attach(runner);
             LogStage("runner-created");
             try
             {
@@ -132,8 +134,65 @@ namespace GameJam.Multiplayer
             finally { Busy = false; }
         }
 
+        private Coroutine pendingPlayerSpawn;
+        private NetworkRunner pendingPlayerRunner;
+
+        public static bool CanSpawnNow(NetworkRunner runner)
+        {
+            if (runner == null || !runner.IsRunning || !runner.CanSpawn || runner.IsSceneManagerBusy) return false;
+            // In Shared, GetNextId reads Client.ServerConnection.Counter. CanSpawn
+            // only checks topology and remains true even without that connection.
+            if (runner.GameMode == GameMode.Shared)
+                return runner.IsConnectedToServer && runner.IsInSession
+                    && runner.LocalPlayer.IsRealPlayer && runner.IsPlayerValid(runner.LocalPlayer);
+            return true;
+        }
+
         public void SpawnLocalPlayer(NetworkRunner runner)
         {
+            if (runner == null || runner != Runner || playerPrefab == null) return;
+            if (pendingPlayerSpawn != null && pendingPlayerRunner == runner) return;
+            if (pendingPlayerSpawn != null) StopCoroutine(pendingPlayerSpawn);
+            pendingPlayerRunner = runner;
+            pendingPlayerSpawn = StartCoroutine(WaitForPlayerSpawn(runner));
+        }
+
+        private System.Collections.IEnumerator WaitForPlayerSpawn(NetworkRunner runner)
+        {
+            // Always yield before completion, so the returned Coroutine handle is valid.
+            yield return null;
+            float deadline = Time.realtimeSinceStartup + 90f;
+            int readyFrames = 0;
+            try
+            {
+                while (runner != null && runner == Runner && runner.IsRunning)
+                {
+                    readyFrames = CanSpawnNow(runner) ? readyFrames + 1 : 0;
+                    if (readyFrames >= 2)
+                    {
+                        SpawnLocalPlayerNow(runner);
+                        yield break;
+                    }
+                    if (Time.realtimeSinceStartup >= deadline)
+                    {
+                        LogStage("spawn-timeout", "serverConnected=" + runner.IsConnectedToServer
+                            + " inSession=" + runner.IsInSession + " localPlayer=" + runner.LocalPlayer);
+                        yield break;
+                    }
+                    yield return null;
+                }
+                LogStage("spawn-cancelled", "runner-stopped-or-replaced");
+            }
+            finally { pendingPlayerSpawn = null; pendingPlayerRunner = null; }
+        }
+
+        private void SpawnLocalPlayerNow(NetworkRunner runner)
+        {
+            if (runner != Runner || !CanSpawnNow(runner) || playerPrefab == null)
+            {
+                LogStage("spawn-deferred", "runner-not-ready");
+                return;
+            }
             var existing = runner.GetPlayerObject(runner.LocalPlayer);
             var position = spawnPoint != null ? spawnPoint.position : transform.position;
             var offset = UnityEngine.Random.insideUnitCircle * 1.5f;
@@ -152,6 +211,7 @@ namespace GameJam.Multiplayer
                 return;
             }
             var player = runner.Spawn(playerPrefab, position, spawnPoint != null ? spawnPoint.rotation : Quaternion.identity, runner.LocalPlayer);
+            if (player == null) { LogStage("spawn-deferred", "spawn-returned-null"); return; }
             runner.SetPlayerObject(runner.LocalPlayer, player);
             LogStage("player-spawned", "valid=" + (player != null && player.IsValid));
         }
@@ -190,9 +250,16 @@ namespace GameJam.Multiplayer
                 if (!curScene.Contains("Loby") && !curScene.Contains("Lobby"))
                 {
                     int lobbyIndex = SceneUtility.GetBuildIndexByScenePath("Assets/00_Scenes/j_LobyDeEspera.unity");
-                    if (lobbyIndex >= 0) SceneManager.LoadScene(lobbyIndex);
+                    if (lobbyIndex >= 0) StartCoroutine(ReturnToLobbyAfterShutdown(lobbyIndex));
                 }
             }
+        }
+
+        private System.Collections.IEnumerator ReturnToLobbyAfterShutdown(int lobbyIndex)
+        {
+            // Leave Fusion's shutdown/update callback before unloading its scene objects.
+            yield return null;
+            if (Application.isPlaying && Runner == null) SceneManager.LoadSceneAsync(lobbyIndex);
         }
 
         public void SetMenu(bool visible)
