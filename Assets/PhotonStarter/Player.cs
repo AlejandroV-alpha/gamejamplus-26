@@ -20,6 +20,7 @@ namespace Starter.ThirdPersonCharacter
         public Transform CameraPivot;
         public Transform CameraHandle;
         public Transform ShoulderCameraHandle;
+        public GameObject CrosshairPrefab;
 
         [Header("Movement Setup")]
         public float WalkSpeed = 2f;
@@ -68,6 +69,7 @@ namespace Starter.ThirdPersonCharacter
         private CinemachineBlendDefinition _previousBlend;
         private bool _blendOverridden;
         private GameObject _crosshair;
+        private bool _ownsCrosshair;
         private const float CrosshairAimThreshold = 0.85f;
         private GameJam.Multiplayer.MarsFusionAvatar _avatar;
         private int _handsLayer = -1;
@@ -213,12 +215,23 @@ namespace Starter.ThirdPersonCharacter
             _blendOverridden = false;
             _brain = null;
             if (_crosshair != null)
-                _crosshair.SetActive(false);
+            {
+                if (_ownsCrosshair) Destroy(_crosshair);
+                else _crosshair.SetActive(false);
+            }
             _crosshair = null;
+            _ownsCrosshair = false;
         }
 
         private void UpdateCrosshair()
         {
+            if (_crosshair == null && CrosshairPrefab != null)
+            {
+                _crosshair = Instantiate(CrosshairPrefab);
+                _crosshair.name = "Local Player Crosshair";
+                DontDestroyOnLoad(_crosshair);
+                _ownsCrosshair = true;
+            }
             if (_crosshair == null)
             {
                 var canvases = FindObjectsByType<Canvas>(FindObjectsInactive.Include, FindObjectsSortMode.None);
@@ -232,7 +245,7 @@ namespace Starter.ThirdPersonCharacter
             }
 
             if (_crosshair != null)
-                _crosshair.SetActive(_aimBlend >= CrosshairAimThreshold);
+                _crosshair.SetActive(_aimBlend >= CrosshairAimThreshold && PlayerInput.ControlsEnabled);
         }
 
         private void ProcessInput(GameplayInput input)

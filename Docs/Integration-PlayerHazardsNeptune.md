@@ -51,3 +51,28 @@ consola. El cambio de prefab de esa prueba solo se hizo en Play.
 
 La validación no sustituye una prueba online de combate, peligros y cambio de
 planeta entre varios clientes.
+
+## Corrección de selección del jugador en el lobby
+
+La escena del lobby heredaba `j_FusionAstronaut`, sin pistola. Ese jugador
+persiste al viajar a Marte, aunque la sesión de Marte apunte a otro prefab.
+Se cambió el lobby a `A_FusionAstronaut`, que contiene la pistola y las
+referencias más recientes de rig y cámara al hombro. `A_CombatAstronaut`
+conserva su uso como variante de prueba y no sustituye al rig más reciente.
+
+La mira anterior existía como `CrosshairCanvas` solo en Marte. Ahora
+`Player.CrosshairPrefab` crea una mira del propietario local, con el mismo
+sprite `Crosshair_04`, que persiste entre escenas y se destruye al despawn.
+Se asignó a `A_FusionAstronaut` y `A_CombatAstronaut`. Solo se muestra durante
+el apuntado y con los controles habilitados. La búsqueda del canvas antiguo
+se conserva como compatibilidad cuando no hay prefab asignado.
+
+Se comprobó el spawn real del lobby con `A_FusionAstronaut`, las mallas de la
+pistola activas, la mira visible al apuntar y un disparo que consume munición,
+sin errores de consola.
+
+El `Gun` de `A_FusionAstronaut` también tenía `tracer` sin asignar. Se añadió
+el hijo `Shot Tracer` con LineRenderer, el material canónico `GunTracer` y una
+duración de 0.12 segundos. Usa el RPC visual existente y conserva el efecto de
+impacto. En Single se comprobó que un disparo consume munición, habilita la
+línea con sus extremos y la deshabilita después, sin errores.

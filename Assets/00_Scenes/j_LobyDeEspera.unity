@@ -15927,12 +15927,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2694dc8cb4785d44b9fc91411ed14e19, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameJam.Multiplayer.MarsFusionSession
-  playerPrefab: {fileID: 3082566752617341179, guid: 652ba36291f1f9c47a5578e744802e8c, type: 3}
+  playerPrefab: {fileID: 3082566752617341179, guid: 2624f5be763fda24594426a730f70743, type: 3}
   runnerPrefab: {fileID: 2382109156329011261, guid: 8878f9c56c69e57429bba54e3662b05d, type: 3}
   spawnPoint: {fileID: 1504726126}
   maxPlayers: 4
   roomName: Loby-Coop
   groundProbeHeight: 1.5
+  planetLabel: MARTE
 --- !u!4 &1445851136
 Transform:
   m_ObjectHideFlags: 0
