@@ -66,7 +66,15 @@ namespace GameJam.Environment.Mars
             {
                 return;
             }
-            ProcessInput(PlayerInput.CurrentInput);
+            var input = PlayerInput.CurrentInput;
+            if (!PlayerInput.ControlsEnabled || (avatar != null && !avatar.IsAlive))
+            {
+                input.MoveDirection = Vector2.zero;
+                input.Sprint = false;
+                input.Jump = false;
+                input.AimToggle = false;
+            }
+            ProcessInput(input);
 
             if (KCC.IsGrounded)
             {
@@ -152,8 +160,12 @@ namespace GameJam.Environment.Mars
             {
                 canSprint = avatar.Stamina > 0f;
             }
+            var survivalAvatar = avatar as GameJam.Survival.SurvivalAvatar;
+            bool sprinting = survivalAvatar != null
+                ? survivalAvatar.SimulateSprint(input.Sprint, input.MoveDirection.sqrMagnitude > 0.01f)
+                : input.Sprint && canSprint;
             float speed = WalkSpeed;
-            if (input.Sprint && canSprint)
+            if (sprinting)
             {
                 speed = SprintSpeed;
             }

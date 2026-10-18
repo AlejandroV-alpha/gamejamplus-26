@@ -1,4 +1,5 @@
 using Fusion;
+using GameJam.Survival;
 using UnityEngine;
 
 namespace GameJam.Combat
@@ -7,7 +8,7 @@ namespace GameJam.Combat
     /// Proporciona al avatar su unica vida sincronizada y recibe dano con autoridad.
     /// </summary>
     [DisallowMultipleComponent]
-    public sealed class PlayerHealth : NetworkBehaviour, IPlayerHealth
+    public class PlayerHealth : NetworkBehaviour, IPlayerHealth
     {
         [SerializeField, Min(1f)] private float startingHealth = 100f;
 
@@ -15,6 +16,8 @@ namespace GameJam.Combat
         [Networked] public float CurrentHealth { get; private set; }
         [Networked] public float MaxHealth { get; private set; }
         [Networked] public bool IsAlive { get; private set; }
+
+        [Networked] public uint DeathSequence { get; private set; }
 
         private bool deathAnnounced;
 
@@ -104,6 +107,10 @@ namespace GameJam.Combat
 
             CurrentHealth = Mathf.Max(0f, CurrentHealth - damage);
             IsAlive = CurrentHealth > 0f;
+            if (!IsAlive)
+            {
+                DeathSequence++;
+            }
             Debug.Log("[PlayerHealth] Vida: " + CurrentHealth + " / " + MaxHealth, this);
         }
 
@@ -112,8 +119,13 @@ namespace GameJam.Combat
         /// </summary>
         public override void Render()
         {
-            if (!IsReady() || IsAlive)
+            if (!IsReady())
             {
+                return;
+            }
+            if (IsAlive)
+            {
+                deathAnnounced = false;
                 return;
             }
             if (deathAnnounced)
@@ -123,6 +135,25 @@ namespace GameJam.Combat
 
             deathAnnounced = true;
             Debug.Log("[PlayerHealth] Jugador muerto.", this);
+        }
+
+        /// <summary>
+        /// Restaura vida solo para la reserva vigente del objetivo autorizado.
+        /// </summary>
+        internal bool TryRevive(SurvivalRevive reservation, int amount)
+        {
+            if (!IsReady() || !HasStateAuthority || IsAlive || CurrentHealth > 0f || amount <= 0)
+            {
+                return false;
+            }
+            if (reservation == null || reservation != GetComponent<SurvivalRevive>() || !reservation.CanComplete())
+            {
+                return false;
+            }
+            CurrentHealth = Mathf.Clamp(amount, 1f, MaxHealth);
+            IsAlive = true;
+            deathAnnounced = false;
+            return true;
         }
 
         /// <summary>

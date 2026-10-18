@@ -1084,6 +1084,7 @@ GameObject:
   - component: {fileID: 6880719135816185724}
   - component: {fileID: 5346522766910823568}
   - component: {fileID: 1676844090218703059}
+  - component: {fileID: 874000000000000001}
   m_Layer: 2
   m_Name: A_FusionAstronaut
   m_TagString: Untagged
@@ -1142,6 +1143,7 @@ MonoBehaviour:
   - {fileID: 6937095546844158768}
   - {fileID: 200706043499424494}
   - {fileID: 2943991575602987810}
+  - {fileID: 874000000000000001}
   ForceRemoteRenderTimeframe: 0
 --- !u!54 &1572134779871167590
 Rigidbody:
@@ -1228,9 +1230,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 3827797598262270737}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 35ee7891638272e40b681a2f5852222f, type: 3}
+  m_Script: {fileID: 11500000, guid: 2836b79d23f44e0d951a77035809da84, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Starter.ThirdPersonCharacter.Player
+  m_EditorClassIdentifier: Assembly-CSharp::GameJam.Survival.SurvivalPlayer
   KCC: {fileID: 2649654373659845254}
   PlayerInput: {fileID: 6377767155928547117}
   Animator: {fileID: 1861680653700957010}
@@ -1266,9 +1268,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 3827797598262270737}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3a4eface1bc23dc489ec7b2a195578b3, type: 3}
+  m_Script: {fileID: 11500000, guid: bc8b2c47817d4705adfa615b09e51b34, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::GameJam.Multiplayer.MarsFusionAvatar
+  m_EditorClassIdentifier: Assembly-CSharp::GameJam.Survival.SurvivalAvatar
   tablet: {fileID: 11400000, guid: 658b9c9bb8e701348bfc975535f3435e, type: 2}
   handSocket: {fileID: 4365429944437638524}
   eyes: {fileID: 6593965051342207841}
@@ -1356,9 +1358,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 3827797598262270737}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 62fe4448bf8854f47b6c343ece32a035, type: 3}
+  m_Script: {fileID: 11500000, guid: 3cf65385870c4ee798ba23b02076613f, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::GameJam.Ship.PlayerShipRepair
+  m_EditorClassIdentifier: Assembly-CSharp::GameJam.Survival.SurvivalShipRepair
   interactionDistance: 3
 --- !u!114 &7996545141748767986
 MonoBehaviour:
@@ -3462,3 +3464,20 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 3548260476922820544, guid: cd976b636adfaeb4988ea2a014ea2581, type: 3}
   m_PrefabInstance: {fileID: 1199793683982394380}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &874000000000000001
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3827797598262270737}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4b440753d0d84db68092a689a576a9c7, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::GameJam.Survival.SurvivalRevive
+  reviveDuration: 10
+  reviveRange: 2.5
+  reviveHealth: 30
+  confirmationInterval: 0.2
+  confirmationTimeout: 1

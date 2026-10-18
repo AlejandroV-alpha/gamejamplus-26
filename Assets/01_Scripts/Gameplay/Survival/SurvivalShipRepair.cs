@@ -41,7 +41,7 @@ namespace GameJam.Survival
             nextPromptScan = Time.time + 0.25f;
             promptStation = null;
             float nearest = interactionDistance * interactionDistance;
-            foreach (ShipRepairStation station in FindObjectsByType<ShipRepairStation>())
+            foreach (ShipRepairStation station in FindObjectsByType<ShipRepairStation>(FindObjectsSortMode.None))
             {
                 if (station.Object == null || !station.Object.IsValid || station.Runner != Runner || station.IsRepaired())
                 {
@@ -73,7 +73,7 @@ namespace GameJam.Survival
         }
 
         /// <summary>
-        /// Reutiliza la reparacion original cuando F no selecciona un companero.
+        /// Reutiliza la reparacion original con la tecla Q.
         /// </summary>
         public bool TryRepairNearest()
         {

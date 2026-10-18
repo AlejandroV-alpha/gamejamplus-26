@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Fusion;
+using GameJam.Combat;
 using Fusion.Addons.SimpleKCC;
 using GameJam.Multiplayer;
 using UnityEngine;
@@ -26,8 +27,8 @@ namespace GameJam.Survival
         [Networked] private uint attemptSequence { get; set; }
         [Networked] public uint AuthorityGeneration { get; private set; }
 
-        private SurvivalHealth health;
-        private SurvivalAvatar avatar;
+        private PlayerHealth health;
+        private MarsFusionAvatar avatar;
         private SimpleKCC kcc;
         private CharacterInput input;
         private SurvivalRevive selected;
@@ -49,8 +50,8 @@ namespace GameJam.Survival
         /// </summary>
         public override void Spawned()
         {
-            health = GetComponent<SurvivalHealth>();
-            avatar = GetComponent<SurvivalAvatar>();
+            health = GetComponent<PlayerHealth>();
+            avatar = GetComponent<MarsFusionAvatar>();
             kcc = GetComponent<SimpleKCC>();
             input = GetComponent<CharacterInput>();
             if (health == null || avatar == null || kcc == null || input == null)
@@ -140,7 +141,7 @@ namespace GameJam.Survival
         /// </summary>
         private bool CanInteractLocally()
         {
-            if (health == null || !health.IsAlive || input == null || !input.ControlsEnabled || avatar == null || avatar.TabletOpen)
+            if (health == null || !health.IsAlive || input == null || !input.ControlsEnabled || avatar == null || avatar.TabletOpen || GameJam.Crafting.CraftingBox.IsBlockingInput)
             {
                 return false;
             }
@@ -155,7 +156,7 @@ namespace GameJam.Survival
         {
             SurvivalRevive nearest = null;
             float best = float.PositiveInfinity;
-            foreach (SurvivalRevive candidate in FindObjectsByType<SurvivalRevive>())
+            foreach (SurvivalRevive candidate in FindObjectsByType<SurvivalRevive>(FindObjectsSortMode.None))
             {
                 if (!TargetValid(candidate))
                 {
@@ -321,7 +322,7 @@ namespace GameJam.Survival
             {
                 return false;
             }
-            SurvivalHealth actorHealth = actor.GetComponent<SurvivalHealth>();
+            PlayerHealth actorHealth = actor.GetComponent<PlayerHealth>();
             SimpleKCC actorKcc = actor.GetComponent<SimpleKCC>();
             if (actorHealth == null || !actorHealth.IsAlive || actorKcc == null)
             {
