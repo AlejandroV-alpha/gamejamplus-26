@@ -117,7 +117,7 @@ public sealed class ReksaiEnemy : HitProcessor, ITakeDamage
     bool HasAliveTarget()
     {
         if (targetTransform == null) return false;
-        if (targetFusion != null) return targetFusion.Health > 0;
+        if (targetFusion != null) return targetFusion.IsAlive;
         if (targetStats != null) return targetStats.IsSpawned && targetStats.IsAlive;
         return true;
     }
@@ -234,7 +234,7 @@ public sealed class ReksaiEnemy : HitProcessor, ITakeDamage
         // 1. Look for Fusion avatars
         var avatars = FindObjectsByType<MarsFusionAvatar>(FindObjectsSortMode.None);
         var bestAvatar = avatars
-            .Where(a => a != null && a.Health > 0 && Vector3.Distance(home, a.transform.position) < leashRange)
+            .Where(a => a != null && a.IsAlive && Vector3.Distance(home, a.transform.position) < leashRange)
             .OrderBy(a => (a.transform.position - transform.position).sqrMagnitude)
             .FirstOrDefault();
 
@@ -340,7 +340,7 @@ public sealed class ReksaiEnemy : HitProcessor, ITakeDamage
 
         if (targetFusion != null)
         {
-            targetFusion.RPC_ApplyDamage(amount);
+            ((ITakeDamage)targetFusion).TakeDamage(Mathf.CeilToInt(amount));
         }
         else if (targetStats != null && targetStats.IsSpawned)
         {

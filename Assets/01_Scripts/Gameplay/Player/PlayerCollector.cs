@@ -66,7 +66,7 @@ namespace GameJam.Gameplay
                 return false;
             }
 
-            if (avatar.Health <= 0)
+            if (!avatar.IsAlive)
             {
                 return false;
             }
@@ -81,7 +81,7 @@ namespace GameJam.Gameplay
         {
             if (!CanCollectLocally())
             {
-                Debug.LogWarning($"[Interaction E] Blocked: networkReady={Object != null && Object.IsValid}, inventory={inventory != null}, avatar={avatar != null}, health={(avatar != null && Object != null && Object.IsValid ? avatar.Health : -1)}, tabletOpen={(avatar != null && Object != null && Object.IsValid && avatar.TabletOpen)}, controls={characterInput != null && characterInput.ControlsEnabled}.", this);
+                Debug.LogWarning($"[Interaction E] Blocked: networkReady={Object != null && Object.IsValid}, inventory={inventory != null}, avatar={avatar != null}, alive={(avatar != null && Object != null && Object.IsValid && avatar.IsAlive)}, tabletOpen={(avatar != null && Object != null && Object.IsValid && avatar.TabletOpen)}, controls={characterInput != null && characterInput.ControlsEnabled}.", this);
                 return false;
             }
 

@@ -1,4 +1,5 @@
 using Fusion;
+using GameJam.Combat;
 using GameJam.Tablet;
 using Starter.ThirdPersonCharacter;
 using UnityEngine;
@@ -7,14 +8,19 @@ using PlayerInput = Starter.ThirdPersonCharacter.PlayerInput;
 
 namespace GameJam.Multiplayer
 {
-    public sealed class MarsFusionAvatar : NetworkBehaviour
+    public sealed class MarsFusionAvatar : NetworkBehaviour, ITakeDamage
     {
         public TabletItemDefinition tablet;
         public Transform handSocket;
         public SpriteRenderer eyes, mouth;
         public Sprite neutralEyes, blinkEyes, hurtEyes, deadEyes;
         public Sprite smileMouth, smallMouth, openMouth, hurtMouth, deadMouth;
-        [Networked] public float Health { get; private set; }
+        [SerializeField, Tooltip("Optional component implementing IPlayerHealth. Owns health and its replication.")]
+        private MonoBehaviour healthSource;
+        public IPlayerHealth HealthSource => healthSource != null ? healthSource as IPlayerHealth : null;
+        public bool HasHealthSource => HealthSource != null;
+        // Until the health component is supplied, keep exploration and interaction enabled.
+        public bool IsAlive => HealthSource == null || HealthSource.IsAlive;
         [Networked] public float Stamina { get; private set; }
         [Networked] public NetworkBool TabletOpen { get; private set; }
         [Networked] public byte VoiceLevel { get; private set; }
@@ -23,7 +29,9 @@ namespace GameJam.Multiplayer
         private MarsFusionSession session;
         private TabletGuideUI ui;
         private GameObject heldTablet;
-        private float previousHealth, hurtUntil, blinkUntil, nextBlink, voiceUntil, nextVoiceSend;
+        private float? previousHealth;
+        private float hurtUntil, blinkUntil, nextBlink, voiceUntil, nextVoiceSend;
+        private bool warnedMissingHealth;
         private uint previousHurt;
         private byte requestedVoice;
         private bool shownOpen;
@@ -34,8 +42,11 @@ namespace GameJam.Multiplayer
         {
             input = GetComponent<PlayerInput>();
             session = FindFirstObjectByType<MarsFusionSession>();
-            if (HasStateAuthority) { Health = 100; Stamina = 100; }
-            previousHealth = Health;
+            if (healthSource == null)
+                foreach (var component in GetComponents<MonoBehaviour>())
+                    if (component is IPlayerHealth) { healthSource = component; break; }
+            if (HasStateAuthority) Stamina = 100;
+            previousHealth = HealthSource?.CurrentHealth;
             previousHurt = HurtSequence;
             nextBlink = Time.time + Random.Range(2f, 5f);
             if (tablet != null && tablet.heldPrefab != null && handSocket != null)
@@ -57,7 +68,7 @@ namespace GameJam.Multiplayer
 
         public void ToggleTablet()
         {
-            if (Object != null && Object.IsValid && HasStateAuthority && Health > 0 && tablet != null)
+            if (Object != null && Object.IsValid && HasStateAuthority && IsAlive && tablet != null)
                 TabletOpen = !TabletOpen;
         }
         public void CloseTablet()
@@ -77,18 +88,29 @@ namespace GameJam.Multiplayer
             if (Object != null && Object.IsValid && HasStateAuthority) HurtSequence++;
         }
 
-        [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
-        public void RPC_ApplyDamage(float damage)
+        public void TakeDamage(int damage)
         {
-            if (float.IsNaN(damage) || float.IsInfinity(damage) || damage <= 0) return;
-            Health = Mathf.Max(0, Health - Mathf.Min(damage, 100));
-            if (Health <= 0) TabletOpen = false;
+            if (damage <= 0 || Object == null || !Object.IsValid) return;
+            RPC_ForwardDamage(damage);
+        }
+
+        [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
+        private void RPC_ForwardDamage(int damage)
+        {
+            if (damage <= 0) return;
+            if (HealthSource != null) HealthSource.TakeDamage(damage);
+            else if (!warnedMissingHealth)
+            {
+                warnedMissingHealth = true;
+                Debug.LogWarning("[Player health] No IPlayerHealth component assigned. Damage awaits the player health implementation.", this);
+            }
         }
 
         public override void FixedUpdateNetwork()
         {
             if (!HasStateAuthority) return;
-            bool sprint = input.CurrentInput.Sprint && input.CurrentInput.MoveDirection.sqrMagnitude > .01f && Stamina > 0 && Health > 0;
+            if (!IsAlive) TabletOpen = false;
+            bool sprint = input.CurrentInput.Sprint && input.CurrentInput.MoveDirection.sqrMagnitude > .01f && Stamina > 0 && IsAlive;
             Stamina = Mathf.Clamp(Stamina + (sprint ? -15 : 10) * Runner.DeltaTime, 0, 100);
         }
 
@@ -109,12 +131,12 @@ namespace GameJam.Multiplayer
             if (Time.unscaledTime >= nextVoiceSend)
             {
                 nextVoiceSend = Time.unscaledTime + .1f;
-                byte level = Time.unscaledTime <= voiceUntil && Health > 0 ? requestedVoice : (byte)0;
+                byte level = Time.unscaledTime <= voiceUntil && IsAlive ? requestedVoice : (byte)0;
                 if (VoiceLevel != level) VoiceLevel = level;
             }
             bool tabletVisible = TabletOpen || (ui != null && ui.IsVisible);
-            input.ControlsEnabled = !menu && !tabletVisible && Health > 0;
-            bool cursor = menu || tabletVisible || Health <= 0;
+            input.ControlsEnabled = !menu && !tabletVisible && IsAlive;
+            bool cursor = menu || tabletVisible || !IsAlive;
             Cursor.lockState = cursor ? CursorLockMode.None : CursorLockMode.Locked;
             Cursor.visible = cursor;
             if (!input.ControlsEnabled) input.ResetInput();
@@ -128,11 +150,13 @@ namespace GameJam.Multiplayer
                 if (heldTablet != null) heldTablet.SetActive(shownOpen);
             }
             if (ui != null) ui.TargetOpen = TabletOpen;
-            if (Health < previousHealth - .01f || HurtSequence != previousHurt) hurtUntil = Time.time + .7f;
-            previousHealth = Health; previousHurt = HurtSequence;
+            float? currentHealth = HealthSource?.CurrentHealth;
+            if ((currentHealth.HasValue && previousHealth.HasValue && currentHealth.Value < previousHealth.Value - .01f) || HurtSequence != previousHurt)
+                hurtUntil = Time.time + .7f;
+            previousHealth = currentHealth; previousHurt = HurtSequence;
             Sprite eye = neutralEyes, lip = smileMouth;
             Expression = "Idle";
-            if (Health <= 0) { eye = deadEyes; lip = deadMouth; Expression = "Eliminated"; }
+            if (!IsAlive) { eye = deadEyes; lip = deadMouth; Expression = "Eliminated"; }
             else if (Time.time < hurtUntil) { eye = hurtEyes; lip = hurtMouth; Expression = "Hurt"; }
             else
             {
@@ -152,7 +176,8 @@ namespace GameJam.Multiplayer
         private void OnGUI()
         {
             if (Object == null || !Object.IsValid || !HasStateAuthority || TabletOpen || (session != null && session.MenuOpen)) return;
-            GUI.Box(new Rect(20, Screen.height - 85, 280, 65), $"Salud: {Health:0} / 100\nEnergía: {Stamina:0} / 100   ·   Tab: tablet");
+            string healthText = HealthSource != null ? $"Salud: {HealthSource.CurrentHealth:0} / {HealthSource.MaxHealth:0}\n" : "";
+            GUI.Box(new Rect(20, Screen.height - 85, 280, 65), $"{healthText}Energía: {Stamina:0} / 100   ·   Tab: tablet");
         }
 
         public override void Despawned(NetworkRunner runner, bool hasState) => CleanUp();
