@@ -12950,6 +12950,8 @@ MonoBehaviour:
   spawnPoint: {fileID: 1044430306}
   maxPlayers: 4
   roomName: A-Mars-Coop
+  groundProbeHeight: 100
+  planetLabel: MARTE
 --- !u!4 &464451377
 Transform:
   m_ObjectHideFlags: 0
@@ -123211,6 +123213,10 @@ PrefabInstance:
     - target: {fileID: 4704946858031448096, guid: 0789f32f72cc85e419f652db4787c761, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6383610594946232437, guid: 0789f32f72cc85e419f652db4787c761, type: 3}
+      propertyPath: Flags
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 6383610594946232437, guid: 0789f32f72cc85e419f652db4787c761, type: 3}
       propertyPath: SortKey
