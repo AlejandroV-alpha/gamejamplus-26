@@ -15,7 +15,7 @@ namespace GameJam.Environment.Mars
         [SerializeField, Range(0f, 1f)] private float movementMultiplier = 0.5f;
         [SerializeField, Min(5f)] private float gustCheckInterval = 5f;
         [SerializeField, Range(0f, 1f)] private float gustProbability = 0.15f;
-        [SerializeField, Min(0f)] private float gustStrength = 1.2f;
+        [SerializeField, Min(0f)] private float gustStrength = 2f;
         [SerializeField, Min(0.01f)] private float gustDuration = 0.35f;
 
         // Fusion requiere propiedades para conservar los intervalos de simulacion.
