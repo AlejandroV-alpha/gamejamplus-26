@@ -24,6 +24,7 @@ namespace GameJam.UI
         private MarsFusionAvatar avatar;
         private MarsFusionSession session;
         private PlayerInventory inventory;
+        private PlayerMaterialDrop materialDrop;
         private PlayerCold cold;
         private PlayerInteractionAction action;
         private bool marsEnvironment;
@@ -32,6 +33,7 @@ namespace GameJam.UI
         private Image eyeImage, mouthImage, detailIcon;
         private PlayerHelmetGraphic helmet;
         private TMP_Text equipped, detailName, detailDescription, detailAmount, emptyText;
+        private RectTransform dropButton;
         private Bar healthBar, staminaBar, environmentBar, actionBar;
         private TMP_FontAsset font;
         private readonly List<Slot> slots = new List<Slot>();
@@ -71,6 +73,7 @@ namespace GameJam.UI
             avatar = source;
             session = FindAnyObjectByType<MarsFusionSession>();
             inventory = source.GetComponent<PlayerInventory>();
+            materialDrop = source.GetComponent<PlayerMaterialDrop>();
             cold = source.GetComponent<PlayerCold>();
             action = source.GetComponent<PlayerInteractionAction>();
             marsEnvironment = source.GetComponent<GameJam.Environment.Mars.PlayerSandstorm>() != null;
@@ -163,8 +166,19 @@ namespace GameJam.UI
             var detail = Panel("Detail", window, new Vector2(.5f, .5f), new Vector2(320, -15), new Vector2(350, 475));
             detailIcon = Icon(detail, new Vector2(0, 138), new Vector2(130, 130));
             detailName = Label(detail, "", new Vector2(0, 34), new Vector2(320, 64), 27);
-            detailDescription = Label(detail, "", new Vector2(0, -80), new Vector2(308, 150), 21);
-            detailAmount = Label(detail, "", new Vector2(0, -202), new Vector2(320, 42), 20);
+            if (materialDrop == null)
+            {
+                detailDescription = Label(detail, "", new Vector2(0, -80), new Vector2(308, 150), 21);
+                detailAmount = Label(detail, "", new Vector2(0, -202), new Vector2(320, 42), 20);
+            }
+            else
+            {
+                detailDescription = Label(detail, "", new Vector2(0, -75), new Vector2(308, 130), 21);
+                detailAmount = Label(detail, "", new Vector2(0, -160), new Vector2(320, 42), 20);
+                dropButton = Panel("Drop one", detail, new Vector2(.5f, .5f), new Vector2(0, -210), new Vector2(260, 40));
+                Label(dropButton, "Soltar 1", Vector2.zero, new Vector2(250, 36), 20);
+                Button(dropButton, DropSelectedMaterial);
+            }
         }
 
         private void Update()
@@ -307,6 +321,36 @@ namespace GameJam.UI
             detailName.text = selected != null ? MaterialName(selected) : GameLocalization.Get("hud.select");
             detailDescription.text = selected != null ? GameLocalization.Get("material." + selected.id + ".description", selected.description) : "";
             detailAmount.text = selected != null ? string.Format(GameLocalization.Get("hud.quantity"), contents[selected]) : "";
+            if (dropButton != null)
+            {
+                dropButton.gameObject.SetActive(selected != null && contents.ContainsKey(selected) && contents[selected] > 0);
+            }
+        }
+
+        /// <summary>
+        /// Solicita soltar una unidad del material seleccionado.
+        /// </summary>
+        private void DropSelectedMaterial()
+        {
+            if (!IsInventoryOpen || selected == null || materialDrop == null || dropButton == null)
+            {
+                return;
+            }
+
+            Button button = dropButton.GetComponent<Button>();
+            if (button == null || !button.interactable)
+            {
+                return;
+            }
+
+            button.interactable = false;
+            bool dropped = materialDrop.TryDropOne(selected);
+            if (dropped)
+            {
+                RefreshInventory();
+            }
+
+            button.interactable = dropButton.gameObject.activeSelf;
         }
 
         private void UpdateSafeArea()
