@@ -42,6 +42,11 @@ public sealed class ReksaiEnemy : HitProcessor, ITakeDamage
 
     public Mode CurrentMode => isStandalone ? localMode : (Mode)mode.Value;
     public float Health => isStandalone ? localHealth : health.Value;
+    // True when this client simulates its own copy (Fusion / standalone), so local hits must apply damage.
+    public bool IsLocalSimulation => isStandalone;
+
+    const float DeathHold = 2.5f, DeathSink = 2f;
+    float DeathLength => ClipLength("death");
 
     float CurrentTime => (float)(isStandalone || NetworkManager.Singleton == null ? Time.timeAsDouble : NetworkManager.ServerTime.Time);
     float Elapsed => (float)(CurrentTime - (isStandalone ? localStateStarted : stateStarted.Value));
@@ -127,7 +132,7 @@ public sealed class ReksaiEnemy : HitProcessor, ITakeDamage
         var state = CurrentMode;
         if (state == Mode.Death)
         {
-            if (Elapsed > 4)
+            if (Elapsed > DeathLength + DeathHold + DeathSink)
             {
                 if (!isStandalone && NetworkObject != null && NetworkObject.IsSpawned)
                     NetworkObject.Despawn(true);
@@ -371,12 +376,25 @@ public sealed class ReksaiEnemy : HitProcessor, ITakeDamage
         if (isStandalone)
         {
             localHealth = Mathf.Max(0, localHealth - Mathf.Min(amount, maxHealth));
-            if (localHealth <= 0) SetMode(Mode.Death);
+            if (localHealth <= 0) Die();
         }
         else if (IsServer)
         {
             health.Value = Mathf.Max(0, health.Value - Mathf.Min(amount, maxHealth));
-            if (health.Value <= 0) SetMode(Mode.Death);
+            if (health.Value <= 0) Die();
+        }
+    }
+
+    void Die()
+    {
+        SetMode(Mode.Death);
+        // The killing shot lands after the collider is disabled, so bleed here instead.
+        var blood = GetComponent<GameJam.Combat.EnemyBloodFx>();
+        if (blood != null)
+        {
+            var chest = transform.position + Vector3.up * 1.2f;
+            blood.Bleed(chest, transform.forward);
+            blood.Bleed(chest, -transform.forward);
         }
     }
 
@@ -420,7 +438,7 @@ public sealed class ReksaiEnemy : HitProcessor, ITakeDamage
             var clip = animator.runtimeAnimatorController.animationClips.FirstOrDefault(a => a.name.EndsWith(suffix, StringComparison.Ordinal));
             if (clip != null) animator.CrossFadeInFixedTime(Animator.StringToHash("Base Layer." + clip.name.Split('|').Last()), .10f, 0, Mathf.Min(elapsed * PlaybackSpeed(state), Mathf.Max(0, clip.length - .01f)));
         }
-        float depth = state == Mode.Hidden ? 4 : state == Mode.Burrow ? 4 * Mathf.SmoothStep(0, 1, elapsed / ClipLength("spell2")) : state == Mode.Emerge ? 4 * (1 - Mathf.SmoothStep(0, 1, elapsed / ClipLength("spell2knockup"))) : 0;
+        float depth = state == Mode.Death ? 2 * Mathf.SmoothStep(0, 1, (elapsed - DeathLength - DeathHold) / DeathSink) : state == Mode.Hidden ? 4 : state == Mode.Burrow ? 4 * Mathf.SmoothStep(0, 1, elapsed / ClipLength("spell2")) : state == Mode.Emerge ? 4 * (1 - Mathf.SmoothStep(0, 1, elapsed / ClipLength("spell2knockup"))) : 0;
         visual.localPosition = visualRest + Vector3.down * depth;
         if (bodyCollider != null) bodyCollider.enabled = state != Mode.Hidden && state != Mode.Burrow && state != Mode.Death;
     }

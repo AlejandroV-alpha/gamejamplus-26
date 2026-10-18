@@ -319,7 +319,7 @@ namespace Starter.ThirdPersonCharacter
 
         private bool IsAimingPose()
         {
-            return _isAiming && !_isSprinting && KCC.IsGrounded && !_isJumping && !(GetComponent<GameJam.Multiplayer.PlayerInteractionAction>()?.IsBusy ?? false);
+            return (_avatar==null || _avatar.IsAlive) && !(GetComponent<GameJam.Combat.PlayerHurtReaction>()?.IsReacting ?? false) && _isAiming && !_isSprinting && KCC.IsGrounded && !_isJumping && !(GetComponent<GameJam.Multiplayer.PlayerInteractionAction>()?.IsBusy ?? false);
         }
 
         private void UpdateAimRig()

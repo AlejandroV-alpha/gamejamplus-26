@@ -22,12 +22,15 @@ namespace GameJam.Combat
         [SerializeField] private AudioClip gunshot;
         [SerializeField] private AudioClip gunreload;
         [SerializeField] private LineRenderer tracer;
+        [SerializeField] private GameObject muzzleFlashEffect;
+        [SerializeField] private EnergyBolt boltEffect;
         [SerializeField] private GameObject impactEffect;
         [SerializeField, Min(1)] private int damage = 1;
         [SerializeField, Min(1f)] private float range = 100f;
         [SerializeField, Min(1)] private int magazineSize = 10;
         [SerializeField, Min(0.02f)] private float fireInterval = 0.25f;
         [SerializeField, Min(0.01f)] private float tracerDuration = 0.05f;
+        [SerializeField, Min(0.01f)] private float muzzleFlashDuration = 1f;
         [SerializeField, Min(0.01f)] private float impactEffectDuration = 1f;
         [SerializeField, Min(0f)] private float recoilDistance = 0.08f;
         [SerializeField, Min(0f)] private float recoilAngle = 5f;
@@ -300,7 +303,6 @@ namespace GameJam.Combat
                 {
                     continue;
                 }
-
                 if (Runner.GameMode == GameMode.Single)
                 {
                     damageReceiver.TakeDamage(damage);
@@ -324,6 +326,15 @@ namespace GameJam.Combat
                 audioSource.PlayOneShot(gunshot);
             }
             PlayRecoil();
+            ShowMuzzleFlash(origin, endpoint);
+            if (boltEffect != null)
+            {
+                // El impacto espera a que la bala visual llegue al objetivo.
+                EnergyBolt bolt = Instantiate(boltEffect, origin, Quaternion.identity);
+                bolt.Launch(origin, endpoint, hasImpact ? () => ShowImpactEffect(endpoint, normal) : (System.Action)null);
+                return;
+            }
+
             ShowTracer(origin, endpoint);
             if (hasImpact)
             {
@@ -344,10 +355,27 @@ namespace GameJam.Combat
         }
 
         /// <summary>
+        /// Crea el destello de la boca orientado hacia el punto de impacto.
+        /// </summary>
+        private void ShowMuzzleFlash(Vector3 origin, Vector3 endpoint)
+        {
+            if (muzzleFlashEffect == null)
+            {
+                return;
+            }
+
+            Vector3 direction = endpoint - origin;
+            Quaternion rotation = direction.sqrMagnitude > 0.0001f ? Quaternion.LookRotation(direction) : firePoint.rotation;
+            GameObject effect = Instantiate(muzzleFlashEffect, origin, rotation);
+            Destroy(effect, muzzleFlashDuration);
+        }
+
+        /// <summary>
         /// Crea un impacto visual local y lo elimina tras su duracion.
         /// </summary>
         private void ShowImpactEffect(Vector3 position, Vector3 normal)
         {
+            EnemyBloodFx.TryBleedAt(position, normal);
             if (impactEffect == null)
             {
                 return;
@@ -473,7 +501,8 @@ namespace GameJam.Combat
             {
                 return false;
             }
-            if (avatar == null || !avatar.IsAlive)
+            if (avatar == null || !avatar.IsAlive || (avatar.GetComponent<PlayerHurtReaction>()?.IsReacting ?? false)
+                || (avatar.GetComponent<PlayerInteractionAction>()?.IsBusy ?? false))
             {
                 return false;
             }

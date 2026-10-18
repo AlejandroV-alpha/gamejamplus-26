@@ -49,7 +49,7 @@ namespace GameJam.Multiplayer
         }
         private bool Begin(int kind,NetworkObject item)
         {
-            if(Object==null || !Object.IsValid || !HasStateAuthority || IsBusy || item==null || !item.IsValid || item.Runner!=Runner || avatar==null || !avatar.IsAlive || avatar.TabletOpen || input==null || !input.ControlsEnabled) return false;
+            if(Object==null || !Object.IsValid || !HasStateAuthority || (GetComponent<GameJam.Combat.PlayerHurtReaction>()?.IsReacting ?? false) || IsBusy || item==null || !item.IsValid || item.Runner!=Runner || avatar==null || !avatar.IsAlive || avatar.TabletOpen || input==null || !input.ControlsEnabled) return false;
             var player=GetComponent<Player>();if(player!=null && player.KCC!=null && !player.KCC.IsGrounded) return false;
             ActionKind=kind;target=item;deadline=TickTimer.CreateFromSeconds(Runner,kind==1?pickupSeconds:repairSeconds);
             startingHealth=avatar.HealthSource!=null?avatar.HealthSource.CurrentHealth:0;
@@ -89,7 +89,7 @@ namespace GameJam.Multiplayer
         }
         private void LateUpdate()
         {
-            if(!IsBusy){RestoreWeapon();return;}
+            if(!IsBusy || avatar==null || !avatar.IsAlive || (GetComponent<GameJam.Combat.PlayerHurtReaction>()?.IsReacting ?? false)){RestoreWeapon();return;}
             foreach(var renderer in weaponRenderers) if(renderer!=null)
             {
                 if(!weaponVisibility.ContainsKey(renderer))weaponVisibility[renderer]=renderer.enabled;

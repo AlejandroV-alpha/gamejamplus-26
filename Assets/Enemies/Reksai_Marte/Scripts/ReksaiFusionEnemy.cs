@@ -282,8 +282,18 @@ public sealed class ReksaiFusionEnemy : NetworkBehaviour, ITakeDamage
     {
         if (amount <= 0 || CurrentMode == Mode.Death || CurrentMode == Mode.Hidden || CurrentMode == Mode.Burrow) return;
         Health = Mathf.Max(0, Health-Mathf.Min(amount,maxHealth));
+        RPC_DamageFeedback(Health<=0);
         Debug.Log("[Reksai Fusion] Health="+Health, this);
         if (Health <= 0) SetMode(Mode.Death);
+    }
+
+    [Rpc(RpcSources.StateAuthority,RpcTargets.All)]
+    private void RPC_DamageFeedback(bool lethal)
+    {
+        var blood=GetComponent<GameJam.Combat.EnemyBloodFx>();
+        if(blood==null)return;
+        blood.Bleed(transform.position+Vector3.up*1.2f,transform.forward);
+        if(lethal)blood.Bleed(transform.position+Vector3.up*1.2f,-transform.forward);
     }
 
     string Suffix(Mode state)

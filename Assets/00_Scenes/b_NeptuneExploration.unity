@@ -4880,7 +4880,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2694dc8cb4785d44b9fc91411ed14e19, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameJam.Multiplayer.MarsFusionSession
-  playerPrefab: {fileID: 3082566752617341179, guid: 652ba36291f1f9c47a5578e744802e8c, type: 3}
+  playerPrefab: {fileID: 3082566752617341179, guid: 2624f5be763fda24594426a730f70743, type: 3}
   runnerPrefab: {fileID: 2382109156329011261, guid: 8878f9c56c69e57429bba54e3662b05d, type: 3}
   spawnPoint: {fileID: 1467885866}
   maxPlayers: 4
@@ -10921,6 +10921,7 @@ GameObject:
   - component: {fileID: 994108028}
   - component: {fileID: 994108027}
   - component: {fileID: 994108026}
+  - component: {fileID: 994108029}
   m_Layer: 0
   m_Name: Neptune - Ice Terrain
   m_TagString: Untagged
@@ -11004,6 +11005,21 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &994108029
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 994108025}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5af590221779896409665c759629d7c5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GameJam.Mars.MarsFootstepSurface
+  profile: {fileID: 11400000, guid: fdf2b9eef86fac04db4b4d68cba723a1, type: 2}
+  paintedLayer: -1
+  minimumWeight: 0.4
 --- !u!1001 &998793496
 PrefabInstance:
   m_ObjectHideFlags: 0

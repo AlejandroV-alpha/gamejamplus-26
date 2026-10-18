@@ -2098,6 +2098,7 @@ GameObject:
   - component: {fileID: 678718212603881683}
   - component: {fileID: 3831061727049271846}
   - component: {fileID: 1887384454739125388}
+  - component: {fileID: 4310166326232718061}
   m_Layer: 0
   m_Name: Reksai_Fusion
   m_TagString: Untagged
@@ -2189,6 +2190,27 @@ MonoBehaviour:
   NetworkedBehaviours:
   - {fileID: 3831061727049271846}
   ForceRemoteRenderTimeframe: 0
+--- !u!114 &4310166326232718061
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6761942961500113530}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: deb7169215e70214586c7d3e13e1f9f4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GameJam.Combat.EnemyBloodFx
+  bloodBurst: {fileID: 5405293530715071691, guid: 7acc13bd7b590124a89e1d01591fdc9b, type: 3}
+  groundSplat: {fileID: 2748677000427019257, guid: c5979c83f8cea184aa476a6e318ef598, type: 3}
+  burstDuration: 2
+  splatsPerHit: 3
+  splatSpread: 1.4
+  splatSize: {x: 0.5, y: 1.3}
+  groundLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
 --- !u!1 &6775776351973940974
 GameObject:
   m_ObjectHideFlags: 0

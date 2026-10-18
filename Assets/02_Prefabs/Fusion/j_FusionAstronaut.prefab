@@ -634,6 +634,9 @@ GameObject:
   - component: {fileID: 7417582317096606280}
   - component: {fileID: 2970041377782251518}
   - component: {fileID: 8390952095215049936}
+  - component: {fileID: 8933138445109749252}
+  - component: {fileID: 3369609033074655366}
+  - component: {fileID: 3749382795239079306}
   m_Layer: 2
   m_Name: j_FusionAstronaut
   m_TagString: Untagged
@@ -1049,6 +1052,65 @@ MonoBehaviour:
   pickupSeconds: 0.8
   repairSeconds: 2.4
   _ActionKind: 0
+--- !u!114 &8933138445109749252
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3827797598262270737}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 949b3d9c0f194694d9054045500480a3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GameJam.Combat.PlayerDeathAnimation
+  body: {fileID: 2922759979444337575}
+  staggerDistance: 0.25
+  lyingLift: 0.18
+  armSpread: 85
+  legSpread: 18
+  twitchInterval: 1.6
+  starColor: {r: 1, g: 0.85, b: 0.1, a: 1}
+--- !u!114 &3369609033074655366
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3827797598262270737}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7b8ad1b7848d09249b6fa0707b5c35fc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GameJam.Combat.PlayerHurtReaction
+  body: {fileID: 2922759979444337575}
+  duration: 0.4
+  recoilAngle: -18
+  recoilDistance: 0.12
+  shake: 6
+  hurtEffect: {fileID: 8443265218036270106, guid: 0ef00dc591e341d43b0c7be8562b3592, type: 3}
+  hurtEffectDuration: 2
+--- !u!114 &3749382795239079306
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3827797598262270737}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: deb7169215e70214586c7d3e13e1f9f4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GameJam.Combat.EnemyBloodFx
+  bloodBurst: {fileID: 5405293530715071691, guid: 7acc13bd7b590124a89e1d01591fdc9b, type: 3}
+  groundSplat: {fileID: 2748677000427019257, guid: c5979c83f8cea184aa476a6e318ef598, type: 3}
+  burstDuration: 2
+  splatsPerHit: 3
+  splatSpread: 1.4
+  splatSize: {x: 0.5, y: 1.3}
+  groundLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
 --- !u!1 &3836924219179165295
 GameObject:
   m_ObjectHideFlags: 0
@@ -2137,7 +2199,7 @@ Animator:
   m_GameObject: {fileID: 8598949745826544242}
   m_Enabled: 1
   m_Avatar: {fileID: 9000000, guid: 2e1ef1324ed4a6247867216909bd9690, type: 3}
-  m_Controller: {fileID: 22100000, guid: 42c23431ee4a55246b555364f3fcf8d8, type: 2}
+  m_Controller: {fileID: 22100000, guid: a8f14bbf82b75534c97745c0caaa75b4, type: 2}
   m_CullingMode: 0
   m_UpdateMode: 0
   m_ApplyRootMotion: 0

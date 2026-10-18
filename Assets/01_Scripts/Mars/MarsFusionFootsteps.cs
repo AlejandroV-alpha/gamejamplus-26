@@ -23,6 +23,10 @@ namespace GameJam.Mars
         }
         public void QueueContact(bool right)
         {
+            var avatar=GetComponent<GameJam.Multiplayer.MarsFusionAvatar>();
+            if(avatar!=null && avatar.Object!=null && avatar.Object.IsValid && !avatar.IsAlive) return;
+            if(GetComponent<GameJam.Multiplayer.PlayerInteractionAction>()?.IsBusy ?? false) return;
+            if(GetComponent<GameJam.Combat.PlayerHurtReaction>()?.IsReacting ?? false) return;
             if (Time.time - lastContact < .22f || kcc == null || kcc.Object == null ||
                 !kcc.Object.IsValid || !kcc.IsGrounded || kcc.RealSpeed < .2f) return;
             pendingFoot = right ? 1 : 0;
@@ -31,6 +35,10 @@ namespace GameJam.Mars
         private void LateUpdate()
         {
             if (pendingFoot < 0) return;
+            var avatar=GetComponent<GameJam.Multiplayer.MarsFusionAvatar>();
+            if((avatar!=null && avatar.Object!=null && avatar.Object.IsValid && !avatar.IsAlive)
+                || (GetComponent<GameJam.Multiplayer.PlayerInteractionAction>()?.IsBusy ?? false)
+                || (GetComponent<GameJam.Combat.PlayerHurtReaction>()?.IsReacting ?? false)) {pendingFoot=-1;return;}
             bool right = pendingFoot == 1;
             pendingFoot = -1;
             if (kcc == null || !kcc.IsGrounded) return;

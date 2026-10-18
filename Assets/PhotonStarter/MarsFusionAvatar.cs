@@ -199,7 +199,7 @@ namespace GameJam.Multiplayer
                 if (VoiceLevel != level) VoiceLevel = level;
             }
             bool tabletVisible = TabletOpen || (ui != null && ui.IsVisible);
-            input.ControlsEnabled = !menu && !tabletVisible && IsAlive && !SceneTransitionVideo.IsBlockingInput && !LobbyDepartureEffects.IsBlockingInput && !PortalWhiteTransition.IsBlockingInput && !(GetComponent<PlayerInteractionAction>()?.IsBusy ?? false);
+            input.ControlsEnabled = !menu && !tabletVisible && IsAlive && !SceneTransitionVideo.IsBlockingInput && !LobbyDepartureEffects.IsBlockingInput && !PortalWhiteTransition.IsBlockingInput && !(GetComponent<PlayerInteractionAction>()?.IsBusy ?? false) && !(GetComponent<GameJam.Combat.PlayerHurtReaction>()?.IsReacting ?? false);
             bool cursor = menu || tabletVisible || !IsAlive;
             Cursor.lockState = cursor ? CursorLockMode.None : CursorLockMode.Locked;
             Cursor.visible = cursor;

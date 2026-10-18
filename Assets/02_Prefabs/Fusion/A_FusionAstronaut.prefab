@@ -1080,6 +1080,10 @@ GameObject:
   - component: {fileID: 6937095546844158768}
   - component: {fileID: 200706043499424494}
   - component: {fileID: 2943991575602987810}
+  - component: {fileID: 6855776540349250643}
+  - component: {fileID: 6880719135816185724}
+  - component: {fileID: 5346522766910823568}
+  - component: {fileID: 1676844090218703059}
   m_Layer: 2
   m_Name: A_FusionAstronaut
   m_TagString: Untagged
@@ -1542,13 +1546,16 @@ MonoBehaviour:
   gunshot: {fileID: 8300000, guid: 3dabb95e8210ef145b2410cb7b1e4c0c, type: 3}
   gunreload: {fileID: 8300000, guid: 5d79b240fba3a1c4ab9043d2e008277b, type: 3}
   tracer: {fileID: 9218075841056528477}
-  impactEffect: {fileID: 2049626777788669612, guid: bb66645df93a1fb4687b639f2ef53489, type: 3}
-  damage: 1
+  muzzleFlashEffect: {fileID: 2492542608560254606, guid: a49bb6cfe36f6c642a9f175cc566d892, type: 3}
+  boltEffect: {fileID: 8717399688694277520, guid: 9050e613070c522479d823ef316f22bd, type: 3}
+  impactEffect: {fileID: 1352570772340302020, guid: d058e1f250b185f4c85dc6b252c2d6bf, type: 3}
+  damage: 20
   range: 100
   magazineSize: 10
   fireInterval: 0.25
   tracerDuration: 0.12
-  impactEffectDuration: 1
+  muzzleFlashDuration: 1.2
+  impactEffectDuration: 2.5
   recoilDistance: 0.08
   recoilAngle: 5
   recoilDuration: 0.12
@@ -1630,6 +1637,80 @@ MonoBehaviour:
   pickupSeconds: 0.8
   repairSeconds: 2.4
   _ActionKind: 0
+--- !u!114 &6855776540349250643
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3827797598262270737}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 949b3d9c0f194694d9054045500480a3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GameJam.Combat.PlayerDeathAnimation
+  body: {fileID: 2922759979444337575}
+  staggerDistance: 0.25
+  lyingLift: 0.18
+  armSpread: 85
+  legSpread: 18
+  twitchInterval: 1.6
+  starColor: {r: 1, g: 0.85, b: 0.1, a: 1}
+--- !u!114 &6880719135816185724
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3827797598262270737}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7b8ad1b7848d09249b6fa0707b5c35fc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GameJam.Combat.PlayerHurtReaction
+  body: {fileID: 2922759979444337575}
+  duration: 0.4
+  recoilAngle: -18
+  recoilDistance: 0.12
+  shake: 6
+  hurtEffect: {fileID: 8443265218036270106, guid: 0ef00dc591e341d43b0c7be8562b3592, type: 3}
+  hurtEffectDuration: 2
+--- !u!114 &5346522766910823568
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3827797598262270737}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: deb7169215e70214586c7d3e13e1f9f4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GameJam.Combat.EnemyBloodFx
+  bloodBurst: {fileID: 5405293530715071691, guid: 7acc13bd7b590124a89e1d01591fdc9b, type: 3}
+  groundSplat: {fileID: 2748677000427019257, guid: c5979c83f8cea184aa476a6e318ef598, type: 3}
+  burstDuration: 2
+  splatsPerHit: 3
+  splatSpread: 1.4
+  splatSize: {x: 0.5, y: 1.3}
+  groundLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+--- !u!114 &1676844090218703059
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3827797598262270737}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e50afcf041a95cf44af342cc3d4bfaa8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GameJam.Mars.MarsFusionFootsteps
+  decalPrefab: {fileID: 1961025457343015111, guid: 3fa22a2a6d8ea4c4086ed372255277c2, type: 3}
+  leftFoot: {fileID: 2478181999759414505}
+  rightFoot: {fileID: 3627647319763041435}
 --- !u!1 &3836924219179165295
 GameObject:
   m_ObjectHideFlags: 0
@@ -3098,6 +3179,7 @@ GameObject:
   - component: {fileID: 1861680653700957010}
   - component: {fileID: 1445129884676762674}
   - component: {fileID: 6177081999615841251}
+  - component: {fileID: 760602519718660267}
   m_Layer: 2
   m_Name: AstronautVisual
   m_TagString: Untagged
@@ -3134,7 +3216,7 @@ Animator:
   m_GameObject: {fileID: 8598949745826544242}
   m_Enabled: 1
   m_Avatar: {fileID: 9000000, guid: 2e1ef1324ed4a6247867216909bd9690, type: 3}
-  m_Controller: {fileID: 9100000, guid: a8479a0604b6ec04aa461b845c07b3a0, type: 2}
+  m_Controller: {fileID: 22100000, guid: 1ebab13ed40dcbc449a10ac424ad1b40, type: 2}
   m_CullingMode: 0
   m_UpdateMode: 0
   m_ApplyRootMotion: 0
@@ -3219,6 +3301,18 @@ MonoBehaviour:
   - {fileID: 3627647319763041435}
   - {fileID: 4655112844356099995}
   - {fileID: 4577046882944677711}
+--- !u!114 &760602519718660267
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8598949745826544242}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 851eacc300096494d9dbc7f06074e4fa, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GameJam.Mars.MarsFootContactEvents
 --- !u!1 &8891927565827229894
 GameObject:
   m_ObjectHideFlags: 0
