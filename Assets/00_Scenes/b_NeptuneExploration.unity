@@ -2674,6 +2674,7 @@ GameObject:
   m_Component:
   - component: {fileID: 6800000000000000401}
   - component: {fileID: 6800000000000000402}
+  - component: {fileID: 6800000000000000403}
   m_Layer: 2
   m_Name: b_NeptuneDiamondRain
   m_TagString: Untagged
@@ -2708,14 +2709,40 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 557c2140203d4f8a93f5ee452a01b53e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::b_NeptuneDiamondRain
+  diamondPrefabs:
+  - {fileID: 7677682259613780392, guid: 6bf7fccd6f0488040945bea359bf513b, type: 3}
+  - {fileID: 6482493936899396674, guid: e6ab591d17b0b1d4698e7ff25e5cb7c9, type: 3}
+  maximumPrefabDiamonds: 128
+  prefabDiamondsPerSecond: 48
+  prefabDiamondSize: {x: 0.18, y: 0.36}
   diamondMaterial: {fileID: 2100000, guid: a66395830f1146168fa1e37176fc5236, type: 2}
   impactMaterial: {fileID: 2100000, guid: e1b6b190ef2041d0960df6f2b5b257a0, type: 2}
   impactSound: {fileID: 0}
-  firstRainDelay: 8
+  firstRainDelay: 18
   rainInterval: 65
-  rainDuration: 12
-  diamondsPerSecond: 22
+  rainDuration: 22
+  diamondsPerSecond: 48
   impactVolume: 0.035
+--- !u!114 &6800000000000000403
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6800000000000000400}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5a41721be0174e28a74309e5fc6f06a4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::b_NeptuneDiamondStorm
+  damagePerSecond: 14
+  damageInterval: 0.75
+  exposureGrace: 1.5
+  warningSeconds: 6
+  shelterLayers:
+    serializedVersion: 2
+    m_Bits: 1
+  shelterCheckDistance: 200
 --- !u!1001 &6800000000000000500
 PrefabInstance:
   m_ObjectHideFlags: 0

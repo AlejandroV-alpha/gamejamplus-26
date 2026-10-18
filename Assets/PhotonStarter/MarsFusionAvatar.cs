@@ -7,7 +7,7 @@ using PlayerInput = Starter.ThirdPersonCharacter.PlayerInput;
 
 namespace GameJam.Multiplayer
 {
-    public sealed class MarsFusionAvatar : NetworkBehaviour
+    public sealed class MarsFusionAvatar : NetworkBehaviour, IWeatherDamageTarget
     {
         public TabletItemDefinition tablet;
         public Transform handSocket;
@@ -29,9 +29,17 @@ namespace GameJam.Multiplayer
         private bool shownOpen;
         public string Expression { get; private set; }
         public TabletGuideUI LocalUI => ui;
+        public Transform WeatherTransform => transform;
+        public bool CanReceiveWeatherDamage => Object != null && Object.IsValid && HasStateAuthority && Health > 0;
+        public double WeatherTime => Runner != null ? Runner.SimulationTime : Time.timeSinceLevelLoadAsDouble;
+        public void ReceiveWeatherDamage(float amount)
+        {
+            if (CanReceiveWeatherDamage) RPC_ApplyDamage(amount);
+        }
 
         public override void Spawned()
         {
+            b_NeptuneDiamondStorm.Register(this);
             input = GetComponent<PlayerInput>();
             session = FindFirstObjectByType<MarsFusionSession>();
             if (HasStateAuthority) { Health = 100; Stamina = 100; }
@@ -159,6 +167,7 @@ namespace GameJam.Multiplayer
         private void OnDestroy() => CleanUp();
         private void CleanUp()
         {
+            b_NeptuneDiamondStorm.Unregister(this);
             if (ui != null) Destroy(ui.gameObject);
             if (heldTablet != null) Destroy(heldTablet);
         }

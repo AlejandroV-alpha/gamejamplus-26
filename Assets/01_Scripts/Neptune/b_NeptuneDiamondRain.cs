@@ -2,15 +2,15 @@ using System.Collections.Generic;
 using UnityEngine;
 
 [DisallowMultipleComponent]
-public sealed class b_NeptuneDiamondRain : MonoBehaviour
+public sealed partial class b_NeptuneDiamondRain : MonoBehaviour
 {
     public Material diamondMaterial;
     public Material impactMaterial;
     public AudioClip impactSound;
-    public float firstRainDelay = 8;
+    public float firstRainDelay = 18;
     public float rainInterval = 65;
-    public float rainDuration = 12;
-    [Range(0, 60)] public float diamondsPerSecond = 22;
+    public float rainDuration = 22;
+    [Range(0, 120)] public float diamondsPerSecond = 48;
     [Range(0, .2f)] public float impactVolume = .035f;
 
     ParticleSystem rain, impacts;
@@ -18,7 +18,12 @@ public sealed class b_NeptuneDiamondRain : MonoBehaviour
     Camera viewCamera;
     Mesh diamondMesh;
     AudioClip generatedChime;
-    float elapsed, nextSound;
+    double elapsed, networkClock;
+    float nextSound;
+    bool hasNetworkClock;
+    public bool IsRaining { get; private set; }
+    public float SecondsUntilRain { get; private set; }
+    public float SecondsRemaining { get; private set; }
     readonly List<ParticleCollisionEvent> collisions = new List<ParticleCollisionEvent>(32);
 
     void OnEnable()
@@ -92,6 +97,9 @@ public sealed class b_NeptuneDiamondRain : MonoBehaviour
         if (impactSound == null) generatedChime = CreateChime();
         viewCamera = Camera.main;
         FollowCamera();
+        PreparePrefabRain();
+        PrepareMapRain();
+        if (prefabDrops != null) rainRenderer.enabled = false;
         rain.Play();
         impacts.Play();
     }
@@ -120,15 +128,36 @@ public sealed class b_NeptuneDiamondRain : MonoBehaviour
     void LateUpdate()
     {
         if (rain == null) return;
-        elapsed += Time.deltaTime;
+        elapsed = hasNetworkClock ? networkClock : elapsed + Time.deltaTime;
         if (viewCamera == null || !viewCamera.isActiveAndEnabled) viewCamera = Camera.main;
         FollowCamera();
-        float duration = Mathf.Clamp(rainDuration, 3, 30);
-        float phase = (elapsed - Mathf.Max(0, firstRainDelay)) % Mathf.Max(duration + 10, rainInterval);
-        float envelope = elapsed >= firstRainDelay && phase < duration
-            ? Mathf.SmoothStep(0, 1, phase) * Mathf.SmoothStep(0, 1, (duration-phase)/2) : 0;
+        float envelope = EvaluateStorm(elapsed);
         var emission = rain.emission;
-        emission.rateOverTime = viewCamera != null ? diamondsPerSecond * envelope : 0;
+        emission.rateOverTime = prefabDrops == null && viewCamera != null ? diamondsPerSecond * envelope : 0;
+        UpdatePrefabRain(envelope, Time.deltaTime);
+        UpdateMapRain(envelope);
+    }
+
+    public void SetStormTime(double time)
+    {
+        if (double.IsNaN(time) || double.IsInfinity(time)) return;
+        hasNetworkClock = true;
+        networkClock = System.Math.Max(0, time);
+        EvaluateStorm(networkClock);
+    }
+
+    public void ClearStormTime() { hasNetworkClock = false; }
+
+    float EvaluateStorm(double time)
+    {
+        float duration = Mathf.Clamp(rainDuration, 3, 30);
+        float period = Mathf.Max(duration+10, rainInterval);
+        float delay = Mathf.Max(0, firstRainDelay);
+        float phase = time < delay ? -1 : (float)((time-delay)%period);
+        IsRaining = phase >= 0 && phase < duration;
+        SecondsUntilRain = time < delay ? (float)(delay-time) : IsRaining ? 0 : period-phase;
+        SecondsRemaining = IsRaining ? duration-phase : 0;
+        return IsRaining ? Mathf.SmoothStep(0,1,phase)*Mathf.SmoothStep(0,1,(duration-phase)/2) : 0;
     }
 
     void FollowCamera()
@@ -136,6 +165,7 @@ public sealed class b_NeptuneDiamondRain : MonoBehaviour
         if (rain == null || viewCamera == null) return;
         Vector3 target = viewCamera.transform.position + new Vector3(-6, 17, 2);
         if ((rain.transform.position-target).sqrMagnitude > 100*100) rain.Clear();
+        if ((rain.transform.position-target).sqrMagnitude > 100*100) ClearPrefabRain();
         rain.transform.position = target;
     }
 
@@ -146,18 +176,25 @@ public sealed class b_NeptuneDiamondRain : MonoBehaviour
         for (int i = 0; i < Mathf.Min(count, 6); i++)
         {
             var hit = collisions[i];
-            var emission = new ParticleSystem.EmitParams {
-                position = hit.intersection + hit.normal*.04f,
-                velocity = hit.normal*.6f + Random.insideUnitSphere*.4f
-            };
-            impacts.Emit(emission, 3);
-            if (viewCamera == null || Time.time < nextSound || audioSource == null ||
-                Vector3.SqrMagnitude(hit.intersection-viewCamera.transform.position) > 18*18) continue;
-            nextSound = Time.time + .45f;
-            audioSource.transform.position = hit.intersection;
-            audioSource.pitch = Random.Range(.92f, 1.12f);
-            audioSource.PlayOneShot(impactSound != null ? impactSound : generatedChime, impactVolume);
+            EmitImpact(hit.intersection, hit.normal, new Color(.65f, .9f, 1, .35f));
         }
+    }
+
+    void EmitImpact(Vector3 position, Vector3 normal, Color color)
+    {
+        if (impacts == null) return;
+        var emission = new ParticleSystem.EmitParams {
+            position = position + normal*.04f,
+            velocity = normal*.6f + Random.insideUnitSphere*.4f,
+            startColor = color
+        };
+        impacts.Emit(emission, 3);
+        if (viewCamera == null || Time.time < nextSound || audioSource == null ||
+            Vector3.SqrMagnitude(position-viewCamera.transform.position) > 18*18) return;
+        nextSound = Time.time + .45f;
+        audioSource.transform.position = position;
+        audioSource.pitch = Random.Range(.92f, 1.12f);
+        audioSource.PlayOneShot(impactSound != null ? impactSound : generatedChime, impactVolume);
     }
 
     static Mesh CreateDiamondMesh()
@@ -191,6 +228,10 @@ public sealed class b_NeptuneDiamondRain : MonoBehaviour
 
     void OnDisable()
     {
+        hasNetworkClock = false;
+        IsRaining = false;
+        DisposeMapRain();
+        DisposePrefabRain();
         if (rain != null) Remove(rain.gameObject);
         if (impacts != null) Remove(impacts.gameObject);
         if (audioSource != null) { audioSource.Stop(); Remove(audioSource.gameObject); }
