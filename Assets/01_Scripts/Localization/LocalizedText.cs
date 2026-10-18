@@ -27,6 +27,11 @@ namespace GameJam.Localization
             }
         }
 
+        public void SetKey(string key)
+        {
+            Key = key;
+        }
+
         private HeyHeyThere.PixelUISciFiFree.PixelButton pixelButton;
 
         private void Awake()

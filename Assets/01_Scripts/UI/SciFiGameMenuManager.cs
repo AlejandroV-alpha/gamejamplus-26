@@ -657,7 +657,7 @@ namespace GameJam.UI
             phComp.color = DimCyan;
             phComp.alignment = TextAlignmentOptions.Left;
             var loc = phComp.gameObject.AddComponent<LocalizedText>();
-            loc.SetKey(placeholderKey);
+            loc.Key = placeholderKey;
 
             var input = bgRect.gameObject.AddComponent<TMP_InputField>();
             input.textComponent = textComp;
@@ -713,7 +713,7 @@ namespace GameJam.UI
             if (isLocalized)
             {
                 var loc = tmp.gameObject.AddComponent<LocalizedText>();
-                loc.SetKey(textOrKey);
+                loc.Key = textOrKey;
             }
             else
             {
@@ -991,13 +991,24 @@ namespace GameJam.UI
                 masterVolumePercentLabel.text = Mathf.RoundToInt(val * 100f) + "%";
         }
 
+        private MarsFusionAvatar GetLocalAvatar()
+        {
+            if (MarsFusionAvatar.Local != null) return MarsFusionAvatar.Local;
+            if (session != null && session.Runner != null && session.Runner.IsRunning)
+            {
+                var localObj = session.Runner.GetPlayerObject(session.Runner.LocalPlayer);
+                if (localObj != null) return localObj.GetComponent<MarsFusionAvatar>();
+            }
+            return null;
+        }
+
         private void SetVoiceMode(bool ptt)
         {
             PlayerPrefs.SetInt("GameJam.VoiceMode", ptt ? 1 : 0);
             PlayerPrefs.Save();
 
             MarsProximityVoice.LocalPushToTalk = ptt;
-            var localAvatar = MarsFusionAvatar.Local;
+            var localAvatar = GetLocalAvatar();
             if (localAvatar != null && localAvatar.TryGetComponent<MarsProximityVoice>(out var voice))
             {
                 voice.SetPushToTalk(ptt);
@@ -1050,7 +1061,7 @@ namespace GameJam.UI
             if (crewListContainer == null) return;
 
             var allAvatars = FindObjectsByType<MarsFusionAvatar>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
-            var localAvatar = MarsFusionAvatar.Local;
+            var localAvatar = GetLocalAvatar();
 
             int neededRows = allAvatars.Length;
             while (activeCrewRows.Count < neededRows)
@@ -1130,7 +1141,7 @@ namespace GameJam.UI
             widget.Avatar = avatar;
             bool isSelf = avatar != null && avatar == localAvatar;
 
-            string name = avatar != null ? avatar.PlayerName : "Astronauta";
+            string name = (avatar != null && !avatar.PlayerName.IsEmpty) ? avatar.PlayerName.ToString() : "Astronauta";
             if (isSelf)
             {
                 name += " " + GameLocalization.Get("crew.you", "(Tú)");
@@ -1165,7 +1176,8 @@ namespace GameJam.UI
                 if (!isSelf && avatar != null)
                 {
                     widget.VolumeSlider.onValueChanged.RemoveAllListeners();
-                    string prefKey = "GameJam.PlayerVol_" + avatar.PlayerName;
+                    string nameStr = !avatar.PlayerName.IsEmpty ? avatar.PlayerName.ToString() : "Astronauta";
+                    string prefKey = "GameJam.PlayerVol_" + nameStr;
                     float savedVol = PlayerPrefs.GetFloat(prefKey, 1f);
                     widget.VolumeSlider.value = savedVol;
                     if (widget.VolumePercentLabel != null)

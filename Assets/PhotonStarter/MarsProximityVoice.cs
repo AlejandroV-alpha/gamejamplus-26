@@ -18,6 +18,7 @@ namespace GameJam.Multiplayer
         private Recorder recorder;
 
         public static float MasterVoiceVolume = 1f;
+        public static bool LocalPushToTalk = true;
         private float individualVolume = 1f;
 
         public float IndividualVolume => individualVolume;

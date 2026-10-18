@@ -31,6 +31,7 @@ namespace GameJam.Multiplayer
         [Networked] public NetworkString<_32> PlayerName { get; private set; }
         [Networked] public NetworkBool LobbyReady { get; private set; }
         [Networked] private NetworkBool IdentityInitialized { get; set; }
+        public static MarsFusionAvatar Local { get; private set; }
         // Session-scoped identity survives scene/avatar recreation, but not a new runner.
         // Runner keys also isolate local multiplayer peers in the same process.
         private static ConditionalWeakTable<NetworkRunner, Dictionary<PlayerRef, byte>> sessionColors =
@@ -117,6 +118,7 @@ namespace GameJam.Multiplayer
                 ui.Build(CloseTablet, tablet.catalog, tablet.skin);
                 ui.TargetOpen = TabletOpen;
             }
+            if (HasStateAuthority) Local = this;
         }
 
         public void ToggleTablet()
@@ -250,6 +252,7 @@ namespace GameJam.Multiplayer
         private void OnDestroy() => CleanUp();
         private void CleanUp()
         {
+            if (Local == this) Local = null;
             if (identityView != null) Destroy(identityView);
             if (ui != null) Destroy(ui.gameObject);
             if (heldTablet != null) Destroy(heldTablet);
