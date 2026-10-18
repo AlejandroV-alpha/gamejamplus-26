@@ -1,0 +1,127 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1001 &4451132021792377081
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: -8679921383154817045, guid: 064c7c9176680b94fa82fb29a226dad9, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 80
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 064c7c9176680b94fa82fb29a226dad9, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 80
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 064c7c9176680b94fa82fb29a226dad9, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 80
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 064c7c9176680b94fa82fb29a226dad9, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -10.920044
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 064c7c9176680b94fa82fb29a226dad9, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 15.706834
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 064c7c9176680b94fa82fb29a226dad9, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 325.8178
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 064c7c9176680b94fa82fb29a226dad9, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 0.7071068
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 064c7c9176680b94fa82fb29a226dad9, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: -0.7071068
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 064c7c9176680b94fa82fb29a226dad9, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 064c7c9176680b94fa82fb29a226dad9, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 064c7c9176680b94fa82fb29a226dad9, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 064c7c9176680b94fa82fb29a226dad9, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 064c7c9176680b94fa82fb29a226dad9, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -7511558181221131132, guid: 064c7c9176680b94fa82fb29a226dad9, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 6b97e6c9ede0dfb45adc0023bc441189, type: 2}
+    - target: {fileID: 919132149155446097, guid: 064c7c9176680b94fa82fb29a226dad9, type: 3}
+      propertyPath: m_Name
+      value: crimsom_red_Model
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 064c7c9176680b94fa82fb29a226dad9, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 6157481258566550766}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 064c7c9176680b94fa82fb29a226dad9, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 8000000000000000112}
+  m_SourcePrefab: {fileID: 100100000, guid: 064c7c9176680b94fa82fb29a226dad9, type: 3}
+--- !u!1 &3532213181113972136 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: 064c7c9176680b94fa82fb29a226dad9, type: 3}
+  m_PrefabInstance: {fileID: 4451132021792377081}
+  m_PrefabAsset: {fileID: 0}
+--- !u!64 &6157481258566550766
+MeshCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3532213181113972136}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 5
+  m_Convex: 0
+  m_CookingOptions: 30
+  m_Mesh: {fileID: -9037851627997230718, guid: 064c7c9176680b94fa82fb29a226dad9, type: 3}
+--- !u!114 &8000000000000000112
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3532213181113972136}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b92bab76e98e472eb471486cef3cceca, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::b_CrystalResourceGlow
+  sparkleMaterial: {fileID: 2100000, guid: b7fb7f3f77b845889f2e23b951dff6ad, type: 2}
+  glowColor: {r: 1, g: 0.28, b: 0.12, a: 0.34}
+  particlesPerSecond: 4
+  radiusMultiplier: 0.65
+  maximumRadius: 1.5
+  particleLightIntensity: 1.4
+  particleLightRange: 1.2
