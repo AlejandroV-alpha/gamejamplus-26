@@ -42,6 +42,7 @@ namespace GameJam.Survival
         public bool IsAnimating => IsRecovering || IsEmoting || IsRescuing || IsLeavingRescue;
         public float ReviveElapsed => Object != null && Object.IsValid && ReviveDeadline.IsRunning
             ? Mathf.Max(0f, reviveDuration - ReviveDeadline.RemainingTime(Runner).GetValueOrDefault()) : 0f;
+        public float ReviveProgress => Mathf.Clamp01(ReviveElapsed / reviveDuration);
         public SurvivalRevive RescueTarget
         {
             get
@@ -89,6 +90,7 @@ namespace GameJam.Survival
             kcc = GetComponent<SimpleKCC>();
             input = GetComponent<CharacterInput>();
             if (GetComponent<PlayerSocialAnimation>() == null) gameObject.AddComponent<PlayerSocialAnimation>();
+            if (GetComponent<SurvivalReviveFeedback>() == null) gameObject.AddComponent<SurvivalReviveFeedback>();
             if (health == null || avatar == null || kcc == null || input == null)
             {
                 Debug.LogError("[SurvivalRevive] Faltan dependencias del astronauta.", this);

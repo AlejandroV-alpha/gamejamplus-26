@@ -4,6 +4,7 @@ using GameJam.Multiplayer;
 using UnityEngine;
 using UnityEngine.Animations;
 using UnityEngine.Playables;
+using System.Collections.Generic;
 
 namespace GameJam.Survival
 {
@@ -31,8 +32,9 @@ namespace GameJam.Survival
             : (reviveGetUp = Resources.Load<AnimationClip>("PlayerSocial/ReviveGetUp"));
         public static AnimationClip RescueStandClip => rescueStand != null ? rescueStand
             : (rescueStand = Resources.Load<AnimationClip>("PlayerSocial/ReviveStand"));
-        private Gun gun;
-        private bool hidGun, gunWasActive, originalRootMotion;
+        private Renderer[] weaponRenderers;
+        private readonly Dictionary<Renderer, bool> weaponVisibility = new Dictionary<Renderer, bool>();
+        private bool originalRootMotion;
         private static readonly HumanBodyBones[] SupportBones = { HumanBodyBones.Hips, HumanBodyBones.LeftFoot, HumanBodyBones.RightFoot };
 
         public static AnimationClip LoadClip(string path)
@@ -52,7 +54,16 @@ namespace GameJam.Survival
             revive = GetComponent<SurvivalRevive>();
             avatar = GetComponent<MarsFusionAvatar>();
             animator = GetComponentInChildren<Animator>();
-            gun = GetComponentInChildren<Gun>(true);
+            var action = GetComponent<PlayerInteractionAction>();
+            Transform weapon = action != null ? action.weaponVisual : null;
+            if (weapon == null)
+            {
+                var gun = GetComponentInChildren<Gun>(true);
+                if (gun != null) weapon = gun.transform;
+            }
+            // Gun can live on the player root. Never hide the player or its skinned model.
+            weaponRenderers = weapon != null && weapon != transform && weapon.IsChildOf(transform)
+                && !ModelIsInside(weapon) ? weapon.GetComponentsInChildren<Renderer>(true) : new Renderer[0];
             if (animator == null || animator.transform == transform) return;
             model = animator.transform;
             restPosition = model.localPosition;
@@ -89,6 +100,15 @@ namespace GameJam.Survival
                 if (clip != null) time = clip.length - revive.EmoteDeadline.RemainingTime(revive.Runner).GetValueOrDefault();
             }
             if (clip == null) { StopPose(); return; }
+            PlayPose(clip, time);
+            if (revive.IsRecovering || target != null || revive.IsLeavingRescue) GroundPose();
+        }
+        private bool ModelIsInside(Transform weapon)
+        {
+            return animator != null && (animator.transform == weapon || animator.transform.IsChildOf(weapon));
+        }
+        private void PlayPose(AnimationClip clip, double time)
+        {
             if (currentClip != clip || !graph.IsValid())
             {
                 if (!graph.IsValid())
@@ -101,11 +121,11 @@ namespace GameJam.Survival
                     var output = AnimationPlayableOutput.Create(graph, "Social pose", animator);
                     output.SetSourcePlayable(mixer);
                     graph.Play();
-                    if (gun != null)
+                    foreach (var renderer in weaponRenderers)
                     {
-                        gunWasActive = gun.gameObject.activeSelf;
-                        gun.gameObject.SetActive(false);
-                        hidGun = true;
+                        if (renderer == null) continue;
+                        weaponVisibility[renderer] = renderer.enabled;
+                        renderer.enabled = false;
                     }
                 }
                 if (previousPlayable.IsValid())
@@ -141,7 +161,6 @@ namespace GameJam.Survival
                 previousPlayable = default;
             }
             graph.Evaluate(0);
-            if (revive.IsRecovering || target != null || revive.IsLeavingRescue) GroundPose();
         }
         private void GroundPose()
         {
@@ -169,8 +188,9 @@ namespace GameJam.Survival
             currentClip = null;
             playable = default;
             previousPlayable = default;
-            if (hidGun && gun != null) gun.gameObject.SetActive(gunWasActive);
-            hidGun = false;
+            foreach (var entry in weaponVisibility)
+                if (entry.Key != null) entry.Key.enabled = entry.Value;
+            weaponVisibility.Clear();
         }
         private void OnDisable() => StopPose();
         private void OnDestroy() => StopPose();
