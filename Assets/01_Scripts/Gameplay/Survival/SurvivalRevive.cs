@@ -30,13 +30,18 @@ namespace GameJam.Survival
         [Networked] public byte Emote { get; private set; }
         [Networked] public TickTimer EmoteDeadline { get; private set; }
         [Networked] public TickTimer GetUpDeadline { get; private set; }
+        [Networked] public TickTimer RescueExitDeadline { get; private set; }
         private float nextSocialLookup;
         private SurvivalRevive rescueTarget;
         public bool IsRecovering => Object != null && Object.IsValid && health != null && health.IsAlive
             && GetUpDeadline.IsRunning && !GetUpDeadline.Expired(Runner);
         public bool IsEmoting => Object != null && Object.IsValid && Emote != 0 && EmoteDeadline.IsRunning && !EmoteDeadline.Expired(Runner);
         public bool IsRescuing => RescueTarget != null;
-        public bool IsAnimating => IsRecovering || IsEmoting || IsRescuing;
+        public bool IsLeavingRescue => Object != null && Object.IsValid && health != null && health.IsAlive
+            && RescueExitDeadline.IsRunning && !RescueExitDeadline.Expired(Runner);
+        public bool IsAnimating => IsRecovering || IsEmoting || IsRescuing || IsLeavingRescue;
+        public float ReviveElapsed => Object != null && Object.IsValid && ReviveDeadline.IsRunning
+            ? Mathf.Max(0f, reviveDuration - ReviveDeadline.RemainingTime(Runner).GetValueOrDefault()) : 0f;
         public SurvivalRevive RescueTarget
         {
             get
@@ -201,7 +206,7 @@ namespace GameJam.Survival
         internal void BeginGetUp()
         {
             if (!HasStateAuthority) return;
-            var clip = Resources.Load<AnimationClip>("Animations/StormStandUp");
+            var clip = PlayerSocialAnimation.ReviveGetUpClip;
             GetUpDeadline = TickTimer.CreateFromSeconds(Runner, clip != null ? clip.length : 8.267f);
         }
 
@@ -210,7 +215,7 @@ namespace GameJam.Survival
         /// </summary>
         private bool CanInteractLocally()
         {
-            if (IsRecovering || IsEmoting || health == null || !health.IsAlive || input == null || !input.ControlsEnabled || avatar == null || avatar.TabletOpen || GameJam.Crafting.CraftingBox.IsBlockingInput)
+            if (IsRecovering || IsLeavingRescue || IsEmoting || health == null || !health.IsAlive || input == null || !input.ControlsEnabled || avatar == null || avatar.TabletOpen || GameJam.Crafting.CraftingBox.IsBlockingInput)
             {
                 return false;
             }
@@ -289,6 +294,14 @@ namespace GameJam.Survival
         /// </summary>
         private void CancelOutgoing()
         {
+            // The rescuer owns this timer; completion and cancellation use the same exit on every peer.
+            bool accepted = sawAcceptance || (selected != null && selected.Object != null && selected.Object.IsValid
+                && selected.Rescuer == Object && selected.ActiveAttempt == attemptSequence);
+            if (selected != null && accepted && health != null && health.IsAlive && !IsRecovering)
+            {
+                var clip = PlayerSocialAnimation.RescueStandClip;
+                RescueExitDeadline = TickTimer.CreateFromSeconds(Runner, clip != null ? clip.length : 3.334f);
+            }
             if (selected != null && selected.Object != null && selected.Object.IsValid && selected.Runner == Runner)
             {
                 selected.RPC_Cancel(Object, attemptSequence);
@@ -444,6 +457,7 @@ namespace GameJam.Survival
             if (HasStateAuthority)
             {
                 AuthorityGeneration++;
+                RescueExitDeadline = TickTimer.None;
                 ClearReservation();
             }
         }

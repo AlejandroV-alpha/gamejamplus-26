@@ -17,17 +17,23 @@ namespace GameJam.Survival
         private SurvivalRevive revive;
         private MarsFusionAvatar avatar;
         private Animator animator;
-        private Transform model, leftArm, rightArm, leftForearm, rightForearm;
+        private Transform model;
         private Vector3 restPosition;
         private Quaternion restRotation;
         private PlayableGraph graph;
-        private AnimationClipPlayable playable;
-        private AnimationClip currentClip, kneel, getUp;
+        private AnimationClipPlayable playable, previousPlayable;
+        private AnimationMixerPlayable mixer;
+        private float blendStarted;
+        private const float TransitionDuration = .15f;
+        private AnimationClip currentClip, kneel;
+        private static AnimationClip reviveGetUp, rescueStand;
+        public static AnimationClip ReviveGetUpClip => reviveGetUp != null ? reviveGetUp
+            : (reviveGetUp = Resources.Load<AnimationClip>("PlayerSocial/ReviveGetUp"));
+        public static AnimationClip RescueStandClip => rescueStand != null ? rescueStand
+            : (rescueStand = Resources.Load<AnimationClip>("PlayerSocial/ReviveStand"));
         private Gun gun;
         private bool hidGun, gunWasActive, originalRootMotion;
         private static readonly HumanBodyBones[] SupportBones = { HumanBodyBones.Hips, HumanBodyBones.LeftFoot, HumanBodyBones.RightFoot };
-        private float rescueStarted = -1;
-        private NetworkId rescueId;
 
         public static AnimationClip LoadClip(string path)
         {
@@ -51,16 +57,7 @@ namespace GameJam.Survival
             model = animator.transform;
             restPosition = model.localPosition;
             restRotation = model.localRotation;
-            kneel = LoadClip("PlayerSocial/Kneel");
-            getUp = Resources.Load<AnimationClip>("Animations/StormStandUp");
-            if (getUp == null) getUp = LoadClip("Animations/StormStandUpSource");
-            if (animator.isHuman)
-            {
-                leftArm = animator.GetBoneTransform(HumanBodyBones.LeftUpperArm);
-                rightArm = animator.GetBoneTransform(HumanBodyBones.RightUpperArm);
-                leftForearm = animator.GetBoneTransform(HumanBodyBones.LeftLowerArm);
-                rightForearm = animator.GetBoneTransform(HumanBodyBones.RightLowerArm);
-            }
+            kneel = Resources.Load<AnimationClip>("PlayerSocial/ReviveCrouch");
         }
         private void LateUpdate()
         {
@@ -72,57 +69,79 @@ namespace GameJam.Survival
             double time = 0;
             if (revive.IsRecovering)
             {
-                clip = getUp;
+                clip = ReviveGetUpClip;
                 if (clip != null) time = clip.length - revive.GetUpDeadline.RemainingTime(revive.Runner).GetValueOrDefault();
             }
             else if (target != null)
             {
-                if (rescueStarted < 0 || rescueId != target.Object.Id)
-                { rescueStarted = Time.time; rescueId = target.Object.Id; }
                 clip = kneel;
-                if (clip != null) time = Mathf.Min(Time.time - rescueStarted, Mathf.Max(0, clip.length - .03f));
+                // Hold the last crouched pose until the authoritative reservation finishes.
+                if (clip != null) time = Mathf.Min(target.ReviveElapsed, Mathf.Max(0, clip.length - .001f));
+            }
+            else if (revive.IsLeavingRescue)
+            {
+                clip = RescueStandClip;
+                if (clip != null) time = clip.length - revive.RescueExitDeadline.RemainingTime(revive.Runner).GetValueOrDefault();
             }
             else if (revive.IsEmoting)
             {
                 clip = EmoteClip(revive.Emote);
                 if (clip != null) time = clip.length - revive.EmoteDeadline.RemainingTime(revive.Runner).GetValueOrDefault();
             }
-            if (target == null) rescueStarted = -1;
             if (clip == null) { StopPose(); return; }
             if (currentClip != clip || !graph.IsValid())
             {
-                StopPose();
+                if (!graph.IsValid())
+                {
+                    originalRootMotion = animator.applyRootMotion;
+                    animator.applyRootMotion = false;
+                    graph = PlayableGraph.Create("Player emotes and cooperative revival");
+                    graph.SetTimeUpdateMode(DirectorUpdateMode.Manual);
+                    mixer = AnimationMixerPlayable.Create(graph, 2);
+                    var output = AnimationPlayableOutput.Create(graph, "Social pose", animator);
+                    output.SetSourcePlayable(mixer);
+                    graph.Play();
+                    if (gun != null)
+                    {
+                        gunWasActive = gun.gameObject.activeSelf;
+                        gun.gameObject.SetActive(false);
+                        hidGun = true;
+                    }
+                }
+                if (previousPlayable.IsValid())
+                {
+                    mixer.DisconnectInput(1);
+                    graph.DestroyPlayable(previousPlayable);
+                }
+                previousPlayable = playable;
+                if (previousPlayable.IsValid())
+                {
+                    // Blend from the sampled crouch, including an early cancellation.
+                    mixer.DisconnectInput(0);
+                    graph.Connect(previousPlayable, 0, mixer, 1);
+                }
                 currentClip = clip;
-                originalRootMotion = animator.applyRootMotion;
-                animator.applyRootMotion = false;
-                graph = PlayableGraph.Create("Player emotes and cooperative revival");
-                graph.SetTimeUpdateMode(DirectorUpdateMode.Manual);
                 playable = AnimationClipPlayable.Create(graph, clip);
                 playable.SetApplyFootIK(true);
                 playable.SetSpeed(0);
-                var output = AnimationPlayableOutput.Create(graph, "Social pose", animator);
-                output.SetSourcePlayable(playable);
-                graph.Play();
-                if (gun != null)
-                {
-                    gunWasActive = gun.gameObject.activeSelf;
-                    gun.gameObject.SetActive(false);
-                    hidGun = true;
-                }
+                graph.Connect(playable, 0, mixer, 0);
+                blendStarted = Time.unscaledTime;
             }
             model.localPosition = restPosition;
             model.localRotation = restRotation;
             playable.SetTime(Mathf.Clamp((float)time, 0, Mathf.Max(0, clip.length - .001f)));
-            graph.Evaluate(0);
-            if (revive.IsRecovering) GroundPose();
-            if (target != null)
+            float blend = previousPlayable.IsValid()
+                ? Mathf.Clamp01((Time.unscaledTime - blendStarted) / TransitionDuration) : 1f;
+            mixer.SetInputWeight(0, blend);
+            mixer.SetInputWeight(1, 1f - blend);
+            if (blend >= 1f && previousPlayable.IsValid())
             {
-                float pump = Mathf.Sin((Time.time - rescueStarted) * Mathf.PI * 4f) * 8f;
-                if (leftArm != null) leftArm.localRotation *= Quaternion.Euler(-40 + pump, 0, -18);
-                if (rightArm != null) rightArm.localRotation *= Quaternion.Euler(-40 + pump, 0, 18);
-                if (leftForearm != null) leftForearm.localRotation *= Quaternion.Euler(-35, 0, 0);
-                if (rightForearm != null) rightForearm.localRotation *= Quaternion.Euler(-35, 0, 0);
+                mixer.DisconnectInput(1);
+                graph.DestroyPlayable(previousPlayable);
+                previousPlayable = default;
             }
+            graph.Evaluate(0);
+            if (revive.IsRecovering || target != null || revive.IsLeavingRescue) GroundPose();
         }
         private void GroundPose()
         {
@@ -148,6 +167,8 @@ namespace GameJam.Survival
                 if (model != null) { model.localPosition = restPosition; model.localRotation = restRotation; }
             }
             currentClip = null;
+            playable = default;
+            previousPlayable = default;
             if (hidGun && gun != null) gun.gameObject.SetActive(gunWasActive);
             hidGun = false;
         }
