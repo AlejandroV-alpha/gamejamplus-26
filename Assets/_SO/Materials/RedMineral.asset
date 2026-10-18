@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c60ab5cbfabf4c3585fa53c0fc37f842, type: 3}
+  m_Name: RedMineral
+  m_EditorClassIdentifier: Assembly-CSharp::GameJam.Inventory.MaterialData
+  id: red_mineral
+  materialName: Mineral rojo
+  description: Mineral rojo utilizado en componentes de Marte.
+  icon: {fileID: 0}
+  prefab: {fileID: 8914290160511922020, guid: 9682ceed10905e94c8f7b1010debf6be, type: 3}

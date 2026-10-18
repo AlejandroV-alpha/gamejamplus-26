@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fcc1bed800aa8474e9cccaf1f5c7ee33, type: 3}
+  m_Name: Estabilizador
+  m_EditorClassIdentifier: Assembly-CSharp::GameJam.Crafting.RecipeData
+  id: saturn_estabilizador
+  recipeName: Estabilizador
+  description: Componente para estabilizar la nave.
+  planet: 1
+  icon: {fileID: 0}
+  ingredients:
+  - material: {fileID: 11400000, guid: 8dd30e445ddc45a68953ca9ff2a2f1ef, type: 2}
+    amount: 3
+  - material: {fileID: 11400000, guid: 6453654fe44ffdc429c6fff7b65ceb59, type: 2}
+    amount: 1
