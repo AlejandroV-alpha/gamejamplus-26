@@ -5198,15 +5198,13 @@ namespace Fusion.Editor {
 
     [InitializeOnLoadMethod]
     static void InitializeEager() {
-      if (AssetDatabase.IsAssetImportWorkerProcess()) {
+      if (AssetDatabase.IsAssetImportWorkerProcess() || FusionMppm.Status == FusionMppmStatus.VirtualInstance) {
         return;
       }
 
-      if (SessionState.GetBool($"FusionCustomDependency/RegisteredEagerDependencies", false)) {
-        return;
-      }
-
-      SessionState.SetBool($"FusionCustomDependency/RegisteredEagerDependencies", true);
+      // Republish dependencies on every domain reload. SessionState survives SDK
+      // updates and define changes, but MPPM's persistent command cache may not.
+      // Virtual players receive these hashes instead of calculating their own.
 
       foreach (var field in TypeCache.GetFieldsWithAttribute<FusionCustomDependencyEagerAttribute>()) {
         Assert.Always(field.FieldType == typeof(FusionCustomDependency));
@@ -15531,6 +15529,11 @@ namespace Fusion.Editor {
     private const string ManifestFile = "manifest.json";
 
     static FusionInstaller() {
+#if FUSION_HAS_MPPM
+      // Virtual players share the main Editor's packages and read-only Asset Database.
+      // Their project directory does not contain Packages/manifest.json.
+      if (!Unity.Multiplayer.PlayMode.CurrentPlayer.IsMainEditor) return;
+#endif
       if (PlayerSettings.runInBackground == false) {
         FusionEditorLog.LogInstaller($"Setting {nameof(PlayerSettings)}.{nameof(PlayerSettings.runInBackground)} to true");
         PlayerSettings.runInBackground = true;
