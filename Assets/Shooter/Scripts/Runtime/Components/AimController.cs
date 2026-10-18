@@ -133,13 +133,18 @@ namespace Blocks.Gameplay.Shooter
             base.OnNetworkSpawn();
             m_MainCamera = Camera.main;
 
-            // Enable RigBuilder at runtime to avoid Edit mode warnings
+            // Rebuild the rig after the network player and its weapon hierarchy are ready.
+            // Constraints added in the scene after the initial graph build otherwise remain inactive.
             if (aimRig != null)
             {
                 var rigBuilder = aimRig.GetComponentInParent<RigBuilder>();
-                if (rigBuilder != null && !rigBuilder.enabled)
+                if (rigBuilder != null)
                 {
-                    rigBuilder.enabled = true;
+                    if (!rigBuilder.enabled)
+                    {
+                        rigBuilder.enabled = true;
+                    }
+
                     rigBuilder.Build();
                 }
             }
