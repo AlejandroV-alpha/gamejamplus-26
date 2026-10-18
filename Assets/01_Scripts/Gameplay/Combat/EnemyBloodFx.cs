@@ -18,6 +18,7 @@ namespace GameJam.Combat
         [SerializeField, Min(0.1f)] private float splatSpread = 1.4f;
         [SerializeField] private Vector2 splatSize = new Vector2(0.5f, 1.3f);
         [SerializeField] private LayerMask groundLayers = ~0;
+        [SerializeField, Min(0.1f), Tooltip("Tamaño del chorro de sangre (criaturas gigantes usan mas).")] private float burstScale = 1f;
 
         /// <summary>
         /// Busca un enemigo con sangre junto al impacto y lo hace sangrar.
@@ -28,7 +29,7 @@ namespace GameJam.Combat
             foreach (Collider candidate in nearby)
             {
                 EnemyBloodFx blood = candidate.GetComponentInParent<EnemyBloodFx>();
-                if (blood != null && blood.GetComponent<ReksaiFusionEnemy>()==null && blood.GetComponent<GameJam.Multiplayer.MarsFusionAvatar>()==null)
+                if (blood != null && blood.GetComponent<ReksaiFusionEnemy>()==null && blood.GetComponent<JungleNightmareFusionEnemy>()==null && blood.GetComponent<GameJam.Multiplayer.MarsFusionAvatar>()==null)
                 {
                     blood.Bleed(point, normal);
                     return;
@@ -44,6 +45,7 @@ namespace GameJam.Combat
             if (bloodBurst != null)
             {
                 GameObject burst = Instantiate(bloodBurst, point, Quaternion.LookRotation(normal));
+                burst.transform.localScale = Vector3.one * burstScale;
                 Destroy(burst, burstDuration);
             }
 

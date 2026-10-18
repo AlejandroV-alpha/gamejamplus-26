@@ -6635,7 +6635,7 @@ Transform:
   m_GameObject: {fileID: 617120884}
   serializedVersion: 2
   m_LocalRotation: {x: -0.7071068, y: 0, z: 0, w: 0.7071068}
-  m_LocalPosition: {x: 40, y: 0.44600686, z: 35}
+  m_LocalPosition: {x: 120, y: 0.25833035, z: 382}
   m_LocalScale: {x: 3, y: 3, z: 3}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -15595,15 +15595,15 @@ PrefabInstance:
       objectReference: {fileID: 2111215503}
     - target: {fileID: 2600027696912353973, guid: dceb2319f92fc0b46a7d1c73802a8d2b, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 40
+      value: 120
       objectReference: {fileID: 0}
     - target: {fileID: 2600027696912353973, guid: dceb2319f92fc0b46a7d1c73802a8d2b, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0.35332355
+      value: 0.18531418
       objectReference: {fileID: 0}
     - target: {fileID: 2600027696912353973, guid: dceb2319f92fc0b46a7d1c73802a8d2b, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 16
+      value: 382
       objectReference: {fileID: 0}
     - target: {fileID: 2600027696912353973, guid: dceb2319f92fc0b46a7d1c73802a8d2b, type: 3}
       propertyPath: m_LocalRotation.w
@@ -16224,7 +16224,7 @@ Transform:
   m_GameObject: {fileID: 1467885865}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 2, z: 0}
+  m_LocalPosition: {x: 120, y: 0.18531418, z: 382}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -22615,15 +22615,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8203570641023347003, guid: ce87e7cb6622f0846a180099297fdacd, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 30
+      value: 120
       objectReference: {fileID: 0}
     - target: {fileID: 8203570641023347003, guid: ce87e7cb6622f0846a180099297fdacd, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 2.16
+      value: 0.18531418
       objectReference: {fileID: 0}
     - target: {fileID: 8203570641023347003, guid: ce87e7cb6622f0846a180099297fdacd, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 13
+      value: 382
       objectReference: {fileID: 0}
     - target: {fileID: 8203570641023347003, guid: ce87e7cb6622f0846a180099297fdacd, type: 3}
       propertyPath: m_LocalRotation.w
@@ -22893,6 +22893,80 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: d5e9c961573f2844d9a03ed7db682f91, type: 3}
+--- !u!1 &2139973558
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2139973561}
+  - component: {fileID: 2139973560}
+  - component: {fileID: 2139973559}
+  m_Layer: 0
+  m_Name: JungleNightmare_SpawnerMinerales
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &2139973559
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2139973558}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1f24c4684bb31284d9b84c6a5a2850fa, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MineralEnemySpawner
+  mediumPrefab: {fileID: 6785775998509184545, guid: c2ebff25b19498a4988fe0a40859af7a, type: 3}
+  largePrefab: {fileID: 2493979143448316718, guid: d6fb65a500f2ff54ba7faa96883f2cea, type: 3}
+  mediumPerZone: 2
+  largePerZone: 1
+  maxZoneCount: 10
+  zoneRadius: 15
+  respawnDelaySeconds: 40
+  minDistanceFromPlayers: 15
+  distanceFromMineral: {x: 3, y: 7}
+--- !u!114 &2139973560
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2139973558}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: -1552182283, guid: e725a070cec140c4caffb81624c8c787, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Fusion.Runtime.dll::Fusion.NetworkObject
+  SortKey: 2665730203
+  SendPriority: 1
+  EnableInterpolation: 1
+  Flags: 262146
+  NestedObjects: []
+  NetworkedBehaviours:
+  - {fileID: 2139973559}
+  ForceRemoteRenderTimeframe: 0
+--- !u!4 &2139973561
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2139973558}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 120, y: 37, z: 382}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &6800000000000000101
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -23158,3 +23232,4 @@ SceneRoots:
   - {fileID: 1265429844}
   - {fileID: 1279340172}
   - {fileID: 5245825107221087825}
+  - {fileID: 2139973561}
