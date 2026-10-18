@@ -705,7 +705,38 @@ Transform:
   m_GameObject: {fileID: 3088574829955371091}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0.25, z: -4.5}
+  m_LocalPosition: {x: 0, y: -0.05, z: -5}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 6608314389182396887}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &3088574829955371092
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 5864237138245083234}
+  m_Layer: 0
+  m_Name: ShoulderCameraHandle
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &5864237138245083234
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3088574829955371092}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0.8, y: 0.15, z: -2.75}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1033,6 +1064,7 @@ MonoBehaviour:
   Animator: {fileID: 1861680653700957010}
   CameraPivot: {fileID: 6608314389182396887}
   CameraHandle: {fileID: 5864237138245083233}
+  ShoulderCameraHandle: {fileID: 5864237138245083234}
   WalkSpeed: 3
   SprintSpeed: 6
   JumpImpulse: 8
@@ -1050,6 +1082,7 @@ MonoBehaviour:
   RightHandGrabPistol: {fileID: 4354125613416770641}
   LeftHandGrabPistol: {fileID: 3610227061387803579}
   AimWeightBlendDuration: 0.2
+  AimCameraBlendDuration: 0.45
 --- !u!114 &1105301317831960609
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1952,6 +1985,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 5864237138245083233}
+  - {fileID: 5864237138245083234}
   m_Father: {fileID: 1946134416809588065}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &6352816348493838614
