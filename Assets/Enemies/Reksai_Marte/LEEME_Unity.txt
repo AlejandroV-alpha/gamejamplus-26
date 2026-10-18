@@ -1,0 +1,4 @@
+﻿REKSAI MARTE
+FBX con 76 huesos y 8 animaciones originales. Textura nueva en Textures/Reksai_Marte_BaseColor.png, también incluida en Blender y FBX.
+Importar FBX y Textures en Assets. Rig: Generic. Si el material no carga, asignar el PNG a Base Map/Base Color de un material Lit compatible con el proyecto. Loop Time para reposo y carrera.
+No se ha probado dentro del proyecto Unity.

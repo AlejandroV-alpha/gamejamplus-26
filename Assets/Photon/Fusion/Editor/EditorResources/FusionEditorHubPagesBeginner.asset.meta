@@ -1,0 +1,17 @@
+fileFormatVersion: 2
+guid: 26edd043df0ec96439be5eb536aa9dad
+labels:
+- HubContentBeginner
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 11400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 291051
+  packageName: Photon Fusion Starter - Multiplayer
+  packageVersion: 2.0.4f1
+  assetPath: Assets/Photon/Fusion/Editor/EditorResources/FusionEditorHubPagesBeginner.asset
+  uploadId: 988192

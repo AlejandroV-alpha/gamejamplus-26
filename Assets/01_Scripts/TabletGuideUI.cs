@@ -27,7 +27,7 @@ namespace GameJam.Tablet
         private string clockMinute;
 
         // Tablet colors: warm accent and dark surfaces.
-        private static readonly Color CyanAccent = new(1f, 0.65f, 0.35f, 1f);     // Vibrant Android cyan
+        private static readonly Color CyanAccent = new(1f, 0.65f, 0.35f, 1f);     // Vibrant warm accent
         private static readonly Color InkWhite = new(0.96f, 0.98f, 1.00f, 1f);       // Ultra-crisp reading white
         private static readonly Color MutedCyan = new(0.48f, 0.68f, 0.80f, 1f);      // Soft technical secondary
         private static readonly Color DimCyan = new(0.26f, 0.40f, 0.50f, 1f);        // Muted labels
@@ -133,10 +133,10 @@ namespace GameJam.Tablet
             AddWallpaper();
 
             // ================= 3. ANDROID TABLET OS INTERFACE =================
-            // Top Android Status Bar (Clock, Network, Planet Chips, Battery, Close)
+            // Top Android Status Bar (Clock, Network, Sector, Close)
             CreateAndroidTopStatusBar(close);
 
-            // Central dynamic workspace for pages (Inicio, Tareas, Recetas, Minerales)
+            // Central dynamic workspace for pages (Inicio, Tareas, Recetas, Minerales, Planetas)
             workspace = new GameObject("Widget workspace", typeof(RectTransform)).GetComponent<RectTransform>();
             workspace.transform.SetParent(screen, false);
             workspace.anchorMin = new Vector2(0.5f, 0.5f);
@@ -144,7 +144,7 @@ namespace GameJam.Tablet
             workspace.sizeDelta = new Vector2(1170, 570);
             workspace.anchoredPosition = new Vector2(0, -18);
 
-            // Bottom Android Taskbar / Dock (Inicio, Tareas, Recetas, Minerales)
+            // Bottom Android Taskbar / Dock (Atras, Inicio, Aplicaciones)
             CreateAndroidTaskbarDock();
 
             pageGroup = workspace.gameObject.AddComponent<CanvasGroup>();
@@ -180,11 +180,9 @@ namespace GameJam.Tablet
 
             foreach (var pos in corners)
             {
-                // Rubberized protective armor plate
                 var plate = CreateRoundedPanel(parent, "CornerArmor", new Vector2(34, 34), 8, ArmorBumper);
                 plate.anchoredPosition = pos;
 
-                // Dark titanium hex fastener bolt
                 var boltRim = CreateRoundedPanel(plate, "HexBolt", new Vector2(10, 10), 5, HexBolt);
                 boltRim.anchoredPosition = Vector2.zero;
                 var boltCenter = CreateRoundedPanel(boltRim, "Pin", new Vector2(4, 4), 2, new Color(0.08f, 0.12f, 0.16f));
@@ -195,22 +193,18 @@ namespace GameJam.Tablet
         // 1B. Left Edge: Weather-sealed High-Speed Data Cartridge Bay
         private void CreateLeftDataPort(RectTransform parent)
         {
-            // Recessed port housing on left bezel
             var bay = CreateRoundedPanel(parent, "DataBayHousing", new Vector2(10, 140), 4, new Color(0.03f, 0.045f, 0.07f));
             bay.anchoredPosition = new Vector2(-637, 20);
 
-            // Sealed rubber protective cover
             var door = CreateRoundedPanel(bay, "SealFlap", new Vector2(6, 120), 3, ChassisRim);
             door.anchoredPosition = Vector2.zero;
 
-            // Grip ridges on door
             for (int r = -2; r <= 2; r++)
             {
                 var ridge = CreateRoundedPanel(door, "Ridge", new Vector2(4, 3), 1, new Color(0.08f, 0.12f, 0.16f));
                 ridge.anchoredPosition = new Vector2(0, r * 16);
             }
 
-            // Port indicator LED
             var led = CreateRoundedPanel(parent, "PortLED", new Vector2(4, 8), 2, new Color(0.00f, 0.92f, 0.88f, 0.70f));
             led.anchoredPosition = new Vector2(-637, -65);
         }
@@ -218,19 +212,16 @@ namespace GameJam.Tablet
         // 1C. Right Edge: Sealed Power Switch, Tactile Volume Rocker, Magnetic Stylus Dock
         private void CreateRightHardwareControls(RectTransform parent)
         {
-            // Power switch with subtle red accent line
             var pwrBtn = CreateRoundedPanel(parent, "Pwr_Button", new Vector2(6, 44), 3, ChassisRim);
             pwrBtn.anchoredPosition = new Vector2(648, 220);
             var pwrAccent = CreateRoundedPanel(pwrBtn, "Accent", new Vector2(2, 20), 1, new Color(0.9f, 0.3f, 0.3f, 0.9f));
             pwrAccent.anchoredPosition = Vector2.zero;
 
-            // Volume rocker with center separator
             var volBtn = CreateRoundedPanel(parent, "Vol_Button", new Vector2(6, 80), 3, ChassisRim);
             volBtn.anchoredPosition = new Vector2(648, 140);
             var volDiv = CreateRoundedPanel(volBtn, "Divider", new Vector2(4, 2), 1, new Color(0.08f, 0.12f, 0.16f));
             volDiv.anchoredPosition = Vector2.zero;
 
-            // Magnetic Stylus docking slot on the right bezel
             var stylusSlot = CreateRoundedPanel(parent, "StylusDock", new Vector2(8, 200), 4, new Color(0.03f, 0.045f, 0.07f));
             stylusSlot.anchoredPosition = new Vector2(637, -30);
             var stylusBody = CreateRoundedPanel(stylusSlot, "StylusPen", new Vector2(4, 180), 2, new Color(0.14f, 0.19f, 0.26f));
@@ -245,7 +236,6 @@ namespace GameJam.Tablet
             cluster.anchoredPosition = new Vector2(0, 390);
             cluster.sizeDelta = new Vector2(340, 20);
 
-            // Atmospheric & radiation intake micro-grille
             var atmosGrille = CreateRoundedPanel(cluster, "AtmosSensorGrille", new Vector2(56, 6), 3, new Color(0.02f, 0.035f, 0.05f));
             atmosGrille.anchoredPosition = new Vector2(-75, 0);
             for (int g = -3; g <= 3; g++)
@@ -254,21 +244,17 @@ namespace GameJam.Tablet
                 slit.anchoredPosition = new Vector2(g * 7, 0);
             }
 
-            // Primary visual spectrum camera
             var lensRim = CreateRoundedPanel(cluster, "VisualLensRim", new Vector2(14, 14), 7, new Color(0.02f, 0.03f, 0.05f));
             lensRim.anchoredPosition = new Vector2(-22, 0);
             var lensIris = CreateRoundedPanel(lensRim, "LensIris", new Vector2(6, 6), 3, new Color(0.10f, 0.40f, 0.70f));
             lensIris.anchoredPosition = Vector2.zero;
 
-            // Infrared / multispectral scanner dot
             var irLens = CreateRoundedPanel(cluster, "IRSensor", new Vector2(8, 8), 4, new Color(0.25f, 0.08f, 0.12f));
             irLens.anchoredPosition = new Vector2(-2, 0);
 
-            // Comms micro speaker grille
             var speaker = CreateRoundedPanel(cluster, "SpeakerGrille", new Vector2(40, 4), 2, new Color(0.02f, 0.03f, 0.05f));
             speaker.anchoredPosition = new Vector2(38, 0);
 
-            // Operational status LED with technical label
             var led = CreateRoundedPanel(cluster, "StatusLED", new Vector2(5, 5), 2, new Color(0.00f, 0.96f, 0.74f, 0.95f));
             led.anchoredPosition = new Vector2(80, 0);
         }
@@ -276,28 +262,23 @@ namespace GameJam.Tablet
         // 1E. Bottom Bezel: Gold Pogo Dock Connector Pins, Authentic Aerospace Markings, Android Gesture Bar
         private void CreateBottomDockHardware(RectTransform parent)
         {
-            // Left in-universe specification stamping
             var leftStamp = CreateLabel(parent, "ORBIT AEROSPACE // EXP-DATAPAD MK-VII", 11,
                 new Vector2(-360, -394), new Vector2(380, 16), HardwareStamp);
             leftStamp.alignment = TextAlignmentOptions.Left;
 
-            // Right in-universe serial & certification stamping
             var rightStamp = CreateLabel(parent, "S/N: 8492-EXP-07  -  HAZMAT CLASS-1", 11,
                 new Vector2(360, -394), new Vector2(380, 16), HardwareStamp);
             rightStamp.alignment = TextAlignmentOptions.Right;
 
-            // Center Magnetic Pogo Dock Connector (Where the tablet docks into the spaceship console!)
             var dockSlot = CreateRoundedPanel(parent, "PogoDockConnector", new Vector2(110, 10), 4, new Color(0.02f, 0.035f, 0.05f));
             dockSlot.anchoredPosition = new Vector2(0, -394);
 
-            // 5 Gold Contact Pins
             for (int p = -2; p <= 2; p++)
             {
                 var pin = CreateRoundedPanel(dockSlot, $"Pin_{p}", new Vector2(5, 5), 2.5f, GoldPin);
                 pin.anchoredPosition = new Vector2(p * 14, 0);
             }
 
-            // Modern Android navigation gesture pill (━) sitting right above the dock port
             var gesturePill = CreateRoundedPanel(parent, "GesturePill", new Vector2(120, 3), 1.5f, new Color(0.00f, 0.92f, 0.88f, 0.40f));
             gesturePill.anchoredPosition = new Vector2(0, -378);
         }
@@ -323,7 +304,6 @@ namespace GameJam.Tablet
             fit.aspectMode = AspectRatioFitter.AspectMode.EnvelopeParent;
             fit.aspectRatio = skin.wallpaper.rect.width / skin.wallpaper.rect.height;
 
-            // Deep dark glass tint (0.74) to balance rich sci-fi artwork with perfect UI text readability
             var tintGo = new GameObject("Wallpaper Tint", typeof(RectTransform), typeof(Image));
             tintGo.transform.SetParent(viewport.transform, false);
             var tRect = (RectTransform)tintGo.transform;
@@ -331,7 +311,7 @@ namespace GameJam.Tablet
             tRect.anchorMax = Vector2.one;
             tRect.offsetMin = tRect.offsetMax = Vector2.zero;
             var tintImg = tintGo.GetComponent<Image>();
-            tintImg.color = new Color(0.015f, 0.022f, 0.038f, 0.46f);
+            tintImg.color = new Color(0.015f, 0.022f, 0.038f, 0.65f);
             tintImg.raycastTarget = false;
         }
 
@@ -358,7 +338,7 @@ namespace GameJam.Tablet
             bar.sizeDelta = new Vector2(0, 42);
             bar.anchoredPosition = Vector2.zero;
             osClockText = CreateLabel(bar, "", 16, new Vector2(-525, 0), new Vector2(90, 26), InkWhite);
-            CreateLabel(bar, "ORBIT / GUÍA DE CAMPO", 13, new Vector2(-325, 0), new Vector2(280, 26), MutedCyan);
+            CreateLabel(bar, "ORBIT / GUIA DE CAMPO", 13, new Vector2(-325, 0), new Vector2(280, 26), MutedCyan);
             sectorLabel = CreateLabel(bar, "", 14, new Vector2(20, 0), new Vector2(300, 26), CyanAccent);
             CreateLabel(bar, "ARCHIVO LOCAL", 12, new Vector2(405, 0), new Vector2(170, 26), MutedCyan);
             CreateNavigationButton(bar, "Cerrar tablet", TabletNavigationIcon.Symbol.Close, new Vector2(550, 0), close);
@@ -368,7 +348,7 @@ namespace GameJam.Tablet
         {
             var dock = CreateRoundedPanel(screen, "b_Tablet_Navigation", new Vector2(500, 48), 24, InsetBg);
             dock.anchoredPosition = new Vector2(0, -325);
-            backButton = CreateNavigationButton(dock, "Atrás", TabletNavigationIcon.Symbol.Back, new Vector2(-150, 0), GoBack);
+            backButton = CreateNavigationButton(dock, "Atras", TabletNavigationIcon.Symbol.Back, new Vector2(-150, 0), GoBack);
             CreateNavigationButton(dock, "Inicio", TabletNavigationIcon.Symbol.Home, Vector2.zero, GoHome);
             CreateNavigationButton(dock, "Aplicaciones", TabletNavigationIcon.Symbol.Apps, new Vector2(150, 0), GoHome);
         }
@@ -434,10 +414,10 @@ namespace GameJam.Tablet
             pageFade = 0f;
             if (pageGroup != null) pageGroup.alpha = 0f;
             if (backButton != null) backButton.interactable = pageHistory.Count > 0;
-            if (sectorLabel != null) sectorLabel.text = Planet != null ? "SECTOR / " + Planet.name.ToUpperInvariant() : "SIN CATÁLOGO";
+            if (sectorLabel != null) sectorLabel.text = Planet != null ? "SECTOR / " + Clean(Planet.name).ToUpperInvariant() : "SIN CATALOGO";
             if (Planet == null)
             {
-                CreateLabel(workspace, "No hay un catálogo planetario asignado.", 24, Vector2.zero, new Vector2(1000, 60), InkWhite);
+                CreateLabel(workspace, "No hay un catalogo planetario asignado.", 24, Vector2.zero, new Vector2(1000, 60), InkWhite);
                 return;
             }
             if (page != "Inicio")
@@ -454,16 +434,16 @@ namespace GameJam.Tablet
         {
             var title = CreateLabel(workspace, "Tu expedición, a mano.", 36, new Vector2(-190, 210), new Vector2(710, 58), InkWhite);
             title.alignment = TextAlignmentOptions.Left;
-            var subtitle = CreateLabel(workspace, Planet.name + " / Herramientas de exploración", 19, new Vector2(-190, 163), new Vector2(710, 35), MutedCyan);
+            var subtitle = CreateLabel(workspace, Clean(Planet.name) + " / Herramientas de exploracion", 19, new Vector2(-190, 163), new Vector2(710, 35), MutedCyan);
             subtitle.alignment = TextAlignmentOptions.Left;
             var mission = CreateRoundedPanel(workspace, "b_Tablet_MissionPreview", new Vector2(1050, 66), 18, new Color(0.04f, 0.065f, 0.10f, 0.88f));
             mission.anchoredPosition = new Vector2(0, 95);
-            CreateLabel(mission, "MISIÓN", 12, new Vector2(-450, 0), new Vector2(100, 28), CyanAccent);
-            var objective = CreateLabel(mission, Planet.objective, 20, new Vector2(45, 0), new Vector2(830, 48), InkWhite);
+            CreateLabel(mission, "MISION", 12, new Vector2(-450, 0), new Vector2(100, 28), CyanAccent);
+            var objective = CreateLabel(mission, Clean(Planet.objective), 20, new Vector2(45, 0), new Vector2(830, 48), InkWhite);
             objective.alignment = TextAlignmentOptions.Left;
             App("Misiones", "Tareas", skin != null ? skin.objectives : null, -390, new Color(0.88f,0.39f,0.20f), "Objetivos del viaje");
-            App("Recetario", "Recetas", skin != null ? skin.repair : null, -130, new Color(0.18f,0.48f,0.56f), "Materiales y reparación");
-            App("Minerales", "Minerales", skin != null ? skin.mine : null, 130, new Color(0.43f,0.37f,0.65f), "Catálogo de recursos");
+            App("Recetario", "Recetas", skin != null ? skin.repair : null, -130, new Color(0.18f,0.48f,0.56f), "Materiales y reparacion");
+            App("Minerales", "Minerales", skin != null ? skin.mine : null, 130, new Color(0.43f,0.37f,0.65f), "Catalogo de recursos");
             App("Planetas", "Planetas", skin != null ? skin.ship : null, 390, new Color(0.20f,0.47f,0.36f), "Archivos planetarios");
             CreateLabel(workspace, "Selecciona una app para abrirla", 15, new Vector2(0, -225), new Vector2(1000, 28), MutedCyan);
         }
@@ -471,8 +451,8 @@ namespace GameJam.Tablet
         // ================= PAGE 2: CHECKLIST (OPERATIONAL STEPS FOR MARS) =================
         private void RenderChecklist()
         {
-            PageHeader("Misiones", Planet.objective);
-            string[] steps = { "Reunir los materiales de " + Planet.name, "Consultar las recetas y reparar los componentes", "Preparar la nave para continuar el viaje" };
+            PageHeader("Misiones", Clean(Planet.objective));
+            string[] steps = { "Reunir los materiales de " + Clean(Planet.name), "Consultar las recetas y reparar los componentes", "Preparar la nave para continuar el viaje" };
             for (int i = 0; i < steps.Length; i++)
             {
                 var row = CreateRoundedPanel(workspace, "b_Mision_" + i, new Vector2(1050, 85), 16, CardBg);
@@ -481,13 +461,13 @@ namespace GameJam.Tablet
                 var label = CreateLabel(row, steps[i], 22, new Vector2(50, 0), new Vector2(880, 65), InkWhite);
                 label.alignment = TextAlignmentOptions.Left;
             }
-            PageNote("Guía de misión / " + Planet.name);
+            PageNote("Guia de mision / " + Clean(Planet.name));
         }
 
         // ================= PAGE 3: RECETAS (ENGINEERING BLUEPRINTS - MARS) =================
         private void RenderRecipes()
         {
-            PageHeader("Recetario", "Componentes y materiales / " + Planet.name);
+            PageHeader("Recetario", "Componentes y materiales / " + Clean(Planet.name));
             var recipes = Planet.recipes;
             if (recipes == null || recipes.Length == 0) { PageNote("No hay recetas registradas para este planeta."); return; }
             var content = AppList("b_Recetas", recipes.Length, 110f);
@@ -497,16 +477,13 @@ namespace GameJam.Tablet
                 row.anchorMin = row.anchorMax = new Vector2(0.5f, 1f);
                 row.anchoredPosition = new Vector2(0, -50 - i * 110);
                 CreateIcon(row, skin != null ? skin.repair : null, new Vector2(-470, 0), new Vector2(32,32), CyanAccent);
-                var name = CreateLabel(row, recipes[i].component, 22, new Vector2(-240, 0), new Vector2(370, 70), InkWhite);
+                var name = CreateLabel(row, Clean(recipes[i].component), 22, new Vector2(-240, 0), new Vector2(370, 70), InkWhite);
                 name.alignment = TextAlignmentOptions.Left;
                 var ingredients = CreateLabel(row, Ingredients(recipes[i]), 19, new Vector2(245, 0), new Vector2(490, 75), MutedCyan);
                 ingredients.alignment = TextAlignmentOptions.Left;
             }
-            PageNote("Guía de reparación / Materiales necesarios por componente.");
+            PageNote("Guia de reparacion / Materiales necesarios por componente.");
         }
-
-        // ================= UI HELPER BUILDERS (ANDROID MATERIAL & UGUI BEST PRACTICES) =================
-
 
         public void GoHome()
         {
@@ -514,12 +491,14 @@ namespace GameJam.Tablet
             page = "Inicio";
             if (workspace != null) RenderPage();
         }
+
         public void GoBack()
         {
             if (pageHistory.Count == 0) return;
             page = pageHistory.Pop();
             RenderPage();
         }
+
         private void PageHeader(string title, string subtitle)
         {
             var heading = CreateLabel(workspace, title, 30, new Vector2(0, 215), new Vector2(1050, 48), InkWhite);
@@ -527,7 +506,9 @@ namespace GameJam.Tablet
             var sub = CreateLabel(workspace, subtitle, 17, new Vector2(0, 169), new Vector2(1050, 38), MutedCyan);
             sub.alignment = TextAlignmentOptions.Left;
         }
+
         private void PageNote(string text) => CreateLabel(workspace, text, 13, new Vector2(0,-239), new Vector2(1050,30), DimCyan);
+
         private void App(string title, string destination, Sprite icon, float x, Color tint, string description)
         {
             var tile = CreateRoundedPanel(workspace, "b_App_" + title, new Vector2(220,210), 22, Color.clear);
@@ -553,62 +534,64 @@ namespace GameJam.Tablet
             CreateLabel(tile, title, 23, new Vector2(0,-40), new Vector2(220,38), InkWhite);
             CreateLabel(tile, description, 14, new Vector2(0,-76), new Vector2(220,35), MutedCyan);
         }
+
         private RectTransform AppList(string name, int count, float rowHeight)
         {
             var viewport = CreateRoundedPanel(workspace, name, new Vector2(1070,350), 0, Color.clear);
             viewport.anchoredPosition = new Vector2(0,-32);
             viewport.gameObject.AddComponent<RectMask2D>();
-            // Transparent raycast surface lets the mouse wheel scroll over blank space too.
             viewport.GetComponent<TabletRoundedPanel>().raycastTarget = true;
-            var content = new GameObject("Content",typeof(RectTransform)).GetComponent<RectTransform>();
-            content.SetParent(viewport,false);
+            var content = new GameObject("Content", typeof(RectTransform)).GetComponent<RectTransform>();
+            content.SetParent(viewport, false);
             content.anchorMin = new Vector2(0,1); content.anchorMax = new Vector2(1,1);
             content.pivot = new Vector2(0.5f,1);
-            content.sizeDelta = new Vector2(0,Mathf.Max(350,count*rowHeight));
+            content.sizeDelta = new Vector2(0, Mathf.Max(350, count * rowHeight));
             var scroll = viewport.gameObject.AddComponent<ScrollRect>();
             scroll.viewport = viewport; scroll.content = content; scroll.horizontal = false;
             scroll.movementType = ScrollRect.MovementType.Clamped; scroll.scrollSensitivity = 28;
             return content;
         }
+
         private void RenderMinerals()
         {
-            PageHeader("Minerales", "Recursos conocidos / " + Planet.name);
+            PageHeader("Minerales", "Recursos conocidos / " + Clean(Planet.name));
             var minerals = Planet.minerals;
             if (minerals == null || minerals.Length == 0) { PageNote("No hay minerales registrados."); return; }
             var content = AppList("b_Minerales", minerals.Length, 110);
-            for (int i=0;i<minerals.Length;i++)
+            for (int i = 0; i < minerals.Length; i++)
             {
-                var row=CreateRoundedPanel(content,"b_Mineral_"+i,new Vector2(1035,94),16,CardBg);
-                row.anchorMin=row.anchorMax=new Vector2(0.5f,1);
-                row.anchoredPosition=new Vector2(0,-50-i*110);
-                CreateIcon(row,skin!=null?skin.mine:null,new Vector2(-470,0),new Vector2(40,40),Planet.accent);
-                var label=CreateLabel(row,minerals[i],23,new Vector2(-200,0),new Vector2(430,60),InkWhite);
-                label.alignment=TextAlignmentOptions.Left;
-                CreateLabel(row,"Usado en "+CountRecipes(minerals[i])+" recetas",18,new Vector2(300,0),new Vector2(360,50),MutedCyan);
+                var row = CreateRoundedPanel(content, "b_Mineral_" + i, new Vector2(1035, 94), 16, CardBg);
+                row.anchorMin = row.anchorMax = new Vector2(0.5f, 1);
+                row.anchoredPosition = new Vector2(0, -50 - i * 110);
+                CreateIcon(row, skin != null ? skin.mine : null, new Vector2(-470, 0), new Vector2(40, 40), Planet.accent);
+                var label = CreateLabel(row, Clean(minerals[i]), 23, new Vector2(-200, 0), new Vector2(430, 60), InkWhite);
+                label.alignment = TextAlignmentOptions.Left;
+                CreateLabel(row, "Usado en " + CountRecipes(minerals[i]) + " recetas", 18, new Vector2(300, 0), new Vector2(360, 50), MutedCyan);
             }
             PageNote("Recursos del planeta / Consulta las recetas para conocer sus usos.");
         }
+
         private void RenderPlanets()
         {
             PageHeader("Planetas", "Selecciona el archivo que quieres consultar");
-            var planets=catalog.planets;
-            var content=AppList("b_Planetas",planets.Length,110);
-            for(int i=0;i<planets.Length;i++)
+            var planets = catalog.planets;
+            var content = AppList("b_Planetas", planets.Length, 110);
+            for (int i = 0; i < planets.Length; i++)
             {
-                int index=i;
-                var row=CreateRoundedPanel(content,"b_Planeta_"+i,new Vector2(1035,94),18,CardBg);
-                row.anchorMin=row.anchorMax=new Vector2(0.5f,1);
-                row.anchoredPosition=new Vector2(0,-50-i*110);
-                row.GetComponent<TabletRoundedPanel>().raycastTarget=true;
-                var button=row.gameObject.AddComponent<Button>();button.targetGraphic=row.GetComponent<TabletRoundedPanel>();
-                button.onClick.AddListener(()=>SelectPlanet(index));
-                var planet=CreateRoundedPanel(row,"Planet icon",new Vector2(48,48),24,planets[i].accent);
-                planet.anchoredPosition=new Vector2(-465,0);
-                var label=CreateLabel(row,planets[i].name,24,new Vector2(-220,0),new Vector2(370,60),InkWhite);
-                label.alignment=TextAlignmentOptions.Left;
-                CreateLabel(row,i==planetIndex?"SELECCIONADO":"ABRIR ARCHIVO",14,new Vector2(345,0),new Vector2(260,40),i==planetIndex?CyanAccent:MutedCyan);
+                int index = i;
+                var row = CreateRoundedPanel(content, "b_Planeta_" + i, new Vector2(1035, 94), 18, CardBg);
+                row.anchorMin = row.anchorMax = new Vector2(0.5f, 1);
+                row.anchoredPosition = new Vector2(0, -50 - i * 110);
+                row.GetComponent<TabletRoundedPanel>().raycastTarget = true;
+                var button = row.gameObject.AddComponent<Button>(); button.targetGraphic = row.GetComponent<TabletRoundedPanel>();
+                button.onClick.AddListener(() => SelectPlanet(index));
+                var planet = CreateRoundedPanel(row, "Planet icon", new Vector2(48, 48), 24, planets[i].accent);
+                planet.anchoredPosition = new Vector2(-465, 0);
+                var label = CreateLabel(row, Clean(planets[i].name), 24, new Vector2(-220, 0), new Vector2(370, 60), InkWhite);
+                label.alignment = TextAlignmentOptions.Left;
+                CreateLabel(row, i == planetIndex ? "SELECCIONADO" : "ABRIR ARCHIVO", 14, new Vector2(345, 0), new Vector2(260, 40), i == planetIndex ? CyanAccent : MutedCyan);
             }
-            PageNote("El archivo seleccionado se aplica a todas las apps de la guía.");
+            PageNote("El archivo seleccionado se aplica a todas las apps de la guia.");
         }
 
         private RectTransform CreateRoundedPanel(Transform parent, string name, Vector2 size, float radius, Color color)
@@ -657,7 +640,7 @@ namespace GameJam.Tablet
             tmp.text = text;
             tmp.fontSize = fontSize;
             tmp.color = color;
-            tmp.raycastTarget = false; // Skill rule: disable raycastTarget on text
+            tmp.raycastTarget = false;
             tmp.textWrappingMode = TextWrappingModes.Normal;
             tmp.alignment = TextAlignmentOptions.Center;
             return tmp;
@@ -681,8 +664,6 @@ namespace GameJam.Tablet
             return img;
         }
 
-        // ================= HELPERS & UPDATES =================
-
         private int CountRecipes(string mineral)
         {
             int count = 0;
@@ -699,15 +680,31 @@ namespace GameJam.Tablet
             foreach (var ingredient in recipe.ingredients ?? Array.Empty<TabletRecipeCatalog.Ingredient>())
             {
                 if (result.Length > 0) result.Append("   +   ");
-                result.Append(ingredient.amount).Append(" × ").Append(ingredient.mineral);
+                result.Append(ingredient.amount).Append(" x ").Append(Clean(ingredient.mineral).ToUpperInvariant());
             }
             return result.ToString();
+        }
+
+        private static string Clean(string input)
+        {
+            if (string.IsNullOrEmpty(input)) return string.Empty;
+            return input
+                .Replace('á', 'a').Replace('Á', 'A')
+                .Replace('é', 'e').Replace('É', 'E')
+                .Replace('í', 'i').Replace('Í', 'I')
+                .Replace('ó', 'o').Replace('Ó', 'O')
+                .Replace('ú', 'u').Replace('Ú', 'U')
+                .Replace('ñ', 'n').Replace('Ñ', 'N')
+                .Replace('·', '-')
+                .Replace('→', '>')
+                .Replace('➔', '>')
+                .Replace('×', 'x');
         }
 
         private void Update()
         {
             if (overlay == null || chassis == null) return;
-            pageFade = Mathf.MoveTowards(pageFade,1f,Time.unscaledDeltaTime*7f);
+            pageFade = Mathf.MoveTowards(pageFade, 1f, Time.unscaledDeltaTime * 7f);
             if (pageGroup != null) pageGroup.alpha = pageFade;
             string minute = DateTime.Now.ToString("HH:mm");
             if (osClockText != null && minute != clockMinute) { clockMinute = minute; osClockText.text = minute; }

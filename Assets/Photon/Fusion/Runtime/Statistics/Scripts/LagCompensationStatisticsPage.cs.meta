@@ -1,0 +1,10 @@
+fileFormatVersion: 2
+guid: ec2edc4bf7174303a1bbebe2a13dffba
+timeCreated: 1766176749
+AssetOrigin:
+  serializedVersion: 1
+  productId: 291051
+  packageName: Photon Fusion Starter - Multiplayer
+  packageVersion: 2.0.4f1
+  assetPath: Assets/Photon/Fusion/Runtime/Statistics/Scripts/LagCompensationStatisticsPage.cs
+  uploadId: 988192

@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: cb6ba593c5ce4bc4d8c5dd1e66b91c39
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 291051
+  packageName: Photon Fusion Starter - Multiplayer
+  packageVersion: 2.0.4f1
+  assetPath: Assets/Photon/Fusion/Runtime/Statistics/Prefabs/IndividualElements/MultilineGraphLegendItem.prefab
+  uploadId: 988192
