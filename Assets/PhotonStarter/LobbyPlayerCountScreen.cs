@@ -71,7 +71,7 @@ namespace GameJam.Multiplayer
                 bool occupied = i < players.Length;
                 var player = occupied ? runner.GetPlayerObject(players[i]) : null;
                 var avatar = player != null ? player.GetComponent<MarsFusionAvatar>() : null;
-                Color color = avatar != null ? MarsPlayerIdentityView.Palette[avatar.SuitColorIndex % MarsPlayerIdentityView.Palette.Length] : new Color(.25f,.36f,.4f);
+                Color color = avatar != null && avatar.HasAssignedColor ? MarsPlayerIdentityView.Palette[avatar.SuitColorIndex] : MarsPlayerIdentityView.PendingColor;
                 icons[i].color = color;
                 names[i].text = avatar != null ? avatar.PlayerName.ToString() : occupied ? "CONECTANDO..." : "PLAZA LIBRE";
                 names[i].color = occupied ? Color.white : new Color(.4f,.52f,.57f);

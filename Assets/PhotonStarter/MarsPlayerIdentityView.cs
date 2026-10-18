@@ -8,11 +8,14 @@ namespace GameJam.Multiplayer
     {
         public static readonly Color[] Palette =
         {
-            new Color(1f, .22f, .25f), new Color(.15f, .65f, 1f),
-            new Color(.25f, 1f, .4f), new Color(1f, .8f, .12f),
-            new Color(.85f, .25f, 1f), new Color(.1f, 1f, .9f),
-            new Color(1f, .4f, .08f), new Color(1f, .3f, .65f)
+            new Color32(255, 56, 64, 255),   // Rojo coral
+            new Color32(45, 140, 255, 255),  // Azul
+            new Color32(57, 230, 117, 255),  // Verde
+            new Color32(255, 212, 59, 255),  // Amarillo
+            new Color32(179, 107, 255, 255), // Violeta
+            new Color32(39, 217, 207, 255)   // Turquesa
         };
+        public static readonly Color PendingColor = new Color32(115, 128, 140, 255);
 
         private MarsFusionAvatar avatar;
         private SkinnedMeshRenderer[] suitMeshes;
@@ -49,14 +52,14 @@ namespace GameJam.Multiplayer
         private void LateUpdate()
         {
             if (avatar == null || avatar.Object == null || !avatar.Object.IsValid || label == null) return;
-            int index = avatar.SuitColorIndex % Palette.Length;
+            int index = avatar.HasAssignedColor ? avatar.SuitColorIndex : -2;
             if (index != appliedColor)
             {
                 appliedColor = index;
                 foreach (var mesh in suitMeshes)
                 {
                     mesh.GetPropertyBlock(properties);
-                    properties.SetColor(BaseColor, Palette[index]);
+                    properties.SetColor(BaseColor, index >= 0 ? Palette[index] : PendingColor);
                     mesh.SetPropertyBlock(properties);
                 }
             }

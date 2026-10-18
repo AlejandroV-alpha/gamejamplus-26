@@ -99,7 +99,7 @@ namespace GameJam.Multiplayer
                 var result = await runner.StartGame(new StartGameArgs
                 {
                     GameMode = offline ? GameMode.Single : GameMode.Shared,
-                    SessionName = roomName.Trim(), PlayerCount = maxPlayers,
+                    SessionName = roomName.Trim(), PlayerCount = Mathf.Clamp(maxPlayers, 1, MarsPlayerIdentityView.Palette.Length),
                     Scene = info, SceneManager = scenes, CustomPhotonAppSettings = settings,
                     SessionProperties = new Dictionary<string, SessionProperty> { ["GameMode"] = "MarsCoop-v1" }
                 });

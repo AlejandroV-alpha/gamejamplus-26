@@ -1,5 +1,6 @@
 using Fusion;
 using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using GameJam.Combat;
 using GameJam.Tablet;
@@ -34,15 +35,18 @@ namespace GameJam.Multiplayer
         public static MarsFusionAvatar Local { get; private set; }
         // Session-scoped identity survives scene/avatar recreation, but not a new runner.
         // Runner keys also isolate local multiplayer peers in the same process.
-        private static ConditionalWeakTable<NetworkRunner, Dictionary<PlayerRef, byte>> sessionColors =
-            new ConditionalWeakTable<NetworkRunner, Dictionary<PlayerRef, byte>>();
+        private static ConditionalWeakTable<NetworkRunner, SessionColorAssignments> sessionColors =
+            new ConditionalWeakTable<NetworkRunner, SessionColorAssignments>();
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void ResetSessionColors()
         {
-            sessionColors = new ConditionalWeakTable<NetworkRunner, Dictionary<PlayerRef, byte>>();
+            sessionColors = new ConditionalWeakTable<NetworkRunner, SessionColorAssignments>();
         }
 
+        public bool HasAssignedColor => IdentityInitialized && SuitColorIndex < MarsPlayerIdentityView.Palette.Length;
+        private float nextColorRequest;
+        private bool warnedColorCapacity;
         private MarsPlayerIdentityView identityView;
         private PlayerInput input;
         private MarsFusionSession session;
@@ -67,37 +71,18 @@ namespace GameJam.Multiplayer
             if (HasStateAuthority) Stamina = 100;
             if (HasStateAuthority && !IdentityInitialized)
             {
-                var owner = Runner.GameMode == GameMode.Shared ? Object.StateAuthority : Object.InputAuthority;
-                var colors = sessionColors.GetOrCreateValue(Runner);
-                byte savedColor;
-                if (colors.TryGetValue(owner, out savedColor))
-                {
-                    SuitColorIndex = savedColor;
-                }
-                else
-                {
-                    SuitColorIndex = (byte)Random.Range(0, MarsPlayerIdentityView.Palette.Length);
-                    var players = FindObjectsByType<MarsFusionAvatar>(FindObjectsSortMode.None);
-                    for (int offset = 0; offset < MarsPlayerIdentityView.Palette.Length; offset++)
-                    {
-                        byte candidate = (byte)((SuitColorIndex + offset) % MarsPlayerIdentityView.Palette.Length);
-                        bool used = colors.ContainsValue(candidate);
-                        foreach (var other in players)
-                            if (other != this && other.Runner == Runner && other.Object != null && other.Object.IsValid
-                                && other.IdentityInitialized && other.SuitColorIndex == candidate) { used = true; break; }
-                        if (!used) { SuitColorIndex = candidate; break; }
-                    }
-                    colors[owner] = SuitColorIndex;
-                }
+                SuitColorIndex = byte.MaxValue; // Neutral until the room coordinator confirms a slot.
+                var owner = ColorOwner;
                 string customName = PlayerPrefs.GetString("GameJam.PlayerName", "").Trim();
                 PlayerName = !string.IsNullOrEmpty(customName) ? customName : ("Astronauta " + owner.PlayerId);
-                IdentityInitialized = true;
+                byte saved;
+                if (sessionColors.GetOrCreateValue(Runner).TryGet(owner.PlayerId, out saved)
+                    && saved < MarsPlayerIdentityView.Palette.Length)
+                    ApplyConfirmedColor(saved);
+                else if (Runner.GameMode != GameMode.Shared)
+                    AssignColorLocally(owner);
             }
-            if (HasStateAuthority)
-            {
-                var owner = Runner.GameMode == GameMode.Shared ? Object.StateAuthority : Object.InputAuthority;
-                sessionColors.GetOrCreateValue(Runner)[owner] = SuitColorIndex;
-            }
+            LearnSessionColors();
             identityView = gameObject.AddComponent<MarsPlayerIdentityView>();
             identityView.Initialize(this);
             previousHealth = HealthSource?.CurrentHealth;
@@ -177,6 +162,7 @@ namespace GameJam.Multiplayer
         public override void FixedUpdateNetwork()
         {
             if (!HasStateAuthority) return;
+            RequestSessionColor();
             if (!IsAlive) TabletOpen = false;
             bool sprint = input.CurrentInput.Sprint && input.CurrentInput.MoveDirection.sqrMagnitude > .01f && Stamina > 0 && IsAlive;
             Stamina = Mathf.Clamp(Stamina + (sprint ? -15 : 10) * Runner.DeltaTime, 0, 100);
@@ -211,6 +197,8 @@ namespace GameJam.Multiplayer
 
         public override void Render()
         {
+            if (HasAssignedColor)
+                sessionColors.GetOrCreateValue(Runner).Observe(ColorOwner.PlayerId, SuitColorIndex, MarsPlayerIdentityView.Palette.Length);
             if (shownOpen != TabletOpen)
             {
                 shownOpen = TabletOpen;
@@ -246,6 +234,80 @@ namespace GameJam.Multiplayer
             if (Object == null || !Object.IsValid || !HasStateAuthority || TabletOpen || (session != null && session.MenuOpen)) return;
             string healthText = HealthSource != null ? $"Salud: {HealthSource.CurrentHealth:0} / {HealthSource.MaxHealth:0}\n" : "";
             GUI.Box(new Rect(20, Screen.height - 85, 280, 65), $"{healthText}Energía: {Stamina:0} / 100   ·   Tab: tablet");
+        }
+
+        private PlayerRef ColorOwner => Runner.GameMode == GameMode.Shared ? Object.StateAuthority : Object.InputAuthority;
+
+        private void ApplyConfirmedColor(byte color)
+        {
+            if (!HasStateAuthority || color >= MarsPlayerIdentityView.Palette.Length) return;
+            SuitColorIndex = color;
+            IdentityInitialized = true;
+            sessionColors.GetOrCreateValue(Runner).Observe(ColorOwner.PlayerId, color, MarsPlayerIdentityView.Palette.Length);
+        }
+
+        private void LearnSessionColors()
+        {
+            var assignments = sessionColors.GetOrCreateValue(Runner);
+            assignments.ForgetDeparted(Runner.ActivePlayers.Select(p => p.PlayerId));
+            foreach (var avatar in FindObjectsByType<MarsFusionAvatar>(FindObjectsSortMode.None))
+                if (avatar.Object != null && avatar.Object.IsValid && avatar.Runner == Runner && avatar.HasAssignedColor)
+                    assignments.Observe(avatar.ColorOwner.PlayerId, avatar.SuitColorIndex, MarsPlayerIdentityView.Palette.Length);
+        }
+
+        private void AssignColorLocally(PlayerRef player)
+        {
+            LearnSessionColors();
+            byte color;
+            if (sessionColors.GetOrCreateValue(Runner).TryReserve(player.PlayerId, MarsPlayerIdentityView.Palette.Length,
+                Random.Range(0, MarsPlayerIdentityView.Palette.Length), Runner.ActivePlayers.Select(p => p.PlayerId), out color))
+                ApplyConfirmedColor(color);
+        }
+
+        private void RequestSessionColor()
+        {
+            if (HasAssignedColor || Time.unscaledTime < nextColorRequest) return;
+            nextColorRequest = Time.unscaledTime + .5f;
+            if (Runner.GameMode != GameMode.Shared) { AssignColorLocally(ColorOwner); return; }
+            NetworkObject masterPlayer;
+            if (!Runner.TryGetPlayerObject(Runner.GetMasterClient(), out masterPlayer)) return;
+            var coordinator = masterPlayer.GetComponent<MarsFusionAvatar>();
+            if (coordinator != null) coordinator.RPC_RequestSessionColor();
+        }
+
+        [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
+        private void RPC_RequestSessionColor(RpcInfo info = default)
+        {
+            if (!HasStateAuthority || Runner.GameMode != GameMode.Shared || !Runner.IsSharedModeMasterClient) return;
+            var requester = info.IsInvokeLocal ? Runner.LocalPlayer : info.Source;
+            if (!Runner.ActivePlayers.Contains(requester)) return;
+            LearnSessionColors();
+            byte color;
+            if (!sessionColors.GetOrCreateValue(Runner).TryReserve(requester.PlayerId, MarsPlayerIdentityView.Palette.Length,
+                Random.Range(0, MarsPlayerIdentityView.Palette.Length), Runner.ActivePlayers.Select(p => p.PlayerId), out color))
+            {
+                if (!warnedColorCapacity) Debug.LogError("[Player colors] No hay colores libres. La sala admite como maximo seis jugadores.", this);
+                warnedColorCapacity = true;
+                return;
+            }
+            // Reserve first, broadcast second: simultaneous requests cannot take the same slot.
+            RPC_ConfirmSessionColor(requester, color);
+        }
+
+        [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+        private void RPC_ConfirmSessionColor(PlayerRef player, byte color)
+        {
+            if (Runner.GameMode != GameMode.Shared || Object.StateAuthority != Runner.GetMasterClient()
+                || color >= MarsPlayerIdentityView.Palette.Length || !Runner.ActivePlayers.Contains(player)) return;
+            var assignments = sessionColors.GetOrCreateValue(Runner);
+            assignments.ForgetDeparted(Runner.ActivePlayers.Select(p => p.PlayerId));
+            if (!assignments.Observe(player.PlayerId, color, MarsPlayerIdentityView.Palette.Length)) return;
+            NetworkObject playerObject;
+            if (Runner.TryGetPlayerObject(player, out playerObject))
+            {
+                var avatar = playerObject.GetComponent<MarsFusionAvatar>();
+                if (avatar != null && avatar.HasStateAuthority) avatar.ApplyConfirmedColor(color);
+            }
         }
 
         public override void Despawned(NetworkRunner runner, bool hasState) => CleanUp();
