@@ -206,7 +206,7 @@ namespace GameJam.Multiplayer
                 if (GUILayout.Button("Desconectar", GUILayout.Height(36))) _ = Disconnect();
             }
             GUI.enabled = true;
-            GUILayout.Label("WASD · Ratón · Espacio · Shift\nTab: tablet  /  V: habla de prueba  /  H: gesto de dolor\nEsc: menú de conexión");
+            GUILayout.Label("WASD · Ratón · Espacio · Shift\nTab: tablet  /  Mantener V: hablar  /  H: gesto de dolor\nEsc: menú de conexión");
             GUILayout.EndArea();
         }
 

@@ -46,7 +46,7 @@ public static class MarsProximityVoiceSetup
             {
                 if (root.GetComponent<VoiceNetworkObject>() == null) root.AddComponent<VoiceNetworkObject>();
                 var recorder = root.GetComponent<Recorder>() ?? root.AddComponent<Recorder>();
-                recorder.TransmitEnabled = true;
+                recorder.TransmitEnabled = false;
                 recorder.VoiceDetection = true;
                 recorder.VoiceDetectionThreshold = .015f;
                 recorder.VoiceDetectionDelayMs = 250;
@@ -58,6 +58,8 @@ public static class MarsProximityVoiceSetup
                 recorder.StopRecordingWhenPaused = false;
                 var voice = root.GetComponent<MarsProximityVoice>() ?? root.AddComponent<MarsProximityVoice>();
                 voice.hearingDistance = 22;
+                voice.pushToTalk = true;
+                voice.pushToTalkKey = UnityEngine.InputSystem.Key.V;
                 var speakerTransform = root.transform.Find("Proximity Voice Speaker");
                 var speakerObject = speakerTransform != null ? speakerTransform.gameObject : new GameObject("Proximity Voice Speaker");
                 speakerObject.transform.SetParent(root.transform, false);

@@ -10,8 +10,8 @@ namespace GameJam.Multiplayer
     public sealed class MarsProximityVoice : MonoBehaviour
     {
         [Min(1)] public float hearingDistance = 22f;
-        public bool pushToTalk;
-        public Key pushToTalkKey = Key.B;
+        public bool pushToTalk = true;
+        public Key pushToTalkKey = Key.V;
         private VoiceNetworkObject voice;
         private MarsFusionAvatar avatar;
         private AudioSource output;
@@ -22,6 +22,7 @@ namespace GameJam.Multiplayer
             voice = GetComponent<VoiceNetworkObject>();
             avatar = GetComponent<MarsFusionAvatar>();
             recorder = GetComponentInChildren<Recorder>(true);
+            if (recorder != null && pushToTalk) recorder.TransmitEnabled = false;
             var speaker = GetComponentInChildren<Speaker>(true);
             output = speaker != null ? speaker.GetComponent<AudioSource>() : null;
             if (output != null)
@@ -43,8 +44,13 @@ namespace GameJam.Multiplayer
                 bool transmit = avatar == null || avatar.IsAlive;
                 if (pushToTalk) transmit &= Keyboard.current != null && Keyboard.current[pushToTalkKey].isPressed;
                 recorder.TransmitEnabled = transmit;
-                if (avatar != null && recorder.IsCurrentlyTransmitting && recorder.LevelMeter != null)
-                    avatar.SetVoiceLevel(recorder.LevelMeter.CurrentAvgAmp);
+                if (avatar != null)
+                {
+                    // Holding the talk button drives the replicated face even during silence.
+                    float level = !transmit ? 0 : pushToTalk ? .8f :
+                        recorder.IsCurrentlyTransmitting && recorder.LevelMeter != null ? recorder.LevelMeter.CurrentAvgAmp : 0;
+                    avatar.SetVoiceLevel(level);
+                }
             }
             else if (output != null)
             {

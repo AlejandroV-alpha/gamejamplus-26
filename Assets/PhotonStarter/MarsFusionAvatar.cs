@@ -124,7 +124,6 @@ namespace GameJam.Multiplayer
                 if (keyboard.tabKey.wasPressedThisFrame) ToggleTablet();
                 if (Application.isEditor || Debug.isDebugBuild)
                 {
-                    if (keyboard.vKey.isPressed) SetVoiceLevel(.8f);
                     if (keyboard.hKey.wasPressedThisFrame) PreviewHurt();
                 }
             }

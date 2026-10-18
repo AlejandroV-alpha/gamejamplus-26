@@ -27,8 +27,9 @@ copia; los archivos DPAPI no son portables entre cuentas de Windows.
 - **Proximity Voice Speaker**: fuente 3D a la altura de la cabeza, volumen completo
   cerca de 2 m y caída lineal hasta 22 m. Fuera del alcance se silencia la fuente.
 - **MarsProximityVoice**: enlaza la amplitud del micrófono con las expresiones del
-  visor. Permite activar `Push To Talk` en el prefab; la tecla predeterminada es B.
-  De fábrica se usa micrófono abierto con detección de voz.
+  visor. `Push To Talk` está activado: mantener **V** para transmitir y animar la boca,
+  incluso durante el silencio; soltarla detiene el envío y la expresión de habla.
+  El estado de la cara se replica mediante `MarsFusionAvatar.VoiceLevel`.
 
 La distancia modifica la reproducción local: no se implementaron grupos de interés
 para limitar el transporte de audio a jugadores cercanos.
