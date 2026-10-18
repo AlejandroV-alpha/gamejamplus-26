@@ -39,7 +39,11 @@ public static class MarsProximityVoiceSetup
         }
         finally { PrefabUtility.UnloadPrefabContents(runner); }
 
-        foreach (string path in new[] { "Assets/02_Prefabs/Fusion/A_FusionAstronaut.prefab", "Assets/02_Prefabs/Fusion/j_FusionAstronaut.prefab" })
+        var playerPaths = AssetDatabase.FindAssets("t:Prefab", new[] { "Assets/02_Prefabs/Fusion" })
+            .Select(AssetDatabase.GUIDToAssetPath)
+            .Where(path => AssetDatabase.LoadAssetAtPath<GameObject>(path).GetComponent<MarsFusionAvatar>() != null)
+            .ToArray();
+        foreach (string path in playerPaths)
         {
             var root = PrefabUtility.LoadPrefabContents(path);
             try
@@ -79,7 +83,7 @@ public static class MarsProximityVoiceSetup
         }
         AssetDatabase.SaveAssets();
         Directory.CreateDirectory(".local/Photon");
-        File.WriteAllText(".local/Photon/voice-setup-result.txt", "Runner configured; both Fusion player prefabs have VoiceNetworkObject, Recorder and 3D Speaker. Range: 22 m. Credentials not serialized.");
-        Debug.Log("[Proximity voice] Runner and both astronaut prefabs configured. Range: 22 m; local microphone only; no echo.");
+        File.WriteAllText(".local/Photon/voice-setup-result.txt", "Runner configured; " + playerPaths.Length + " Fusion player prefabs have VoiceNetworkObject, Recorder and 3D Speaker. Range: 22 m. Credentials not serialized.");
+        Debug.Log("[Proximity voice] Runner and " + playerPaths.Length + " astronaut prefabs configured. Range: 22 m; local microphone only; no echo.");
     }
 }

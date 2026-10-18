@@ -769,6 +769,7 @@ MonoBehaviour:
   Animator: {fileID: 1861680653700957010}
   CameraPivot: {fileID: 6608314389182396887}
   CameraHandle: {fileID: 5864237138245083233}
+  ShoulderCameraHandle: {fileID: 0}
   WalkSpeed: 3
   SprintSpeed: 6
   JumpImpulse: 10
@@ -783,9 +784,11 @@ MonoBehaviour:
   LandingAudioClip: {fileID: 0}
   FootstepAudioVolume: 0.5
   AimHand: {fileID: 0}
+  AimBody: {fileID: 0}
   RightHandGrabPistol: {fileID: 0}
   LeftHandGrabPistol: {fileID: 0}
   AimWeightBlendDuration: 0.2
+  AimCameraBlendDuration: 0.45
 --- !u!114 &1105301317831960609
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -816,6 +819,13 @@ MonoBehaviour:
   _TabletOpen:
     RawValue: 0
   _VoiceLevel: 0
+  _SuitColorIndex: 0
+  _PlayerName:
+    _length: 0
+    _data:
+      Data: 0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+  _LobbyReady:
+    RawValue: 0
 --- !u!114 &7969052409205033395
 MonoBehaviour:
   m_ObjectHideFlags: 0
