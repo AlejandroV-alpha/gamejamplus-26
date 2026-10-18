@@ -22,6 +22,7 @@ namespace GameJam.Crafting
         public static bool IsBlockingInput { get; private set; }
 
         [SerializeField] private Animator lidAnimator;
+        [SerializeField] private bool smoothLidAnimation;
         [SerializeField, Min(0.5f)] private float interactionDistance = 2.8f;
         [SerializeField, Min(0f)] private float panelDelay = 0.45f;
         [SerializeField] private string title = "Caja de crafteo";
@@ -32,6 +33,11 @@ namespace GameJam.Crafting
         private float nextPlayerSearch;
         private float openedAt;
         private bool open;
+        private Transform lidHinge;
+        private Quaternion closedLidRotation;
+        private Quaternion openedLidRotation;
+        private float lidProgress;
+        private float lidVelocity;
 
         private void Awake()
         {
@@ -40,6 +46,91 @@ namespace GameJam.Crafting
             {
                 lidAnimator = GetComponentInChildren<Animator>();
             }
+            InitializeSmoothLid();
+        }
+
+        private void InitializeSmoothLid()
+        {
+            if (!smoothLidAnimation || lidAnimator == null ||
+                !lidAnimator.HasState(0, Animator.StringToHash("Base Layer.Cerrada")) ||
+                !lidAnimator.HasState(0, Animator.StringToHash("Base Layer.Abierta")))
+            {
+                return;
+            }
+
+            foreach (Transform child in lidAnimator.GetComponentsInChildren<Transform>(true))
+            {
+                if (child.name == "Bisagra_Tapa")
+                {
+                    lidHinge = child;
+                    break;
+                }
+            }
+            if (lidHinge == null)
+            {
+                return;
+            }
+
+            // Keep the scene's placement: imported clips also contain root transform keys.
+            Transform root = lidAnimator.transform;
+            Vector3 position = root.localPosition;
+            Quaternion rotation = root.localRotation;
+            Vector3 scale = root.localScale;
+            lidAnimator.Play("Base Layer.Abierta", 0, 0f);
+            lidAnimator.Update(0f);
+            openedLidRotation = lidHinge.localRotation;
+            lidAnimator.Play("Base Layer.Cerrada", 0, 0f);
+            lidAnimator.Update(0f);
+            lidAnimator.enabled = false;
+            root.SetLocalPositionAndRotation(position, rotation);
+            root.localScale = scale;
+            closedLidRotation = CalculateClosedLidRotation();
+            lidHinge.localRotation = closedLidRotation;
+        }
+
+        private Quaternion CalculateClosedLidRotation()
+        {
+            foreach (MeshFilter mesh in lidHinge.GetComponentsInChildren<MeshFilter>(true))
+            {
+                if (mesh.name != "Caja_Tapa" || mesh.sharedMesh == null)
+                {
+                    continue;
+                }
+
+                // Measured from the largest lid faces in Caja_Craft_Juego.fbx.
+                // The surface is baked diagonally into the mesh, so neither zero
+                // hinge rotation nor the mesh bounds describe its closed pose.
+                Vector3 normal = mesh.transform.TransformDirection(new Vector3(0f, 0.676f, 0.737f).normalized);
+                Vector3 up = transform.up;
+                if (Vector3.Dot(normal, up) < 0f)
+                {
+                    normal = -normal;
+                }
+                Vector3 axis = lidHinge.parent.TransformDirection(Vector3.right);
+                Vector3 from = Vector3.ProjectOnPlane(normal, axis);
+                Vector3 to = Vector3.ProjectOnPlane(up, axis);
+                float correction = Vector3.SignedAngle(from, to, axis);
+                return Quaternion.AngleAxis(correction, Vector3.right) * lidHinge.localRotation;
+            }
+            return lidHinge.localRotation;
+        }
+
+        private void LateUpdate()
+        {
+            if (lidHinge == null)
+            {
+                return;
+            }
+
+            float target = open ? 1f : 0f;
+            lidProgress = Mathf.SmoothDamp(lidProgress, target, ref lidVelocity,
+                open ? 0.16f : 0.12f);
+            if (Mathf.Abs(lidProgress - target) < 0.001f)
+            {
+                lidProgress = target;
+                lidVelocity = 0f;
+            }
+            lidHinge.localRotation = Quaternion.Slerp(closedLidRotation, openedLidRotation, lidProgress);
         }
 
         private void OnDisable()
@@ -47,6 +138,12 @@ namespace GameJam.Crafting
             if (open)
             {
                 Close();
+            }
+            if (lidHinge != null)
+            {
+                lidProgress = 0f;
+                lidVelocity = 0f;
+                lidHinge.localRotation = closedLidRotation;
             }
         }
 
@@ -85,7 +182,8 @@ namespace GameJam.Crafting
 
             if (open)
             {
-                ui.SetPanelVisible(Time.time - openedAt >= panelDelay);
+                ui.SetPanelVisible(Time.time - openedAt >= panelDelay &&
+                    (lidHinge == null || lidProgress >= 0.98f));
                 ui.Refresh(table, GetInventory());
             }
         }
@@ -95,7 +193,7 @@ namespace GameJam.Crafting
             open = true;
             openedAt = Time.time;
             IsBlockingInput = true;
-            if (lidAnimator != null)
+            if (lidAnimator != null && lidHinge == null)
             {
                 lidAnimator.ResetTrigger(CloseTrigger);
                 lidAnimator.SetTrigger(OpenTrigger);
@@ -110,7 +208,7 @@ namespace GameJam.Crafting
             {
                 ui.SetPanelVisible(false);
             }
-            if (lidAnimator != null)
+            if (lidAnimator != null && lidHinge == null)
             {
                 lidAnimator.ResetTrigger(OpenTrigger);
                 lidAnimator.SetTrigger(CloseTrigger);

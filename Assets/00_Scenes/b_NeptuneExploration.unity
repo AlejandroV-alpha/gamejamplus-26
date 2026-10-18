@@ -22555,27 +22555,27 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5670926750892190212, guid: ce87e7cb6622f0846a180099297fdacd, type: 3}
       propertyPath: m_Size.x
-      value: 0.9916482
+      value: 0.9433789
       objectReference: {fileID: 0}
     - target: {fileID: 5670926750892190212, guid: ce87e7cb6622f0846a180099297fdacd, type: 3}
       propertyPath: m_Size.y
-      value: 0.9861297
+      value: 0.5553306
       objectReference: {fileID: 0}
     - target: {fileID: 5670926750892190212, guid: ce87e7cb6622f0846a180099297fdacd, type: 3}
       propertyPath: m_Size.z
-      value: 0.9072178
+      value: 0.7287727
       objectReference: {fileID: 0}
     - target: {fileID: 5670926750892190212, guid: ce87e7cb6622f0846a180099297fdacd, type: 3}
       propertyPath: m_Center.x
-      value: 0.0002708408
+      value: -0.023862684
       objectReference: {fileID: 0}
     - target: {fileID: 5670926750892190212, guid: ce87e7cb6622f0846a180099297fdacd, type: 3}
       propertyPath: m_Center.y
-      value: 0.49306497
+      value: 0.2776653
       objectReference: {fileID: 0}
     - target: {fileID: 5670926750892190212, guid: ce87e7cb6622f0846a180099297fdacd, type: 3}
       propertyPath: m_Center.z
-      value: 0.03505534
+      value: 0.00047688631
       objectReference: {fileID: 0}
     - target: {fileID: 5957524946351051076, guid: ce87e7cb6622f0846a180099297fdacd, type: 3}
       propertyPath: planet
@@ -22706,6 +22706,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameJam.Crafting.CraftingBox
   lidAnimator: {fileID: 1092792813}
+  smoothLidAnimation: 1
   interactionDistance: 2.8
   panelDelay: 0.45
   title: Caja de crafteo
