@@ -64,7 +64,7 @@ namespace GameJam.Ship
         {
             if (promptStation==null || player==null || !player.CanCraftLocally()) return;
             if(promptStation.Object==null || !promptStation.Object.IsValid || promptStation.IsRepaired())return;
-            GUI.Box(new Rect(Screen.width*.5f-140,Screen.height*.84f,280,32),"F  |  Reparar nave");
+            GUI.Box(new Rect(Screen.width*.5f-140,Screen.height*.84f,280,32),"F  |  " + GameJam.Localization.GameLocalization.Get("hud.repair_ship"));
         }
 
         /// <summary>

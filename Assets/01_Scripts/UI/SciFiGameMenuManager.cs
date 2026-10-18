@@ -241,6 +241,7 @@ namespace GameJam.UI
             // Manejo de tecla Escape para pausar / reanudar
             if (Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame)
             {
+                if (MarsFusionAvatar.Local != null && MarsFusionAvatar.Local.LocalHud != null && MarsFusionAvatar.Local.LocalHud.ConsumeEscape()) return;
                 if (session != null && session.Runner != null && session.Runner.IsRunning)
                 {
                     if (pauseMenuGroup != null && pauseMenuGroup.alpha > 0.5f)

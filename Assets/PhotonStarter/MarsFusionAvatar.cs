@@ -20,10 +20,20 @@ namespace GameJam.Multiplayer
         public Sprite smileMouth, smallMouth, openMouth, hurtMouth, deadMouth;
         [SerializeField, Tooltip("Optional component implementing IPlayerHealth. Owns health and its replication.")]
         private MonoBehaviour healthSource;
-        public IPlayerHealth HealthSource => healthSource != null ? healthSource as IPlayerHealth : null;
+        public IPlayerHealth HealthSource
+        {
+            get
+            {
+                if (healthSource == null) return null;
+                if (healthSource is NetworkBehaviour networkHealth &&
+                    (networkHealth.Object == null || !networkHealth.Object.IsValid || !networkHealth.StateBufferIsValid)) return null;
+                return healthSource as IPlayerHealth;
+            }
+        }
         public bool HasHealthSource => HealthSource != null;
         // Until the health component is supplied, keep exploration and interaction enabled.
-        public bool IsAlive => HealthSource == null || HealthSource.IsAlive;
+        public bool IsAlive => healthSource == null || (HealthSource?.IsAlive ?? false);
+        public bool IsNetworkReady => Object != null && Object.IsValid && StateBufferIsValid;
         [Networked] public float Stamina { get; protected set; }
         [Networked] public NetworkBool TabletOpen { get; private set; }
         [Networked] public byte VoiceLevel { get; private set; }
@@ -44,7 +54,7 @@ namespace GameJam.Multiplayer
             sessionColors = new ConditionalWeakTable<NetworkRunner, SessionColorAssignments>();
         }
 
-        public bool HasAssignedColor => IdentityInitialized && SuitColorIndex < MarsPlayerIdentityView.Palette.Length;
+        public bool HasAssignedColor => IsNetworkReady && IdentityInitialized && SuitColorIndex < MarsPlayerIdentityView.Palette.Length;
         private float nextColorRequest;
         private bool warnedColorCapacity;
         private MarsPlayerIdentityView identityView;
@@ -60,6 +70,7 @@ namespace GameJam.Multiplayer
         private bool shownOpen;
         public string Expression { get; private set; }
         public TabletGuideUI LocalUI => ui;
+        public GameJam.UI.PlayerHUD LocalHud { get; private set; }
 
         public override void Spawned()
         {
@@ -103,7 +114,12 @@ namespace GameJam.Multiplayer
                 ui.Build(CloseTablet, tablet.catalog, tablet.skin);
                 ui.TargetOpen = TabletOpen;
             }
-            if (HasStateAuthority) Local = this;
+            if (HasStateAuthority)
+            {
+                Local = this;
+                LocalHud = new GameObject("Local Player HUD").AddComponent<GameJam.UI.PlayerHUD>();
+                LocalHud.Build(this);
+            }
         }
 
         public void ToggleTablet()
@@ -183,7 +199,7 @@ namespace GameJam.Multiplayer
 
         private void Update()
         {
-            if (Object == null || !Object.IsValid || !HasStateAuthority) return;
+            if (!IsNetworkReady || !HasStateAuthority) return;
             var keyboard = Keyboard.current;
             bool menu = (session != null && session.MenuOpen) || GameJam.Crafting.CraftingBox.IsBlockingInput;
             if (keyboard != null && !menu && !SceneTransitionVideo.IsBlockingInput && !LobbyDepartureEffects.IsBlockingInput && !PortalWhiteTransition.IsBlockingInput)
@@ -201,8 +217,9 @@ namespace GameJam.Multiplayer
                 if (VoiceLevel != level) VoiceLevel = level;
             }
             bool tabletVisible = TabletOpen || (ui != null && ui.IsVisible);
-            input.ControlsEnabled = !menu && !tabletVisible && IsAlive && !SceneTransitionVideo.IsBlockingInput && !LobbyDepartureEffects.IsBlockingInput && !PortalWhiteTransition.IsBlockingInput && !(GetComponent<PlayerInteractionAction>()?.IsBusy ?? false) && !(GetComponent<GameJam.Combat.PlayerHurtReaction>()?.IsReacting ?? false);
-            bool cursor = menu || tabletVisible || !IsAlive;
+            bool inventoryVisible = LocalHud != null && LocalHud.IsInventoryOpen;
+            input.ControlsEnabled = !menu && !tabletVisible && !inventoryVisible && IsAlive && !SceneTransitionVideo.IsBlockingInput && !LobbyDepartureEffects.IsBlockingInput && !PortalWhiteTransition.IsBlockingInput && !(GetComponent<PlayerInteractionAction>()?.IsBusy ?? false) && !(GetComponent<GameJam.Combat.PlayerHurtReaction>()?.IsReacting ?? false);
+            bool cursor = menu || tabletVisible || inventoryVisible || !IsAlive;
             Cursor.lockState = cursor ? CursorLockMode.None : CursorLockMode.Locked;
             Cursor.visible = cursor;
             if (!input.ControlsEnabled) input.ResetInput();
@@ -210,6 +227,7 @@ namespace GameJam.Multiplayer
 
         public override void Render()
         {
+            if (!IsNetworkReady) return;
             if (HasAssignedColor)
                 sessionColors.GetOrCreateValue(Runner).Observe(ColorOwner.PlayerId, SuitColorIndex, MarsPlayerIdentityView.Palette.Length);
             if (shownOpen != TabletOpen)
@@ -239,14 +257,6 @@ namespace GameJam.Multiplayer
             }
             if (eyes != null && eyes.sprite != eye) eyes.sprite = eye;
             if (mouth != null && mouth.sprite != lip) mouth.sprite = lip;
-        }
-
-        private void OnGUI()
-        {
-            if (PortalWhiteTransition.IsBlockingInput || SceneTransitionVideo.IsBlockingInput) return;
-            if (Object == null || !Object.IsValid || !HasStateAuthority || TabletOpen || (session != null && session.MenuOpen)) return;
-            string healthText = HealthSource != null ? $"Salud: {HealthSource.CurrentHealth:0} / {HealthSource.MaxHealth:0}\n" : "";
-            GUI.Box(new Rect(20, Screen.height - 85, 280, 65), $"{healthText}Energía: {Stamina:0} / 100   ·   Tab: tablet");
         }
 
         private PlayerRef ColorOwner => Runner.GameMode == GameMode.Shared ? Object.StateAuthority : Object.InputAuthority;
@@ -331,6 +341,7 @@ namespace GameJam.Multiplayer
             if (Local == this) Local = null;
             if (identityView != null) Destroy(identityView);
             if (ui != null) Destroy(ui.gameObject);
+            if (LocalHud != null) Destroy(LocalHud.gameObject);
             if (heldTablet != null) Destroy(heldTablet);
         }
     }

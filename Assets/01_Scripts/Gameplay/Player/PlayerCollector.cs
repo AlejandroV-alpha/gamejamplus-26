@@ -56,12 +56,12 @@ namespace GameJam.Gameplay
         /// </summary>
         public bool CanCollect()
         {
-            if (Object == null || !Object.IsValid)
+            if (Object == null || !Object.IsValid || !StateBufferIsValid)
             {
                 return false;
             }
 
-            if (inventory == null || avatar == null)
+            if (inventory == null || avatar == null || !avatar.IsNetworkReady)
             {
                 return false;
             }

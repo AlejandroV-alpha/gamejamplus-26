@@ -64,7 +64,7 @@ namespace GameJam.Combat
         /// </summary>
         private void LateUpdate()
         {
-            if (avatar == null || body == null || avatar.Object == null || !avatar.Object.IsValid)
+            if (avatar == null || body == null || !avatar.IsNetworkReady || !avatar.HasHealthSource)
             {
                 return;
             }

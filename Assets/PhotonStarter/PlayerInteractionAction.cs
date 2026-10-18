@@ -24,7 +24,7 @@ namespace GameJam.Multiplayer
         private Renderer[] weaponRenderers;
         private readonly Dictionary<Renderer,bool> weaponVisibility=new Dictionary<Renderer,bool>();
         private readonly Dictionary<Transform,Quaternion> rest=new Dictionary<Transform,Quaternion>();
-        public bool IsBusy => Object!=null && Object.IsValid && ActionKind!=0;
+        public bool IsBusy => Object!=null && Object.IsValid && StateBufferIsValid && ActionKind!=0;
         public float Progress => !IsBusy?0:1-Mathf.Clamp01(deadline.RemainingTime(Runner).GetValueOrDefault()/(ActionKind==1?pickupSeconds:repairSeconds));
         public override void Spawned()
         {
@@ -116,8 +116,9 @@ namespace GameJam.Multiplayer
         private void OnGUI()
         {
             if(!IsBusy || !HasStateAuthority)return;
+            if(avatar != null && avatar.LocalHud != null)return;
             float width=Mathf.Min(340,Screen.width*.65f),x=(Screen.width-width)/2,y=Screen.height*.76f;
-            GUI.Box(new Rect(x,y,width,48),ActionKind==1?"Recogiendo…":"Reparando…");
+            GUI.Box(new Rect(x,y,width,48),GameJam.Localization.GameLocalization.Get(ActionKind==1?"hud.collecting":"hud.repairing"));
             var old=GUI.color;GUI.color=new Color(.25f,1,.75f);GUI.DrawTexture(new Rect(x+8,y+34,(width-16)*Progress,5),Texture2D.whiteTexture);GUI.color=old;
         }
     }

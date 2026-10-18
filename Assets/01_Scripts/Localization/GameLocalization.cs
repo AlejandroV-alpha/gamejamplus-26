@@ -15,8 +15,9 @@ namespace GameJam.Localization
     /// Sistema centralizado de traducción y localización para Español, Inglés y Portugués (Brasil).
     /// Soporta cambio de idioma en caliente y persistencia en PlayerPrefs.
     /// </summary>
-    public static class GameLocalization
+    public static partial class GameLocalization
     {
+        static GameLocalization() => AddPlayerTranslations();
         private const string PrefKey = "GameJam.Language";
         public static event Action OnLanguageChanged;
 

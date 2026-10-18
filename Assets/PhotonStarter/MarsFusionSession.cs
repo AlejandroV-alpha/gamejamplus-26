@@ -213,7 +213,10 @@ namespace GameJam.Multiplayer
         {
             if (SceneTransitionVideo.IsBlockingInput || PortalWhiteTransition.IsBlockingInput) return;
             if (GameJam.UI.SciFiGameMenuManager.Instance == null && Runner != null && Runner.IsRunning && Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame)
+            {
+                if (MarsFusionAvatar.Local != null && MarsFusionAvatar.Local.LocalHud != null && MarsFusionAvatar.Local.LocalHud.ConsumeEscape()) return;
                 SetMenu(!MenuOpen);
+            }
         }
 
         private void OnGUI()
