@@ -184,7 +184,7 @@ LineRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 9d2febd8131983a42b054097305df49d, type: 2}
+  - {fileID: 2100000, guid: dd6a219c42e2454458b3362405a07cf8, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -218,29 +218,29 @@ LineRenderer:
       m_Curve:
       - serializedVersion: 3
         time: 0
-        value: 0.035
+        value: 0.06
         inSlope: 0
-        outSlope: 0
+        outSlope: -0.04
         tangentMode: 0
         weightedMode: 0
-        inWeight: 0.33333334
-        outWeight: 0.33333334
+        inWeight: 0
+        outWeight: 0
       - serializedVersion: 3
         time: 1
-        value: 0.012
-        inSlope: 0
+        value: 0.02
+        inSlope: -0.04
         outSlope: 0
         tangentMode: 0
         weightedMode: 0
-        inWeight: 0.33333334
-        outWeight: 0.33333334
+        inWeight: 0
+        outWeight: 0
       m_PreInfinity: 2
       m_PostInfinity: 2
       m_RotationOrder: 4
     colorGradient:
       serializedVersion: 2
       key0: {r: 1, g: 1, b: 1, a: 1}
-      key1: {r: 1, g: 1, b: 1, a: 1}
+      key1: {r: 0.3, g: 0.9, b: 1, a: 0.6}
       key2: {r: 0, g: 0, b: 0, a: 0}
       key3: {r: 0, g: 0, b: 0, a: 0}
       key4: {r: 0, g: 0, b: 0, a: 0}
@@ -1075,6 +1075,10 @@ GameObject:
   - component: {fileID: 3400531004580539894}
   - component: {fileID: 5918237461029384757}
   - component: {fileID: 5918237461029384756}
+  - component: {fileID: 8244201808651893941}
+  - component: {fileID: 5014236402979798986}
+  - component: {fileID: 8651531209150184467}
+  - component: {fileID: 7680387236756597348}
   m_Layer: 2
   m_Name: A_FusionAstronaut
   m_TagString: Untagged
@@ -1128,6 +1132,7 @@ MonoBehaviour:
   - {fileID: 7169554143392359341}
   - {fileID: 7996545141748767986}
   - {fileID: 5918237461029384756}
+  - {fileID: 8244201808651893941}
   ForceRemoteRenderTimeframe: 0
 --- !u!54 &1572134779871167590
 Rigidbody:
@@ -1225,7 +1230,7 @@ MonoBehaviour:
   ShoulderCameraHandle: {fileID: 5864237138245083234}
   CrosshairPrefab: {fileID: 3236472220937120975, guid: a3b5e0f6bfedf8840ad64f87410b11ab, type: 3}
   WalkSpeed: 3
-  SprintSpeed: 6
+  SprintSpeed: 20
   JumpImpulse: 8
   UpGravity: -25
   DownGravity: -40
@@ -1268,7 +1273,7 @@ MonoBehaviour:
   openMouth: {fileID: 21300000, guid: 7cd79282949414e49b29d92be8cfa63e, type: 3}
   hurtMouth: {fileID: 21300000, guid: 8e5cf857c42d26d4da4eafe286db2fac, type: 3}
   deadMouth: {fileID: 21300000, guid: 4fd08b22468880648b0db2abc13e49f0, type: 3}
-  healthSource: {fileID: 0}
+  healthSource: {fileID: 8244201808651893941}
   _Stamina: 0
   _TabletOpen:
     RawValue: 0
@@ -1529,13 +1534,16 @@ MonoBehaviour:
   gunshot: {fileID: 8300000, guid: 3dabb95e8210ef145b2410cb7b1e4c0c, type: 3}
   gunreload: {fileID: 8300000, guid: 5d79b240fba3a1c4ab9043d2e008277b, type: 3}
   tracer: {fileID: 9218075841056528477}
-  impactEffect: {fileID: 2049626777788669612, guid: bb66645df93a1fb4687b639f2ef53489, type: 3}
-  damage: 1
+  muzzleFlashEffect: {fileID: 2492542608560254606, guid: a49bb6cfe36f6c642a9f175cc566d892, type: 3}
+  boltEffect: {fileID: 8717399688694277520, guid: 9050e613070c522479d823ef316f22bd, type: 3}
+  impactEffect: {fileID: 1352570772340302020, guid: d058e1f250b185f4c85dc6b252c2d6bf, type: 3}
+  damage: 20
   range: 100
   magazineSize: 10
   fireInterval: 0.25
-  tracerDuration: 0.12
-  impactEffectDuration: 1
+  tracerDuration: 0.06
+  muzzleFlashDuration: 1.2
+  impactEffectDuration: 2.5
   recoilDistance: 0.08
   recoilAngle: 5
   recoilDuration: 0.12
@@ -1543,6 +1551,80 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 4294967295
   allowFriendlyFire: 0
+--- !u!114 &8244201808651893941
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3827797598262270737}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8409b0a4b44d9274e9b9c352e14afac9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GameJam.Combat.PlayerHealth
+  startingHealth: 100
+  _CurrentHealth: 0
+  _MaxHealth: 0
+  _IsAlive: 0
+--- !u!114 &5014236402979798986
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3827797598262270737}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 949b3d9c0f194694d9054045500480a3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GameJam.Combat.PlayerDeathAnimation
+  body: {fileID: 0}
+  hopHeight: 1.1
+  spinDegrees: 720
+  lyingLift: 0.18
+  twitchInterval: 1.4
+  starColor: {r: 1, g: 0.85, b: 0.1, a: 1}
+--- !u!114 &8651531209150184467
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3827797598262270737}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: deb7169215e70214586c7d3e13e1f9f4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GameJam.Combat.EnemyBloodFx
+  bloodBurst: {fileID: 5405293530715071691, guid: 7acc13bd7b590124a89e1d01591fdc9b, type: 3}
+  groundSplat: {fileID: 2748677000427019257, guid: c5979c83f8cea184aa476a6e318ef598, type: 3}
+  burstDuration: 2
+  splatsPerHit: 2
+  splatSpread: 0.8
+  splatSize: {x: 0.35, y: 0.8}
+  groundLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+--- !u!114 &7680387236756597348
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3827797598262270737}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7b8ad1b7848d09249b6fa0707b5c35fc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GameJam.Combat.PlayerHurtReaction
+  body: {fileID: 0}
+  duration: 0.4
+  recoilAngle: -18
+  recoilDistance: 0.12
+  shake: 6
+  hurtEffect: {fileID: 8443265218036270106, guid: 0ef00dc591e341d43b0c7be8562b3592, type: 3}
+  hurtEffectDuration: 2
 --- !u!1 &3836924219179165295
 GameObject:
   m_ObjectHideFlags: 0

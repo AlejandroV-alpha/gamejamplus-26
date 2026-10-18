@@ -22,12 +22,15 @@ namespace GameJam.Combat
         [SerializeField] private AudioClip gunshot;
         [SerializeField] private AudioClip gunreload;
         [SerializeField] private LineRenderer tracer;
+        [SerializeField] private GameObject muzzleFlashEffect;
+        [SerializeField] private EnergyBolt boltEffect;
         [SerializeField] private GameObject impactEffect;
         [SerializeField, Min(1)] private int damage = 1;
         [SerializeField, Min(1f)] private float range = 100f;
         [SerializeField, Min(1)] private int magazineSize = 10;
         [SerializeField, Min(0.02f)] private float fireInterval = 0.25f;
         [SerializeField, Min(0.01f)] private float tracerDuration = 0.05f;
+        [SerializeField, Min(0.01f)] private float muzzleFlashDuration = 1f;
         [SerializeField, Min(0.01f)] private float impactEffectDuration = 1f;
         [SerializeField, Min(0f)] private float recoilDistance = 0.08f;
         [SerializeField, Min(0f)] private float recoilAngle = 5f;
@@ -294,6 +297,11 @@ namespace GameJam.Combat
                 {
                     continue;
                 }
+                if (component is ReksaiEnemy reksai && reksai.IsLocalSimulation)
+                {
+                    // Cada cliente simula su propio Reksai: el dano llega por RpcShotEffects.
+                    return;
+                }
 
                 if (Runner.GameMode == GameMode.Single)
                 {
@@ -318,6 +326,19 @@ namespace GameJam.Combat
                 audioSource.PlayOneShot(gunshot);
             }
             PlayRecoil();
+            if (hasImpact)
+            {
+                DamageLocalEnemy(endpoint);
+            }
+            ShowMuzzleFlash(origin, endpoint);
+            if (boltEffect != null)
+            {
+                // El impacto espera a que la bala visual llegue al objetivo.
+                EnergyBolt bolt = Instantiate(boltEffect, origin, Quaternion.identity);
+                bolt.Launch(origin, endpoint, hasImpact ? () => ShowImpactEffect(endpoint, normal) : (System.Action)null);
+                return;
+            }
+
             ShowTracer(origin, endpoint);
             if (hasImpact)
             {
@@ -338,10 +359,44 @@ namespace GameJam.Combat
         }
 
         /// <summary>
+        /// Aplica el dano a la copia local del enemigo para que todos los clientes lo vean morir.
+        /// </summary>
+        private void DamageLocalEnemy(Vector3 point)
+        {
+            Collider[] nearby = Physics.OverlapSphere(point, 0.35f, hitLayers, QueryTriggerInteraction.Ignore);
+            foreach (Collider candidate in nearby)
+            {
+                ReksaiEnemy reksai = candidate.GetComponentInParent<ReksaiEnemy>();
+                if (reksai != null && reksai.IsLocalSimulation)
+                {
+                    reksai.TakeDamage(damage);
+                    return;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Crea el destello de la boca orientado hacia el punto de impacto.
+        /// </summary>
+        private void ShowMuzzleFlash(Vector3 origin, Vector3 endpoint)
+        {
+            if (muzzleFlashEffect == null)
+            {
+                return;
+            }
+
+            Vector3 direction = endpoint - origin;
+            Quaternion rotation = direction.sqrMagnitude > 0.0001f ? Quaternion.LookRotation(direction) : firePoint.rotation;
+            GameObject effect = Instantiate(muzzleFlashEffect, origin, rotation);
+            Destroy(effect, muzzleFlashDuration);
+        }
+
+        /// <summary>
         /// Crea un impacto visual local y lo elimina tras su duracion.
         /// </summary>
         private void ShowImpactEffect(Vector3 position, Vector3 normal)
         {
+            EnemyBloodFx.TryBleedAt(position, normal);
             if (impactEffect == null)
             {
                 return;
