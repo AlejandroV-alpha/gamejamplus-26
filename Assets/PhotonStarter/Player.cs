@@ -11,7 +11,7 @@ namespace Starter.ThirdPersonCharacter
     /// <summary>
     /// Main player scrip - controls player movement and animations.
     /// </summary>
-    public sealed class Player : NetworkBehaviour
+    public class Player : NetworkBehaviour
     {
         [Header("References")]
         public SimpleKCC KCC;
@@ -94,7 +94,7 @@ namespace Starter.ThirdPersonCharacter
         public override void FixedUpdateNetwork()
         {
             if (!HasStateAuthority) return;
-            ProcessInput(PlayerInput.CurrentInput);
+            ProcessInput(PrepareMovementInput(PlayerInput.CurrentInput));
 
             if (KCC.IsGrounded)
             {
@@ -250,6 +250,22 @@ namespace Starter.ThirdPersonCharacter
                 _crosshair.SetActive(_aimBlend >= CrosshairAimThreshold && PlayerInput.ControlsEnabled);
         }
 
+        /// <summary>
+        /// Conserva la entrada original antes de simular el movimiento.
+        /// </summary>
+        protected virtual GameplayInput PrepareMovementInput(GameplayInput input)
+        {
+            return input;
+        }
+
+        /// <summary>
+        /// Conserva las condiciones originales para permitir correr.
+        /// </summary>
+        protected virtual bool ResolveSprint(GameplayInput input)
+        {
+            return input.Sprint && input.MoveDirection.sqrMagnitude > 0.01f && (_avatar == null || _avatar.Stamina > 0);
+        }
+
         private void ProcessInput(GameplayInput input)
         {
             float jumpImpulse = 0f;
@@ -268,7 +284,7 @@ namespace Starter.ThirdPersonCharacter
             // It feels better when the player falls quicker
             KCC.SetGravity(-Mathf.Abs(KCC.RealVelocity.y >= 0f ? UpGravity : DownGravity));
 
-            bool sprinting = input.Sprint && input.MoveDirection.sqrMagnitude > 0.01f && (_avatar == null || _avatar.Stamina > 0);
+            bool sprinting = ResolveSprint(input);
             _isSprinting = sprinting;
             float speed = sprinting ? SprintSpeed : WalkSpeed;
 
