@@ -11,7 +11,7 @@ using PlayerInput = Starter.ThirdPersonCharacter.PlayerInput;
 
 namespace GameJam.Multiplayer
 {
-    public sealed class MarsFusionAvatar : NetworkBehaviour, ITakeDamage
+    public class MarsFusionAvatar : NetworkBehaviour, ITakeDamage
     {
         public TabletItemDefinition tablet;
         public Transform handSocket;
@@ -24,7 +24,7 @@ namespace GameJam.Multiplayer
         public bool HasHealthSource => HealthSource != null;
         // Until the health component is supplied, keep exploration and interaction enabled.
         public bool IsAlive => HealthSource == null || HealthSource.IsAlive;
-        [Networked] public float Stamina { get; private set; }
+        [Networked] public float Stamina { get; protected set; }
         [Networked] public NetworkBool TabletOpen { get; private set; }
         [Networked] public byte VoiceLevel { get; private set; }
         [Networked] private uint HurtSequence { get; set; }
@@ -164,8 +164,21 @@ namespace GameJam.Multiplayer
             if (!HasStateAuthority) return;
             RequestSessionColor();
             if (!IsAlive) TabletOpen = false;
+            UpdateStamina();
+        }
+
+        /// <summary>
+        /// Conserva el consumo y la recuperacion del avatar original.
+        /// </summary>
+        protected virtual void UpdateStamina()
+        {
             bool sprint = input.CurrentInput.Sprint && input.CurrentInput.MoveDirection.sqrMagnitude > .01f && Stamina > 0 && IsAlive;
-            Stamina = Mathf.Clamp(Stamina + (sprint ? -15 : 10) * Runner.DeltaTime, 0, 100);
+            float staminaChange = 10f;
+            if (sprint)
+            {
+                staminaChange = -15f;
+            }
+            Stamina = Mathf.Clamp(Stamina + staminaChange * Runner.DeltaTime, 0, 100);
         }
 
         private void Update()
