@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+using UnityEngine;
+using UnityEngine.InputSystem;
 
 namespace Starter.ThirdPersonCharacter
 {
@@ -11,6 +12,7 @@ namespace Starter.ThirdPersonCharacter
         public Vector2 MoveDirection;
         public bool Jump;
         public bool Sprint;
+        public bool AimToggle;
     }
 
     /// <summary>
@@ -64,6 +66,8 @@ namespace Starter.ThirdPersonCharacter
 
             _input.Jump |= _inputActions.Player.Jump.WasPressedThisFrame();
             _input.Sprint |= _inputActions.Player.Sprint.IsPressed();
+            if (Mouse.current != null)
+                _input.AimToggle |= Mouse.current.rightButton.wasPressedThisFrame;
         }
 
         private void OnEnable()
@@ -87,6 +91,7 @@ namespace Starter.ThirdPersonCharacter
             _input.MoveDirection = default;
             _input.Jump = false;
             _input.Sprint = false;
+            _input.AimToggle = false;
         }
 
         private Vector2 ClampLookRotation(Vector2 lookRotation)

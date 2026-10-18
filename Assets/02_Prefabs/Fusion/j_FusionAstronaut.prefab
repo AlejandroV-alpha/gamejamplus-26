@@ -764,8 +764,8 @@ MonoBehaviour:
   Animator: {fileID: 1861680653700957010}
   CameraPivot: {fileID: 6608314389182396887}
   CameraHandle: {fileID: 5864237138245083233}
-  WalkSpeed: 10
-  SprintSpeed: 20
+  WalkSpeed: 3
+  SprintSpeed: 6
   JumpImpulse: 10
   UpGravity: -25
   DownGravity: -40
@@ -777,6 +777,10 @@ MonoBehaviour:
   FootstepAudioClips: []
   LandingAudioClip: {fileID: 0}
   FootstepAudioVolume: 0.5
+  AimHand: {fileID: 0}
+  RightHandGrabPistol: {fileID: 0}
+  LeftHandGrabPistol: {fileID: 0}
+  AimWeightBlendDuration: 0.2
 --- !u!114 &1105301317831960609
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -817,7 +821,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 9e1738307459c144b855c25f192ca4e6, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameJam.Inventory.Inventory
   materials:
   - {fileID: 11400000, guid: 8dd30e445ddc45a68953ca9ff2a2f1ef, type: 2}

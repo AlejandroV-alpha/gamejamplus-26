@@ -1,4 +1,6 @@
 ﻿using UnityEngine;
+using UnityEngine.Animations.Rigging;
+using UnityEngine.InputSystem;
 using Fusion;
 using Fusion.Addons.SimpleKCC;
 
@@ -36,12 +38,24 @@ namespace Starter.ThirdPersonCharacter
         [Range(0f, 1f)]
         public float FootstepAudioVolume = 0.5f;
 
+        [Header("Aim Rig")]
+        public MultiAimConstraint AimHand;
+        public TwoBoneIKConstraint RightHandGrabPistol;
+        public TwoBoneIKConstraint LeftHandGrabPistol;
+        public float AimWeightBlendDuration = 0.2f;
+
         [Networked]
         private NetworkBool _isJumping { get; set; }
+        [Networked]
+        private NetworkBool _isAiming { get; set; }
+        [Networked]
+        private NetworkBool _isSprinting { get; set; }
 
         private Vector3 _moveVelocity;
         private Camera _camera;
         private int _lastJumpTick = -1;
+        private float _aimBlend;
+        private float _aimBlendVelocity;
         private GameJam.Multiplayer.MarsFusionAvatar _avatar;
 
         public override void Spawned() => _avatar = GetComponent<GameJam.Multiplayer.MarsFusionAvatar>();
@@ -67,6 +81,7 @@ namespace Starter.ThirdPersonCharacter
             Animator.SetBool(AnimatorId.Jump, _isJumping);
             Animator.SetBool(AnimatorId.Grounded, KCC.IsGrounded && !_isJumping);
             Animator.SetBool(AnimatorId.FreeFall, KCC.RealVelocity.y < -10f);
+            UpdateAimRig();
             // The astronaut clip contains anticipation; start at actual takeoff as in the previous controller.
             if (_isJumping && _lastJumpTick < 0)
             {
@@ -100,6 +115,9 @@ namespace Starter.ThirdPersonCharacter
             float jumpImpulse = 0f;
 
             // Comparing current input buttons to previous input buttons - this prevents glitches when input is lost
+            if (input.AimToggle)
+                _isAiming = !_isAiming;
+
             if (KCC.IsGrounded && input.Jump)
             {
                 // Set world space jump vector
@@ -110,7 +128,9 @@ namespace Starter.ThirdPersonCharacter
             // It feels better when the player falls quicker
             KCC.SetGravity(-Mathf.Abs(KCC.RealVelocity.y >= 0f ? UpGravity : DownGravity));
 
-            float speed = input.Sprint && (_avatar == null || _avatar.Stamina > 0) ? SprintSpeed : WalkSpeed;
+            bool sprinting = input.Sprint && input.MoveDirection.sqrMagnitude > 0.01f && (_avatar == null || _avatar.Stamina > 0);
+            _isSprinting = sprinting;
+            float speed = sprinting ? SprintSpeed : WalkSpeed;
 
             var lookRotation = Quaternion.Euler(0f, input.LookRotation.y, 0f);
             // Calculate correct move direction from input (rotated based on camera look)
@@ -144,6 +164,20 @@ namespace Starter.ThirdPersonCharacter
             }
 
             KCC.Move(_moveVelocity, jumpImpulse);
+        }
+
+        private void UpdateAimRig()
+        {
+            bool airborne = _isJumping || !KCC.IsGrounded;
+            bool aimingPose = _isAiming && !airborne && !_isSprinting;
+            float duration = Mathf.Max(0.01f, AimWeightBlendDuration);
+            _aimBlend = Mathf.SmoothDamp(_aimBlend, aimingPose ? 1f : 0f, ref _aimBlendVelocity, duration);
+            if (AimHand != null)
+                AimHand.weight = _aimBlend;
+            if (LeftHandGrabPistol != null)
+                LeftHandGrabPistol.weight = _aimBlend;
+            if (RightHandGrabPistol != null)
+                RightHandGrabPistol.weight = _aimBlend;
         }
 
         // Animation event
