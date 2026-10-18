@@ -307,7 +307,8 @@ namespace GameJam.Crafting
                 return null;
             }
 
-            if (playerObject.StateAuthority != player)
+            PlayerRef owner = Runner.GameMode == GameMode.Shared ? playerObject.StateAuthority : playerObject.InputAuthority;
+            if (owner != player)
             {
                 return null;
             }

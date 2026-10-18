@@ -237,7 +237,9 @@ namespace GameJam.Collectibles
                 return false;
             }
 
-            if (playerObject.StateAuthority != requester)
+            // Shared assigns state ownership to the player; Single/Host keep it on the server.
+            PlayerRef owner = Runner.GameMode == GameMode.Shared ? playerObject.StateAuthority : playerObject.InputAuthority;
+            if (owner != requester)
             {
                 return false;
             }

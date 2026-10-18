@@ -37,11 +37,6 @@ namespace GameJam.Gameplay
         /// </summary>
         private void Update()
         {
-            if (!CanCollectLocally())
-            {
-                return;
-            }
-
             Keyboard keyboard = Keyboard.current;
             if (keyboard == null)
             {
@@ -50,6 +45,8 @@ namespace GameJam.Gameplay
 
             if (keyboard.eKey.wasPressedThisFrame)
             {
+                // Only the locally owned avatar reports an attempted interaction.
+                if (Object == null || !Object.IsValid || !HasStateAuthority) return;
                 TryCollectNearest();
             }
         }
@@ -84,6 +81,7 @@ namespace GameJam.Gameplay
         {
             if (!CanCollectLocally())
             {
+                Debug.LogWarning($"[Interaction E] Blocked: networkReady={Object != null && Object.IsValid}, inventory={inventory != null}, avatar={avatar != null}, health={(avatar != null && Object != null && Object.IsValid ? avatar.Health : -1)}, tabletOpen={(avatar != null && Object != null && Object.IsValid && avatar.TabletOpen)}, controls={characterInput != null && characterInput.ControlsEnabled}.", this);
                 return false;
             }
 
@@ -115,9 +113,11 @@ namespace GameJam.Gameplay
 
             if (nearestPickup == null)
             {
+                Debug.LogWarning($"[Interaction E] No available pickup within {searchRadius:F1} m. Colliders found: {nearbyColliders.Length}. Check pickup network registration, collider, layer and distance.", this);
                 return false;
             }
 
+            Debug.Log($"[Interaction E] Requesting {nearestPickup.name} at {Mathf.Sqrt(nearestDistanceSquared):F2} m.", nearestPickup);
             return nearestPickup.RequestCollection();
         }
 

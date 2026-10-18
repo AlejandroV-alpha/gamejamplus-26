@@ -109,6 +109,7 @@ namespace GameJam.Crafting
         {
             if (!CanCraftLocally())
             {
+                Debug.LogWarning("[Crafting] Interaction blocked: check player authority, health, tablet and controls.", this);
                 return false;
             }
 
@@ -135,6 +136,7 @@ namespace GameJam.Crafting
 
             if (nearestTable == null)
             {
+                Debug.LogWarning($"[Crafting] No crafting table from this session within {interactionDistance:F1} m. Use keys 4, 5 or 6 beside the table.", this);
                 return false;
             }
 

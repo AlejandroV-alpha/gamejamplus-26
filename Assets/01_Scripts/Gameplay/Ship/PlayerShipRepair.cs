@@ -79,6 +79,7 @@ namespace GameJam.Ship
 
             if (nearestStation == null)
             {
+                Debug.LogWarning($"[ShipRepair] No repair station from this session within {interactionDistance:F1} m.", this);
                 return false;
             }
 

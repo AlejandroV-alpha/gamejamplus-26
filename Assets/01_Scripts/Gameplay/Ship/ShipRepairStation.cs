@@ -143,7 +143,8 @@ namespace GameJam.Ship
                 return null;
             }
 
-            if (playerObject.StateAuthority != requester)
+            PlayerRef owner = Runner.GameMode == GameMode.Shared ? playerObject.StateAuthority : playerObject.InputAuthority;
+            if (owner != requester)
             {
                 return null;
             }

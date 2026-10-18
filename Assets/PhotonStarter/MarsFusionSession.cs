@@ -48,6 +48,13 @@ namespace GameJam.Multiplayer
             }
             connectionAttempt++;
             LogStage("start-requested", "mode=" + (offline ? "Single" : "Shared") + " sceneIndex=" + SceneManager.GetActiveScene().buildIndex);
+            if (SceneManager.GetActiveScene().buildIndex < 0)
+            {
+                Status = "La escena actual no está incluida en la lista de escenas del Build Profile activo. Agrégala antes de iniciar Fusion.";
+                LogStage("scene-config-failed", SceneManager.GetActiveScene().path);
+                Debug.LogError("[Mars Fusion] " + Status, this);
+                return false;
+            }
             FusionAppSettings settings = PhotonLocalSettings.Read();
             if (!offline && (settings == null || string.IsNullOrWhiteSpace(settings.AppIdFusion)))
             {

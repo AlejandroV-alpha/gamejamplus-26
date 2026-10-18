@@ -35,5 +35,8 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/00_Scenes/j_MarsFusion.unity
     guid: 3dc97565509d4a4449c08df8700e5677
+  - enabled: 1
+    path: Assets/00_Scenes/A_MarsFusion.unity
+    guid: a5b43f8d927e04f43b95bfb598e7e631
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}

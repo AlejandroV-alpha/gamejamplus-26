@@ -7,7 +7,7 @@ using GameJam.Multiplayer;
 
 // The server controls AI and hits. The player owner updates its existing health stat.
 // Supports both Unity Netcode and Photon Fusion / Standalone mode.
-public sealed class ReksaiEnemy : HitProcessor
+public sealed class ReksaiEnemy : HitProcessor, ITakeDamage
 {
     public enum Mode { Idle, Run, Attack1, Attack2, Burrow, Hidden, Emerge, Death }
     [SerializeField] float maxHealth = 160, detectionRange = 28, leashRange = 65, speed = 6.5f, attackRange = 3.8f, damage = 18, burrowCooldown = 18;
@@ -357,6 +357,11 @@ public sealed class ReksaiEnemy : HitProcessor
         var stats = playerObject.GetComponent<CoreStatsHandler>();
         if (stats != null && stats.IsSpawned && stats.IsOwner && stats.IsAlive && !float.IsNaN(amount) && !float.IsInfinity(amount) && amount > 0 && amount <= damage)
             stats.ModifyStat(StatKeys.Health, -amount, ulong.MaxValue, ModificationSource.Damage);
+    }
+
+    public void TakeDamage(int damage)
+    {
+        ApplyDamage(damage);
     }
 
     public void ApplyDamage(float amount)
