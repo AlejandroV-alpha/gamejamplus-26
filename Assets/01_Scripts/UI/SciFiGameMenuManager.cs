@@ -1141,7 +1141,8 @@ namespace GameJam.UI
             widget.Avatar = avatar;
             bool isSelf = avatar != null && avatar == localAvatar;
 
-            string name = (avatar != null && !avatar.PlayerName.IsEmpty) ? avatar.PlayerName.ToString() : "Astronauta";
+            string rawName = avatar != null ? avatar.PlayerName.ToString() : null;
+            string name = !string.IsNullOrWhiteSpace(rawName) ? rawName : "Astronauta";
             if (isSelf)
             {
                 name += " " + GameLocalization.Get("crew.you", "(Tú)");
@@ -1176,8 +1177,7 @@ namespace GameJam.UI
                 if (!isSelf && avatar != null)
                 {
                     widget.VolumeSlider.onValueChanged.RemoveAllListeners();
-                    string nameStr = !avatar.PlayerName.IsEmpty ? avatar.PlayerName.ToString() : "Astronauta";
-                    string prefKey = "GameJam.PlayerVol_" + nameStr;
+                    string prefKey = "GameJam.PlayerVol_" + (!string.IsNullOrWhiteSpace(rawName) ? rawName : "Astronauta");
                     float savedVol = PlayerPrefs.GetFloat(prefKey, 1f);
                     widget.VolumeSlider.value = savedVol;
                     if (widget.VolumePercentLabel != null)
