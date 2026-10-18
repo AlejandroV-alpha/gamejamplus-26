@@ -67,7 +67,8 @@ namespace GameJam.Environment.Mars
                 return;
             }
             var input = PlayerInput.CurrentInput;
-            if (!PlayerInput.ControlsEnabled || (avatar != null && !avatar.IsAlive))
+            if (!PlayerInput.ControlsEnabled || (avatar != null && !avatar.IsAlive)
+                || (GetComponent<GameJam.Survival.SurvivalRevive>()?.IsAnimating ?? false))
             {
                 input.MoveDirection = Vector2.zero;
                 input.Sprint = false;

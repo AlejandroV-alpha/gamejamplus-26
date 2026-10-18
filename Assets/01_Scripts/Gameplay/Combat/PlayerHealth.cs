@@ -151,6 +151,7 @@ namespace GameJam.Combat
                 return false;
             }
             CurrentHealth = Mathf.Clamp(amount, 1f, MaxHealth);
+            reservation.BeginGetUp();
             IsAlive = true;
             deathAnnounced = false;
             return true;

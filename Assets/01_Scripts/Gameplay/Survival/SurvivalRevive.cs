@@ -27,6 +27,35 @@ namespace GameJam.Survival
         [Networked] private uint attemptSequence { get; set; }
         [Networked] public uint AuthorityGeneration { get; private set; }
 
+        [Networked] public byte Emote { get; private set; }
+        [Networked] public TickTimer EmoteDeadline { get; private set; }
+        [Networked] public TickTimer GetUpDeadline { get; private set; }
+        private float nextSocialLookup;
+        private SurvivalRevive rescueTarget;
+        public bool IsRecovering => Object != null && Object.IsValid && health != null && health.IsAlive
+            && GetUpDeadline.IsRunning && !GetUpDeadline.Expired(Runner);
+        public bool IsEmoting => Object != null && Object.IsValid && Emote != 0 && EmoteDeadline.IsRunning && !EmoteDeadline.Expired(Runner);
+        public bool IsRescuing => RescueTarget != null;
+        public bool IsAnimating => IsRecovering || IsEmoting || IsRescuing;
+        public SurvivalRevive RescueTarget
+        {
+            get
+            {
+                if (Object == null || !Object.IsValid || avatar == null || !avatar.IsAlive) return null;
+                if (Time.unscaledTime >= nextSocialLookup)
+                {
+                    nextSocialLookup = Time.unscaledTime + .15f;
+                    rescueTarget = null;
+                    foreach (var candidate in FindObjectsByType<SurvivalRevive>(FindObjectsSortMode.None))
+                        if (candidate.Object != null && candidate.Object.IsValid && candidate.Runner == Runner
+                            && candidate.Rescuer == Object && candidate.ActiveAttempt != 0)
+                        { rescueTarget = candidate; break; }
+                }
+                return rescueTarget != null && rescueTarget.Object != null && rescueTarget.Object.IsValid
+                    && rescueTarget.Rescuer == Object && rescueTarget.ActiveAttempt != 0 ? rescueTarget : null;
+            }
+        }
+
         private PlayerHealth health;
         private MarsFusionAvatar avatar;
         private SimpleKCC kcc;
@@ -54,6 +83,7 @@ namespace GameJam.Survival
             avatar = GetComponent<MarsFusionAvatar>();
             kcc = GetComponent<SimpleKCC>();
             input = GetComponent<CharacterInput>();
+            if (GetComponent<PlayerSocialAnimation>() == null) gameObject.AddComponent<PlayerSocialAnimation>();
             if (health == null || avatar == null || kcc == null || input == null)
             {
                 Debug.LogError("[SurvivalRevive] Faltan dependencias del astronauta.", this);
@@ -69,6 +99,7 @@ namespace GameJam.Survival
             {
                 return;
             }
+            ReadEmotes();
             bool nowHeld = Application.isFocused && Keyboard.current != null && Keyboard.current.fKey.isPressed;
             if (nowHeld && !held)
             {
@@ -97,6 +128,9 @@ namespace GameJam.Survival
             {
                 return;
             }
+            if (Emote != 0 && (EmoteDeadline.ExpiredOrNotRunning(Runner) || avatar == null || !avatar.IsAlive
+                || avatar.TabletOpen || (GetComponent<PlayerHurtReaction>()?.IsReacting ?? false)
+                || (GetComponent<GameJam.Environment.Mars.PlayerSandstorm>()?.IsDowned ?? false))) Emote = 0;
             if (ActiveAttempt != 0 && (!ReservationValid() || confirmationDeadline.ExpiredOrNotRunning(Runner)))
             {
                 ClearReservation();
@@ -110,6 +144,12 @@ namespace GameJam.Survival
             }
             if (selected != null)
             {
+                if (IsRescuing && kcc != null)
+                {
+                    Vector3 facing = selected.transform.position - transform.position;
+                    facing.y = 0;
+                    if (facing.sqrMagnitude > .01f) kcc.SetLookRotation(Quaternion.LookRotation(facing).eulerAngles);
+                }
                 ContinueOutgoing();
             }
             else if (pressed)
@@ -136,12 +176,41 @@ namespace GameJam.Survival
             released = false;
         }
 
+        private void ReadEmotes()
+        {
+            var keyboard = Keyboard.current;
+            if (keyboard == null || !Application.isFocused) return;
+            if (IsEmoting)
+            {
+                bool cancel = keyboard.wKey.isPressed || keyboard.aKey.isPressed || keyboard.sKey.isPressed
+                    || keyboard.dKey.isPressed || keyboard.spaceKey.isPressed || keyboard.fKey.isPressed
+                    || (Mouse.current != null && (Mouse.current.leftButton.isPressed || Mouse.current.rightButton.isPressed));
+                if (cancel) Emote = 0;
+                return;
+            }
+            if (!CanInteractLocally() || IsRescuing || kcc == null || !kcc.IsGrounded || kcc.RealSpeed > .15f) return;
+            byte choice = keyboard.digit7Key.wasPressedThisFrame ? (byte)1
+                : keyboard.digit8Key.wasPressedThisFrame ? (byte)2 : keyboard.digit9Key.wasPressedThisFrame ? (byte)3 : (byte)0;
+            if (choice == 0) return;
+            var clip = PlayerSocialAnimation.EmoteClip(choice);
+            if (clip == null) return;
+            Emote = choice;
+            EmoteDeadline = TickTimer.CreateFromSeconds(Runner, clip.length);
+        }
+
+        internal void BeginGetUp()
+        {
+            if (!HasStateAuthority) return;
+            var clip = Resources.Load<AnimationClip>("Animations/StormStandUp");
+            GetUpDeadline = TickTimer.CreateFromSeconds(Runner, clip != null ? clip.length : 8.267f);
+        }
+
         /// <summary>
         /// Comprueba controles y vida del propietario antes de leer una accion.
         /// </summary>
         private bool CanInteractLocally()
         {
-            if (health == null || !health.IsAlive || input == null || !input.ControlsEnabled || avatar == null || avatar.TabletOpen || GameJam.Crafting.CraftingBox.IsBlockingInput)
+            if (IsRecovering || IsEmoting || health == null || !health.IsAlive || input == null || !input.ControlsEnabled || avatar == null || avatar.TabletOpen || GameJam.Crafting.CraftingBox.IsBlockingInput)
             {
                 return false;
             }

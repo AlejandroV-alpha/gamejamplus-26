@@ -321,10 +321,10 @@ namespace GameJam.Combat
                 {
                     continue;
                 }
-                if (component is NetworkBehaviour networked
-                    && networked.Object != null
-                    && networked.Object.IsValid
-                    && networked.Runner == Runner)
+                if (component is GiantGolemEnemy golem
+                    && golem.Object != null
+                    && golem.Object.IsValid
+                    && golem.Runner == Runner)
                 {
                     damageReceiver.TakeDamage(damage);
                     return;
@@ -532,7 +532,8 @@ namespace GameJam.Combat
             {
                 return false;
             }
-            if ((avatar.GetComponent<GameJam.Environment.Mars.PlayerSandstorm>()?.IsTumbling ?? false)
+            if ((avatar.GetComponent<GameJam.Survival.SurvivalRevive>()?.IsAnimating ?? false)
+                || (avatar.GetComponent<GameJam.Environment.Mars.PlayerSandstorm>()?.IsTumbling ?? false)
                 || avatar.TabletOpen || characterInput == null)
             {
                 return false;

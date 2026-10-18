@@ -95,7 +95,7 @@ namespace Starter.ThirdPersonCharacter
         {
             if (!HasStateAuthority) return;
             var movementInput = PrepareMovementInput(PlayerInput.CurrentInput);
-            if (_sandstorm != null && _sandstorm.IsTumbling)
+            if ((_sandstorm != null && _sandstorm.IsTumbling) || (GetComponent<GameJam.Survival.SurvivalRevive>()?.IsAnimating ?? false))
             {
                 movementInput.MoveDirection = Vector2.zero;
                 movementInput.Jump = false;
@@ -349,7 +349,7 @@ namespace Starter.ThirdPersonCharacter
 
         private bool IsAimingPose()
         {
-            return (_avatar==null || _avatar.IsAlive) && !(GetComponent<GameJam.Combat.PlayerHurtReaction>()?.IsReacting ?? false) && _isAiming && !_isSprinting && KCC.IsGrounded && !_isJumping && !(GetComponent<GameJam.Multiplayer.PlayerInteractionAction>()?.IsBusy ?? false);
+            return !(GetComponent<GameJam.Survival.SurvivalRevive>()?.IsAnimating ?? false) && (_avatar==null || _avatar.IsAlive) && !(GetComponent<GameJam.Combat.PlayerHurtReaction>()?.IsReacting ?? false) && _isAiming && !_isSprinting && KCC.IsGrounded && !_isJumping && !(GetComponent<GameJam.Multiplayer.PlayerInteractionAction>()?.IsBusy ?? false);
         }
 
         private void UpdateAimRig()
