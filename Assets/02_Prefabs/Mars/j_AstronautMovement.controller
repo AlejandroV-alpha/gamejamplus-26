@@ -32,7 +32,7 @@ AnimatorStateMachine:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: ArmsLayer
+  m_Name: HandsLayer
   m_ChildStates:
   - serializedVersion: 1
     m_State: {fileID: -6323608480798180962}
@@ -217,7 +217,7 @@ AnimatorController:
     m_SyncedLayerAffectsTiming: 0
     m_Controller: {fileID: 9100000}
   - serializedVersion: 5
-    m_Name: ArmsLayer
+    m_Name: HandsLayer
     m_StateMachine: {fileID: -7735070294026670457}
     m_Mask: {fileID: 31900000, guid: 5016ba64642bc4f4baf97119d00a9010, type: 2}
     m_Motions: []
@@ -246,7 +246,7 @@ AnimatorStateMachine:
     m_Position: {x: 330, y: 230, z: 0}
   - serializedVersion: 1
     m_State: {fileID: 4519862394807512262}
-    m_Position: {x: 337, y: 373, z: 0}
+    m_Position: {x: 330, y: 330, z: 0}
   m_ChildStateMachines: []
   m_AnyStateTransitions: []
   m_EntryTransitions: []
@@ -325,7 +325,7 @@ BlendTree:
     m_DirectBlendParameter: Blend
     m_Mirror: 0
   - serializedVersion: 2
-    m_Motion: {fileID: 7400000, guid: 3f8a1292116a1cb4e9586fafb1a05b25, type: 2}
+    m_Motion: {fileID: 7400000, guid: 1a4f5a26f9c7ffb4aa3ec0a294c4a37f, type: 2}
     m_Threshold: 3
     m_Position: {x: 0, y: 0}
     m_TimeScale: 1

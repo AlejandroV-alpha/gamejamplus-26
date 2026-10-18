@@ -4,6 +4,7 @@ using UnityEngine;
 
 namespace GameJam.Multiplayer
 {
+    [DefaultExecutionOrder(10000)]
     public sealed class LobbyDepartureEffects : MonoBehaviour
     {
         public LobbyAlert alert;
@@ -116,6 +117,12 @@ namespace GameJam.Multiplayer
             float y = Mathf.PerlinNoise(3,t)-.5f;
             camera.transform.position += camera.transform.right * (x*strength) + camera.transform.up * (y*strength);
             camera.transform.rotation *= Quaternion.Euler(y*strength*12,x*strength*7,x*strength*16);
+        }
+
+        private void LateUpdate()
+        {
+            // Run after Cinemachine's aim/shoulder blend has placed the local camera.
+            if (current == this && Camera.main != null) ApplyCameraShake(Camera.main);
         }
 
         private void OnGUI()
