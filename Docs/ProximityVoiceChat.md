@@ -1,12 +1,15 @@
 # Voz de proximidad (Photon Voice + Fusion)
 
+Para preparar otra PC desde cero, sigue la [guía de configuración del equipo](Multiplayer-Guia-Equipo.md).
+
 El paquete `com.photonengine.voice-fusion` se instala desde Fusion Hub > Addons > Voice.
 La configuración se aplica al runner compartido por Marte y el lobby y a los prefabs
 `A_FusionAstronaut` y `j_FusionAstronaut`.
 
 ## Configuración privada en cada computadora
 
-Crear un App ID de tipo **Voice** en Photon, distinto al de Fusion. Ejecutar desde
+Usar el App ID de tipo **Voice** del equipo, distinto al de Fusion y compartido
+por todos los participantes. Ejecutar desde
 PowerShell `./Tools/Configure-PhotonLocal.ps1 -Service Voice` y pegarlo en la entrada
 oculta. Se cifra con Windows DPAPI para ese usuario en
 `%LOCALAPPDATA%/GameJamPlus26/Photon/voice-appid.dpapi`.
