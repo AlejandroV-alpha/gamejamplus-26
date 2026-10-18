@@ -16,7 +16,7 @@ MonoBehaviour:
   recipeName: Nucleo energetico
   description: Nucleo de energia de la nave.
   planet: 1
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: 002b324b170f41b8b2e9279f8411b27c, type: 3}
   ingredients:
   - material: {fileID: 11400000, guid: 6453654fe44ffdc429c6fff7b65ceb59, type: 2}
     amount: 2

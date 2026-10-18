@@ -15,5 +15,5 @@ MonoBehaviour:
   id: red_mineral
   materialName: Mineral rojo
   description: Mineral rojo utilizado en componentes de Marte.
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: f060185c234c76745a2e846aaa2d4573, type: 3}
   prefab: {fileID: 8914290160511922020, guid: 9682ceed10905e94c8f7b1010debf6be, type: 3}

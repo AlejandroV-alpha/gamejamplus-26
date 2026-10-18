@@ -15,5 +15,5 @@ MonoBehaviour:
   id: ice_crystal
   materialName: Cristal de hielo
   description: Cristal de hielo utilizado en componentes de Neptuno.
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: 5797060c9231a2941a7102fd40b505cc, type: 3}
   prefab: {fileID: 8923127039557489132, guid: f2017a9d4030f7a40afe9f41eb67a7a7, type: 3}

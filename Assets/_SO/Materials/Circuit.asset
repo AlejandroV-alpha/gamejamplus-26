@@ -15,5 +15,5 @@ MonoBehaviour:
   id: circuit
   materialName: Circuit
   description: Componente electronico para sistemas de control.
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: 2cb43d3e1c745ab4c85c9035a1192f28, type: 3}
   prefab: {fileID: 346993187844137648, guid: f25f12b9d6bf11345a95256d368cfb69, type: 3}
