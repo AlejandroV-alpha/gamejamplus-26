@@ -18,6 +18,7 @@ namespace GameJam.Multiplayer
         public string roomName = "Mars-Coop";
         [Tooltip("Height above the spawn point where the ground raycast starts. Keep it below the ceiling in indoor scenes.")]
         public float groundProbeHeight = 100f;
+        public string planetLabel = "MARTE";
         public NetworkRunner Runner { get; private set; }
         public string Status { get; private set; } = "Photon Fusion — listo";
         public bool MenuOpen { get; private set; } = true;
@@ -191,7 +192,7 @@ namespace GameJam.Multiplayer
         {
             if (!MenuOpen) return;
             GUILayout.BeginArea(new Rect(20, 20, Mathf.Min(460, Screen.width - 40), 320), GUI.skin.box);
-            GUILayout.Label("MARTE · PHOTON FUSION");
+            GUILayout.Label(planetLabel + " · PHOTON FUSION");
             GUILayout.Label(Status);
             GUI.enabled = !Busy;
             if (Runner == null)
