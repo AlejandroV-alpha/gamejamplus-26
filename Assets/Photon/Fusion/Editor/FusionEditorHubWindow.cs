@@ -3,6 +3,7 @@ namespace Fusion.Editor {
   using System.Collections.Generic;
   using System.Linq;
   using UnityEditor;
+  using UnityEditor.Callbacks;
   using UnityEngine;
   using Object = UnityEngine.Object;
 
@@ -163,10 +164,12 @@ namespace Fusion.Editor {
       AssetDatabase.importPackageCompleted += OnImportPackageCompleted;
     }
 
+#if !FUSION_DISABLE_HUB_POPUP
     [UnityEditor.Callbacks.DidReloadScripts]
     static void OnDidReloadScripts() {
       EditorApplication.delayCall += CheckPopupCondition;
     }
+#endif
 
     /// <summary>
     /// The QPrototypes have to be reloaded to properly work.
@@ -186,7 +189,7 @@ namespace Fusion.Editor {
 
     protected static void OpenPage(int page) {
 #if FUSION_HAS_MPPM
-      // Project integration: the Hub is an Editor-only window, unsupported in virtual players.
+      // Project integration: the Hub window is unsupported in virtual players.
       if (!Unity.Multiplayer.PlayMode.CurrentPlayer.IsMainEditor) return;
 #endif
       if (Application.isPlaying) {
@@ -281,11 +284,13 @@ namespace Fusion.Editor {
       return true;
     }
 
+#if !FUSION_DISABLE_HUB_POPUP
     /// <summary>
     /// Is used to check if important user files are installed and opens the Hub otherwise.
     /// </summary>
     internal static void CheckPopupCondition() {
 #if FUSION_HAS_MPPM
+      // Project integration: the Hub window is unsupported in virtual players.
       if (!Unity.Multiplayer.PlayMode.CurrentPlayer.IsMainEditor) return;
 #endif
       if (EditorApplication.isPlayingOrWillChangePlaymode) {
@@ -306,15 +311,19 @@ namespace Fusion.Editor {
 
       EditorApplication.delayCall += () => OpenPage(page);
     }
+#endif
 
     protected virtual void OnGuiHeartbeat() {
     }
   }
 
+#if !FUSION_DISABLE_HUB_POPUP
   class FusionEditorHubWindowAssetPostprocessor : AssetPostprocessor {
+    [RunAfterClass(typeof(FusionGlobalScriptableObjectUtils.PostProcessor))]
     static void OnPostprocessAllAssets(string[] importedAssets, string[] deletedAssets, string[] movedAssets, string[] movedFromAssetPaths) {
       // Unity handling for post asset processing callback. Checks existence of settings assets every time assets change.
       FusionEditorHubWindow.CheckPopupCondition();
     }
   }
+#endif
 }

@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: b366d5a4334a78048be247dcaa26b727
+guid: 023061bba086a494d90c72ddbafd6eee
 labels:
 - FusionCodeDoc
 TextScriptImporter:
@@ -7,10 +7,3 @@ TextScriptImporter:
   userData: 
   assetBundleName: 
   assetBundleVariant: 
-AssetOrigin:
-  serializedVersion: 1
-  productId: 291051
-  packageName: Photon Fusion Starter - Multiplayer
-  packageVersion: 2.0.4f1
-  assetPath: Assets/Photon/Fusion/Assemblies/Fusion.Log.xml
-  uploadId: 988192

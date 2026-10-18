@@ -1,14 +1,7 @@
 fileFormatVersion: 2
-guid: c7a0f0372855eac41a5ec0ba7daa5df6
+guid: 325c761f06fab402fb86256c389a0b0a
 DefaultImporter:
   externalObjects: {}
   userData: 
   assetBundleName: 
   assetBundleVariant: 
-AssetOrigin:
-  serializedVersion: 1
-  productId: 291051
-  packageName: Photon Fusion Starter - Multiplayer
-  packageVersion: 2.0.4f1
-  assetPath: Assets/Photon/Fusion/Assemblies/Debug/Fusion.Sockets.pdb.debug
-  uploadId: 988192

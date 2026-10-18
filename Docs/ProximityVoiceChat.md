@@ -57,3 +57,35 @@ Compilación del runtime y del Editor correcta. Ambos prefabs tienen el componen
 de voz registrado en Fusion; el altavoz usa audio 3D y alcance de 22 m. Se verificó
 el cifrado, la lectura en Unity y la exclusión de Git del App ID. Pendiente validar
 captura de micrófono y comunicación audible entre dos clientes online.
+
+## Fallo de replicación de Fusion 2.1.1
+
+El log de la prueba del 18/10/2026 muestra el fallo
+`AssertException: tick >= sc._latestTickAcknowledged` en
+`Fusion.Simulation.StateReplicator.OnPacketDelivered`, seguido de desconexión de la
+sesión. La versión instalada cuando ocurrió el fallo era Fusion **2.1.1, build 2177**.
+
+Photon documenta exactamente esa aserción como incorrecta y corregida en
+**2.1.2, build 2279**; podía dispararse tras un reinicio del tiempo o pérdida extrema
+de paquetes. La versión estable posterior disponible es **2.1.3, build 2390**.
+Fuente: [notas oficiales de Fusion 2.1](https://doc.photonengine.com/fusion/v2/getting-started/release-notes/release-notes-2-1).
+
+Se instaló **Fusion 2.1.3, build 2390** desde el paquete oficial descargado por el
+usuario. Se conservaron `NetworkProjectConfig.fusion`, los App IDs locales y las
+adaptaciones del Hub para jugadores virtuales. Unity completó la recompilación
+sin errores de C#. Se verificó dentro del Editor que la versión cargada es
+2.1.3.2390, los dos App IDs se leen correctamente y ambos prefabs conservan Voice
+y push to talk con V. La prueba Fusion Single creó el jugador y el EventSystem
+y se desconectó sin errores de consola. Falta repetir la prueba online con todos los participantes
+usando la misma revisión del proyecto y del SDK; esa prueba es necesaria para
+confirmar que el fallo ya no reaparece en esta partida.
+
+Los avisos anteriores tienen otro significado:
+
+- `TransmitEnabled is false`: estado inicial esperado al usar push to talk.
+- Micrófono a 48 kHz y codificador a 16 kHz: el SDK está adaptando la frecuencia.
+  Ese aviso no contiene el fallo de replicación identificado.
+- `Leader joined room, Voice client is busy`: el cliente Voice aún está conectando;
+  en el log después aparece la petición de entrada a la sala de voz.
+- `DisconnectedByPluginLogic` / código 104 aparece después de la aserción. El log
+  no permite atribuir por separado la razón interna del rechazo del servidor.

@@ -1,14 +1,7 @@
 fileFormatVersion: 2
-guid: afce970a5c02a844dbad6c01bac2eeef
+guid: 91a118b81f72348fc8449eb16c081a14
 DefaultImporter:
   externalObjects: {}
   userData: 
   assetBundleName: 
   assetBundleVariant: 
-AssetOrigin:
-  serializedVersion: 1
-  productId: 291051
-  packageName: Photon Fusion Starter - Multiplayer
-  packageVersion: 2.0.4f1
-  assetPath: Assets/Photon/Fusion/Assemblies/Release/Fusion.Common.dll.release
-  uploadId: 988192

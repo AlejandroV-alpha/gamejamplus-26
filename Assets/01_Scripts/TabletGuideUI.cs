@@ -4,6 +4,8 @@ using System.Text;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.EventSystems;
+using UnityEngine.InputSystem.UI;
 using UnityEngine.UI;
 
 namespace GameJam.Tablet
@@ -56,6 +58,7 @@ namespace GameJam.Tablet
 
         public void Build(UnityAction close, TabletRecipeCatalog data = null, TabletUISkin appearance = null)
         {
+            EnsureInputEventSystem();
             catalog = data;
             skin = appearance;
             tmpFont = (skin != null && skin.tmpFont != null) ? skin.tmpFont : TMP_Settings.defaultFontAsset;
@@ -149,6 +152,25 @@ namespace GameJam.Tablet
 
             pageGroup = workspace.gameObject.AddComponent<CanvasGroup>();
             RenderPage();
+        }
+
+        private void EnsureInputEventSystem()
+        {
+            // The lobby has no scene UI, but this runtime canvas still needs pointer routing.
+            var events = EventSystem.current;
+            if (events == null || !events.isActiveAndEnabled)
+                events = FindFirstObjectByType<EventSystem>();
+            if (events == null)
+            {
+                var host = new GameObject("Tablet EventSystem");
+                host.transform.SetParent(transform, false);
+                events = host.AddComponent<EventSystem>();
+            }
+            if (events.GetComponent<BaseInputModule>() == null)
+            {
+                var module = events.gameObject.AddComponent<InputSystemUIInputModule>();
+                module.AssignDefaultActions();
+            }
         }
 
         private void CreateEquipmentHint()

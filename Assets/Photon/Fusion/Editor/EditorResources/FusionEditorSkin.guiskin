@@ -2083,9 +2083,9 @@ MonoBehaviour:
     m_StretchHeight: 0
   - m_Name: thumbnail-box
     m_Normal:
-      m_Background: {fileID: 2800000, guid: 66c8fab250d03c24d890b5de021887a3, type: 3}
+      m_Background: {fileID: 2800000, guid: 3f929bc2e87f64441ba0a9c7a42516ca, type: 3}
       m_ScaledBackgrounds:
-      - {fileID: 2800000, guid: 66c8fab250d03c24d890b5de021887a3, type: 3}
+      - {fileID: 2800000, guid: 3f929bc2e87f64441ba0a9c7a42516ca, type: 3}
       m_TextColor: {r: 1, g: 1, b: 1, a: 1}
     m_Hover:
       m_Background: {fileID: 0}
@@ -2215,7 +2215,6 @@ MonoBehaviour:
     m_FixedHeight: 0
     m_StretchWidth: 0
     m_StretchHeight: 0
-    m_IsSDF: 0
   m_Settings:
     m_DoubleClickSelectsWord: 1
     m_TripleClickSelectsLine: 1
