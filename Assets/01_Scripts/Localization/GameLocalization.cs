@@ -216,6 +216,11 @@ namespace GameJam.Localization
                 [GameLanguage.English] = "RESUME MISSION",
                 [GameLanguage.Portuguese] = "CONTINUAR MISSÃO"
             },
+            ["pause.btn_return_lobby"] = new() {
+                [GameLanguage.Spanish] = "VOLVER AL LOBBY",
+                [GameLanguage.English] = "RETURN TO LOBBY",
+                [GameLanguage.Portuguese] = "VOLTAR AO LOBBY"
+            },
             ["pause.btn_disconnect"] = new() {
                 [GameLanguage.Spanish] = "DESCONECTAR / SALIR",
                 [GameLanguage.English] = "DISCONNECT / LEAVE",

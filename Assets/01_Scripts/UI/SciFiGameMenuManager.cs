@@ -2,34 +2,39 @@ using System;
 using System.Collections.Generic;
 using GameJam.Localization;
 using GameJam.Multiplayer;
-using HeyHeyThere.PixelUISciFiFree;
+using GameJam.Tablet;
 using TMPro;
 using UnityEngine;
+using UnityEngine.Events;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.UI;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 namespace GameJam.UI
 {
     /// <summary>
-    /// Gestor integral de menús Sci-Fi para inicio de sesión y pausa en el juego.
-    /// Utiliza el kit de diseño PixelUISciFiFree (Cyan Theme) y se integra con el sistema
-    /// de localización (Español, Inglés, Portugués Brasil), configuración de chat de voz
-    /// por proximidad, volumen general y sliders de volumen individual por astronauta.
+    /// Gestor integral de interfaces para terminal de inicio y menú de pausa.
+    /// Diseñado con la estética de datapad de campo rugoso idéntica a la Tablet:
+    /// chasis de titanio, cuerpo mate con tornillos hexagonales, pantalla embutida con cristal oscuro,
+    /// tarjetas de datos retroiluminadas y tipografía moderna de alta resolución.
+    /// 
+    /// Flujo de escenas:
+    /// - En el Lobby (j_LobyDeEspera.unity): La terminal de inicio está activa para configurar sala/idioma y conectar.
+    /// - Al conectar: La terminal se oculta y el astronauta camina libremente en la nave.
+    /// - En escenas de misión (Mars, Neptune): La terminal de inicio NUNCA se muestra.
+    /// - Tecla [Esc]: Abre el datapad de Pausa (Misión, Ajustes, Tripulación) con opción de volver al Lobby.
     /// </summary>
     public sealed class SciFiGameMenuManager : MonoBehaviour
     {
         public static SciFiGameMenuManager Instance { get; private set; }
 
-        [Header("Referencias de Sesión")]
+        [Header("Referencias")]
         [SerializeField] private MarsFusionSession session;
-
-        [Header("Tema y Fuentes")]
-        [SerializeField] private PixelTheme theme;
         [SerializeField] private TMP_FontAsset fontAsset;
 
-        // Raíces y Grupos de Canvas para rendimiento óptimo (sin re-creación continua de UI)
+        // Raíces y Grupos de Canvas
         private Canvas rootCanvas;
         private CanvasGroup startMenuGroup;
         private CanvasGroup pauseMenuGroup;
@@ -37,25 +42,35 @@ namespace GameJam.UI
         // Componentes de Inicio
         private TMP_InputField playerNameInput;
         private TMP_InputField roomCodeInput;
-        private PixelButton btnOnlineStart;
-        private PixelButton btnSoloStart;
+        private Button btnOnlineStart;
+        private Button btnSoloStart;
         private TextMeshProUGUI statusLabel;
-        private Image statusDot;
+        private TabletRoundedPanel statusDot;
 
         // Botones de Idioma Inicio
-        private PixelButton btnStartLangEs;
-        private PixelButton btnStartLangEn;
-        private PixelButton btnStartLangPt;
+        private Button btnStartLangEs;
+        private Button btnStartLangEn;
+        private Button btnStartLangPt;
+        private TabletRoundedPanel btnStartLangEsBg;
+        private TabletRoundedPanel btnStartLangEnBg;
+        private TabletRoundedPanel btnStartLangPtBg;
 
         // Botones de Idioma Pausa
-        private PixelButton btnPauseLangEs;
-        private PixelButton btnPauseLangEn;
-        private PixelButton btnPauseLangPt;
+        private Button btnPauseLangEs;
+        private Button btnPauseLangEn;
+        private Button btnPauseLangPt;
+        private TabletRoundedPanel btnPauseLangEsBg;
+        private TabletRoundedPanel btnPauseLangEnBg;
+        private TabletRoundedPanel btnPauseLangPtBg;
 
         // Pestañas del Menú de Pausa
-        private PixelButton tabBtnMission;
-        private PixelButton tabBtnSettings;
-        private PixelButton tabBtnCrew;
+        private Button tabBtnMission;
+        private Button tabBtnSettings;
+        private Button tabBtnCrew;
+        private TabletRoundedPanel tabBtnMissionBg;
+        private TabletRoundedPanel tabBtnSettingsBg;
+        private TabletRoundedPanel tabBtnCrewBg;
+
         private GameObject tabContentMission;
         private GameObject tabContentSettings;
         private GameObject tabContentCrew;
@@ -64,8 +79,10 @@ namespace GameJam.UI
         // Ajustes de Audio y Voz
         private Slider masterVolumeSlider;
         private TextMeshProUGUI masterVolumePercentLabel;
-        private PixelButton btnVoicePtt;
-        private PixelButton btnVoiceOpenMic;
+        private Button btnVoicePtt;
+        private Button btnVoiceOpenMic;
+        private TabletRoundedPanel btnVoicePttBg;
+        private TabletRoundedPanel btnVoiceOpenMicBg;
         private Slider voiceMasterVolumeSlider;
         private TextMeshProUGUI voiceMasterPercentLabel;
 
@@ -73,33 +90,50 @@ namespace GameJam.UI
         private RectTransform crewListContainer;
         private TextMeshProUGUI crewEmptyLabel;
         private readonly List<CrewRowWidget> activeCrewRows = new();
-
-        // Control de tiempo para polling suave de tripulación
         private float nextCrewCheckTime;
         private bool isInitialized;
 
-        // Colores de diseño temático Cyan Sci-Fi
-        private static readonly Color DeepSpaceBg = new(0.015f, 0.025f, 0.045f, 0.92f);
-        private static readonly Color WindowFrameCyan = new(0.00f, 0.90f, 0.95f, 1f);
-        private static readonly Color AccentGlow = new(0.00f, 0.95f, 0.90f, 1f);
-        private static readonly Color TextWhite = new(0.96f, 0.98f, 1.00f, 1f);
-        private static readonly Color TextMuted = new(0.50f, 0.70f, 0.82f, 1f);
-        private static readonly Color TextDim = new(0.32f, 0.44f, 0.54f, 1f);
-        private static readonly Color InsetCardBg = new(0.025f, 0.045f, 0.075f, 0.95f);
-        private static readonly Color InsetSlotBg = new(0.05f, 0.08f, 0.12f, 0.95f);
-        private static readonly Color SpeakingGreen = new(0.18f, 0.92f, 0.45f, 1f);
+        // Paleta de Hardware y Datapad Aeroespacial (Idéntica a TabletGuideUI)
+        private static readonly Color ChassisRim = new(0.18f, 0.24f, 0.32f, 1f);     // Titanio exterior
+        private static readonly Color ChassisMatte = new(0.065f, 0.085f, 0.115f, 1f);// Cuerpo aleación mate
+        private static readonly Color ChassisBezel = new(0.035f, 0.045f, 0.065f, 1f);// Bisel interior de pantalla
+        private static readonly Color ArmorBumper = new(0.12f, 0.16f, 0.22f, 1f);   // Protectores de esquina
+        private static readonly Color HexBolt = new(0.26f, 0.34f, 0.46f, 1f);       // Tornillos hexagonales
+        private static readonly Color GlassDisplay = new(0.02f, 0.035f, 0.055f, 0.98f);// Cristal pantalla embutida
+        private static readonly Color CardBg = new(0.045f, 0.075f, 0.12f, 0.96f);    // Tarjeta oscura
+        private static readonly Color InsetBg = new(0.02f, 0.035f, 0.055f, 0.95f);   // Pozo hundido para inputs
+        private static readonly Color SlotBg = new(0.07f, 0.11f, 0.17f, 0.95f);     // Botón normal
+
+        // Colores de Tipografía y Señales
+        private static readonly Color InkWhite = new(0.96f, 0.98f, 1.00f, 1f);       // Texto principal blanco nítido
+        private static readonly Color MutedCyan = new(0.48f, 0.68f, 0.80f, 1f);      // Subtítulo técnico
+        private static readonly Color DimCyan = new(0.26f, 0.40f, 0.50f, 1f);        // Marcas secundarias
+        private static readonly Color CyanAccent = new(0.00f, 0.92f, 0.88f, 1f);     // Acento neón cian
+        private static readonly Color AmberAccent = new(1.00f, 0.65f, 0.35f, 1f);    // Acento cálido ámbar
+        private static readonly Color SpeakingGreen = new(0.18f, 0.92f, 0.45f, 1f);  // Transmisión de voz activa
+        private static readonly Color DangerRed = new(0.92f, 0.25f, 0.25f, 1f);      // Desconectar / Salir
+        private static readonly Color GoldPin = new(0.85f, 0.70f, 0.25f, 1f);        // Pines pogo dock
+        private static readonly Color HardwareStamp = new(0.28f, 0.38f, 0.50f, 1f);  // Marcas técnicas
 
         private class CrewRowWidget
         {
             public GameObject Root;
             public MarsFusionAvatar Avatar;
-            public Image AvatarIcon;
             public TextMeshProUGUI NameLabel;
-            public Image SpeakingBadge;
+            public TabletRoundedPanel SpeakingDot;
             public TextMeshProUGUI SpeakingLabel;
-            public GameObject VolumeControlGroup;
             public Slider VolumeSlider;
             public TextMeshProUGUI VolumePercentLabel;
+        }
+
+        public static bool IsLobbyScene
+        {
+            get
+            {
+                string sceneName = SceneManager.GetActiveScene().name;
+                return sceneName.IndexOf("Lobby", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                       sceneName.IndexOf("Loby", StringComparison.OrdinalIgnoreCase) >= 0;
+            }
         }
 
         private void Awake()
@@ -114,7 +148,9 @@ namespace GameJam.UI
             if (session == null)
                 session = FindFirstObjectByType<MarsFusionSession>();
 
-            LoadThemeAssets();
+            if (fontAsset == null)
+                fontAsset = TMP_Settings.defaultFontAsset;
+
             BuildMenuHierarchy();
         }
 
@@ -137,15 +173,24 @@ namespace GameJam.UI
 
             UpdateLanguageButtonsHighlight();
 
-            // Determinar estado inicial según si hay runner activo
-            if (session != null && session.Runner != null && session.Runner.IsRunning)
+            // El menú de inicio sólo es visible en el Lobby cuando NO hay un runner activo
+            if (IsLobbyScene)
             {
-                SetStartMenuVisible(false);
-                SetPauseMenuVisible(false);
+                if (session != null && session.Runner != null && session.Runner.IsRunning)
+                {
+                    SetStartMenuVisible(false);
+                    SetPauseMenuVisible(false);
+                }
+                else
+                {
+                    SetStartMenuVisible(true);
+                    SetPauseMenuVisible(false);
+                }
             }
             else
             {
-                SetStartMenuVisible(true);
+                // En escenas de misión (Marte, Neptuno), NUNCA se muestra la terminal de inicio
+                SetStartMenuVisible(false);
                 SetPauseMenuVisible(false);
             }
 
@@ -178,7 +223,7 @@ namespace GameJam.UI
                 }
             }
 
-            // Actualizar estado de conexión y botones de inicio
+            // Actualizar estado de conexión en terminal de inicio
             if (startMenuGroup != null && startMenuGroup.alpha > 0.05f)
             {
                 UpdateStartMenuState();
@@ -195,31 +240,12 @@ namespace GameJam.UI
             }
         }
 
-        private void LoadThemeAssets()
-        {
-#if UNITY_EDITOR
-            if (theme == null)
-            {
-                theme = UnityEditor.AssetDatabase.LoadAssetAtPath<PixelTheme>("Assets/PixelUISciFiFree/Themes/Cyan.asset");
-            }
-            if (fontAsset == null)
-            {
-                fontAsset = UnityEditor.AssetDatabase.LoadAssetAtPath<TMP_FontAsset>("Assets/PixelUISciFiFree/Font/Pixel UI Sci-Fi TMP.asset");
-            }
-#endif
-            if (fontAsset == null)
-            {
-                fontAsset = TMP_Settings.defaultFontAsset;
-            }
-        }
-
-        #region UI Construction
+        #region Construcción de la Jerarquía de Interfaces
 
         private void BuildMenuHierarchy()
         {
             EnsureEventSystem();
 
-            // Canvas Principal
             rootCanvas = gameObject.GetComponent<Canvas>();
             if (rootCanvas == null) rootCanvas = gameObject.AddComponent<Canvas>();
             rootCanvas.renderMode = RenderMode.ScreenSpaceOverlay;
@@ -235,74 +261,98 @@ namespace GameJam.UI
             if (gameObject.GetComponent<GraphicRaycaster>() == null)
                 gameObject.AddComponent<GraphicRaycaster>();
 
-            // Fondo oscuro de espacio cósmico
-            var backdropGo = CreateRect("Backdrop", transform, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero).gameObject;
-            var backdropImg = backdropGo.AddComponent<Image>();
-            backdropImg.color = DeepSpaceBg;
+            // Fondo translúcido sutil
+            var backdrop = CreateRect("Backdrop", transform, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
+            var backdropImg = backdrop.gameObject.AddComponent<Image>();
+            backdropImg.color = new Color(0.01f, 0.015f, 0.025f, 0.70f);
             backdropImg.raycastTarget = false;
 
-            // ==================== 1. MENÚ DE INICIO / CONEXIÓN ====================
-            var startRoot = CreateRect("StartMenuRoot", transform, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero).gameObject;
-            startMenuGroup = startRoot.AddComponent<CanvasGroup>();
-
-            BuildStartMenuWindow(startRoot.transform);
+            // ==================== 1. TERMINAL DE INICIO (LOBBY) ====================
+            var startRoot = CreateRect("StartMenuRoot", transform, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
+            startMenuGroup = startRoot.gameObject.AddComponent<CanvasGroup>();
+            BuildStartTerminalDatapad(startRoot.transform);
 
             // ==================== 2. MENÚ DE PAUSA ====================
-            var pauseRoot = CreateRect("PauseMenuRoot", transform, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero).gameObject;
-            pauseMenuGroup = pauseRoot.AddComponent<CanvasGroup>();
-
-            BuildPauseMenuWindow(pauseRoot.transform);
+            var pauseRoot = CreateRect("PauseMenuRoot", transform, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
+            pauseMenuGroup = pauseRoot.gameObject.AddComponent<CanvasGroup>();
+            BuildPauseDatapad(pauseRoot.transform);
         }
 
         private void EnsureEventSystem()
         {
-            var eventSystem = EventSystem.current;
-            if (eventSystem == null)
+            if (EventSystem.current == null)
             {
-                eventSystem = FindFirstObjectByType<EventSystem>();
-            }
-            if (eventSystem == null)
-            {
-                var esGo = new GameObject("EventSystem", typeof(EventSystem), typeof(InputSystemUIInputModule));
-                esGo.transform.SetParent(transform, false);
+                var existing = FindFirstObjectByType<EventSystem>();
+                if (existing == null)
+                {
+                    var esGo = new GameObject("EventSystem", typeof(EventSystem), typeof(InputSystemUIInputModule));
+                    esGo.transform.SetParent(transform, false);
+                }
             }
         }
 
-        private void BuildStartMenuWindow(Transform parent)
+        #endregion
+
+        #region 1. Terminal de Expedición (Estilo Datapad de Campo)
+
+        private void BuildStartTerminalDatapad(Transform parent)
         {
-            // Ventana Principal Centrada (660 x 740)
-            var winRect = CreateWindowPanel("StartWindow", parent, new Vector2(660, 750), Vector2.zero);
+            Vector2 chassisSize = new(720, 800);
+            Vector2 displaySize = new(650, 710);
+
+            // Chasis exterior de titanio
+            var rim = CreateRoundedPanel(parent, "TerminalRim", chassisSize, 32, ChassisRim);
+            rim.anchoredPosition = Vector2.zero;
+
+            // Cuerpo aleación oscura mate
+            var body = CreateRoundedPanel(rim, "TerminalBody", chassisSize - new Vector2(8, 8), 28, ChassisMatte);
+            body.anchoredPosition = Vector2.zero;
+
+            // 4 Protectores de esquina rugosos con tornillos hexagonales
+            CreateArmorCornerBumpers(body, (chassisSize - new Vector2(8, 8)) * 0.5f);
+
+            // Sensores superiores y marcas inferiores de hardware
+            CreateTopHardwareSensors(body, chassisSize.x);
+            CreateBottomHardwareDock(body, chassisSize.x, "TERMINAL-EXP // DOCK-01");
+
+            // Bisel de pantalla embutida
+            var bezel = CreateRoundedPanel(body, "ScreenBezel", displaySize + new Vector2(10, 10), 22, ChassisBezel);
+            bezel.anchoredPosition = new Vector2(0, -6);
+
+            // Pantalla de cristal oscuro
+            var display = CreateRoundedPanel(bezel, "GlassDisplay", displaySize, 20, GlassDisplay);
+            display.anchoredPosition = Vector2.zero;
+            display.gameObject.AddComponent<RectMask2D>();
 
             // --- HEADER DE LA TERMINAL ---
-            var headerGo = CreateRect("Header", winRect, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0, -45), new Vector2(600, 70));
-            var title = CreateLabel(headerGo.transform, "menu.main_title", 24, Vector2.zero, new Vector2(580, 36), TextWhite, true);
-            title.alignment = TextAlignmentOptions.Center;
+            var badge = CreateLabel(display, "ORBIT AEROSPACE // EXP-TERMINAL MK-IV", 10, new Vector2(0, 318), new Vector2(580, 18), DimCyan);
+            badge.alignment = TextAlignmentOptions.Center;
 
-            var subtitle = CreateLabel(headerGo.transform, "menu.subtitle", 13, new Vector2(0, -28), new Vector2(580, 22), TextMuted, true);
+            var title = CreateLabel(display, "menu.main_title", 22, new Vector2(0, 292), new Vector2(580, 32), InkWhite, true);
+            title.alignment = TextAlignmentOptions.Center;
+            title.fontStyle = FontStyles.Bold;
+
+            var subtitle = CreateLabel(display, "menu.subtitle", 12, new Vector2(0, 268), new Vector2(580, 20), MutedCyan, true);
             subtitle.alignment = TextAlignmentOptions.Center;
 
-            // --- SELECTOR DE IDIOMA AL PRINCIPIO DE TODO ---
-            var langCard = CreateInsetCard("LanguageCard", winRect, new Vector2(0, 215), new Vector2(580, 80));
-            var langLabel = CreateLabel(langCard.transform, "lang.title", 12, new Vector2(0, 20), new Vector2(540, 20), AccentGlow, true);
+            // --- SELECTOR DE IDIOMA ---
+            var langCard = CreateCard(display, "LanguageCard", new Vector2(590, 72), new Vector2(0, 210));
+            var langLabel = CreateLabel(langCard, "lang.title", 11, new Vector2(0, 18), new Vector2(550, 18), AmberAccent, true);
             langLabel.alignment = TextAlignmentOptions.Center;
 
-            var langRow = CreateRect("LangButtons", langCard.transform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0, -12), new Vector2(540, 36));
-            btnStartLangEs = CreateSciFiButton("BtnLangES", langRow.transform, "ES · Español", new Vector2(-180, 0), new Vector2(170, 34), () => SelectLanguage(GameLanguage.Spanish));
-            btnStartLangEn = CreateSciFiButton("BtnLangEN", langRow.transform, "EN · English", new Vector2(0, 0), new Vector2(170, 34), () => SelectLanguage(GameLanguage.English));
-            btnStartLangPt = CreateSciFiButton("BtnLangPT", langRow.transform, "PT · Brasil", new Vector2(180, 0), new Vector2(170, 34), () => SelectLanguage(GameLanguage.Portuguese));
+            var langRow = CreateRect("LangRow", langCard, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0, -12), new Vector2(560, 32));
+            btnStartLangEs = CreateDatapadButton(langRow, "BtnLangES", "ES · Español", new Vector2(-180, 0), new Vector2(170, 30), () => SelectLanguage(GameLanguage.Spanish), out btnStartLangEsBg);
+            btnStartLangEn = CreateDatapadButton(langRow, "BtnLangEN", "EN · English", new Vector2(0, 0), new Vector2(170, 30), () => SelectLanguage(GameLanguage.English), out btnStartLangEnBg);
+            btnStartLangPt = CreateDatapadButton(langRow, "BtnLangPT", "PT · Brasil", new Vector2(180, 0), new Vector2(170, 30), () => SelectLanguage(GameLanguage.Portuguese), out btnStartLangPtBg);
 
-            if (btnStartLangEs.label != null) btnStartLangEs.label.fontSize = 11;
-            if (btnStartLangEn.label != null) btnStartLangEn.label.fontSize = 11;
-            if (btnStartLangPt.label != null) btnStartLangPt.label.fontSize = 11;
-
-            // --- DATOS DEL ASTRONAUTA ---
-            var nameCard = CreateInsetCard("NameCard", winRect, new Vector2(0, 115), new Vector2(580, 80));
-            var nameHeader = CreateLabel(nameCard.transform, "menu.player_name", 12, new Vector2(0, 22), new Vector2(540, 20), TextMuted, true);
+            // --- NOMBRE DEL ASTRONAUTA ---
+            var nameCard = CreateCard(display, "NameCard", new Vector2(590, 74), new Vector2(0, 126));
+            var nameHeader = CreateLabel(nameCard, "menu.player_name", 11, new Vector2(0, 18), new Vector2(550, 18), MutedCyan, true);
             nameHeader.alignment = TextAlignmentOptions.Left;
 
             string savedName = PlayerPrefs.GetString("GameJam.PlayerName", "Astronauta").Trim();
             if (string.IsNullOrEmpty(savedName)) savedName = "Astronauta";
-            playerNameInput = CreateInputField("PlayerNameInput", nameCard.transform, savedName, "menu.player_name_placeholder", new Vector2(0, -12), new Vector2(540, 38));
+            playerNameInput = CreateInputField(nameCard, "PlayerNameInput", savedName, "menu.player_name_placeholder", new Vector2(0, -12), new Vector2(550, 34));
             playerNameInput.onValueChanged.AddListener(val =>
             {
                 PlayerPrefs.SetString("GameJam.PlayerName", val.Trim());
@@ -310,15 +360,15 @@ namespace GameJam.UI
             });
 
             // --- CÓDIGO DE SALA ---
-            var roomCard = CreateInsetCard("RoomCard", winRect, new Vector2(0, 15), new Vector2(580, 80));
-            var roomHeader = CreateLabel(roomCard.transform, "menu.room_code", 12, new Vector2(0, 22), new Vector2(540, 20), TextMuted, true);
+            var roomCard = CreateCard(display, "RoomCard", new Vector2(590, 74), new Vector2(0, 42));
+            var roomHeader = CreateLabel(roomCard, "menu.room_code", 11, new Vector2(0, 18), new Vector2(550, 18), MutedCyan, true);
             roomHeader.alignment = TextAlignmentOptions.Left;
 
             string savedRoom = PlayerPrefs.GetString("GameJam.RoomName", "MARTE-01").Trim();
             if (string.IsNullOrEmpty(savedRoom)) savedRoom = "MARTE-01";
             if (session != null) session.roomName = savedRoom;
 
-            roomCodeInput = CreateInputField("RoomCodeInput", roomCard.transform, savedRoom, "menu.room_code_placeholder", new Vector2(0, -12), new Vector2(540, 38));
+            roomCodeInput = CreateInputField(roomCard, "RoomCodeInput", savedRoom, "menu.room_code_placeholder", new Vector2(0, -12), new Vector2(550, 34));
             roomCodeInput.onValueChanged.AddListener(val =>
             {
                 string r = val.Trim();
@@ -328,71 +378,89 @@ namespace GameJam.UI
             });
 
             // --- BOTONES DE CONEXIÓN ---
-            btnOnlineStart = CreateSciFiButton("BtnOnline", winRect, "menu.btn_join_online", new Vector2(0, -85), new Vector2(580, 52), OnClickStartOnline, true);
-            if (btnOnlineStart.label != null)
-            {
-                btnOnlineStart.label.fontSize = 14;
-                btnOnlineStart.label.enableAutoSizing = true;
-                btnOnlineStart.label.fontSizeMin = 10;
-                btnOnlineStart.label.fontSizeMax = 15;
-            }
+            btnOnlineStart = CreateDatapadButton(display, "BtnOnline", "menu.btn_join_online", new Vector2(0, -42), new Vector2(590, 48), OnClickStartOnline, out var onlineBg, true);
+            onlineBg.color = new Color(0.00f, 0.45f, 0.52f, 0.95f);
+            var onlineTxt = btnOnlineStart.GetComponentInChildren<TextMeshProUGUI>();
+            if (onlineTxt != null) { onlineTxt.fontSize = 14; onlineTxt.fontStyle = FontStyles.Bold; }
 
-            btnSoloStart = CreateSciFiButton("BtnSolo", winRect, "menu.btn_solo", new Vector2(0, -145), new Vector2(580, 46), OnClickStartSolo, true);
-            if (btnSoloStart.label != null)
-            {
-                btnSoloStart.label.fontSize = 13;
-                btnSoloStart.label.enableAutoSizing = true;
-                btnSoloStart.label.fontSizeMin = 10;
-                btnSoloStart.label.fontSizeMax = 14;
-            }
+            btnSoloStart = CreateDatapadButton(display, "BtnSolo", "menu.btn_solo", new Vector2(0, -100), new Vector2(590, 44), OnClickStartSolo, out var soloBg, true);
+            soloBg.color = new Color(0.10f, 0.15f, 0.22f, 0.95f);
+            var soloTxt = btnSoloStart.GetComponentInChildren<TextMeshProUGUI>();
+            if (soloTxt != null) { soloTxt.fontSize = 13; soloTxt.fontStyle = FontStyles.Normal; }
 
             // --- BARRA DE ESTADO DE FUSION ---
-            var statusBox = CreateInsetCard("StatusBox", winRect, new Vector2(0, -220), new Vector2(580, 60));
-            var dotGo = CreateRect("StatusDot", statusBox.transform, new Vector2(0, 0.5f), new Vector2(0, 0.5f), new Vector2(24, 0), new Vector2(12, 12)).gameObject;
-            statusDot = dotGo.AddComponent<Image>();
-            statusDot.color = AccentGlow;
+            var statusBox = CreateRoundedPanel(display, "StatusBox", new Vector2(590, 44), 10, InsetBg);
+            statusBox.anchoredPosition = new Vector2(0, -164);
 
-            statusLabel = CreateLabel(statusBox.transform, "menu.status_ready", 13, new Vector2(48, 0), new Vector2(510, 40), TextWhite, true);
+            var dotRect = CreateRoundedPanel(statusBox, "StatusDot", new Vector2(10, 10), 5, CyanAccent);
+            dotRect.anchoredPosition = new Vector2(-265, 0);
+            statusDot = dotRect.GetComponent<TabletRoundedPanel>();
+
+            statusLabel = CreateLabel(statusBox, "menu.status_ready", 12, new Vector2(14, 0), new Vector2(520, 24), InkWhite, true);
             statusLabel.alignment = TextAlignmentOptions.Left;
 
-            // --- GUÍA DE TECLAS RÁPIDA ---
-            var bottomHelp = CreateLabel(winRect, "controls.move", 11, new Vector2(0, -295), new Vector2(580, 30), TextDim, true);
-            bottomHelp.alignment = TextAlignmentOptions.Center;
+            // --- CONTROLES RÁPIDOS INFORMATIVOS ---
+            var controlsHint = CreateLabel(display, "WASD: Desplazamiento · E: Interactuar · Tab: Tablet · Esc: Pausa", 11, new Vector2(0, -215), new Vector2(580, 24), DimCyan);
+            controlsHint.alignment = TextAlignmentOptions.Center;
         }
 
-        private void BuildPauseMenuWindow(Transform parent)
+        #endregion
+
+        #region 2. Menú de Pausa (Datapad de Comando)
+
+        private void BuildPauseDatapad(Transform parent)
         {
-            // Ventana Centrada (840 x 680)
-            var winRect = CreateWindowPanel("PauseWindow", parent, new Vector2(840, 680), Vector2.zero);
+            Vector2 chassisSize = new(880, 700);
+            Vector2 displaySize = new(810, 610);
+
+            // Chasis exterior de titanio
+            var rim = CreateRoundedPanel(parent, "PauseRim", chassisSize, 32, ChassisRim);
+            rim.anchoredPosition = Vector2.zero;
+
+            // Cuerpo mate
+            var body = CreateRoundedPanel(rim, "PauseBody", chassisSize - new Vector2(8, 8), 28, ChassisMatte);
+            body.anchoredPosition = Vector2.zero;
+
+            CreateArmorCornerBumpers(body, (chassisSize - new Vector2(8, 8)) * 0.5f);
+            CreateTopHardwareSensors(body, chassisSize.x);
+            CreateBottomHardwareDock(body, chassisSize.x, "COMMAND-DATAPAD // SECURE-LINK");
+
+            // Bisel y Pantalla de cristal
+            var bezel = CreateRoundedPanel(body, "PauseBezel", displaySize + new Vector2(10, 10), 22, ChassisBezel);
+            bezel.anchoredPosition = new Vector2(0, -6);
+
+            var display = CreateRoundedPanel(bezel, "PauseDisplay", displaySize, 20, GlassDisplay);
+            display.anchoredPosition = Vector2.zero;
+            display.gameObject.AddComponent<RectMask2D>();
 
             // --- HEADER DE PAUSA ---
-            var headerGo = CreateRect("Header", winRect, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0, -42), new Vector2(760, 50));
-            var title = CreateLabel(headerGo.transform, "pause.title", 24, Vector2.zero, new Vector2(740, 34), TextWhite, true);
+            var title = CreateLabel(display, "pause.title", 20, new Vector2(0, 268), new Vector2(700, 28), InkWhite, true);
             title.alignment = TextAlignmentOptions.Center;
+            title.fontStyle = FontStyles.Bold;
 
-            // --- PESTAÑAS SUPERIORES ---
-            var tabRow = CreateRect("TabRow", winRect, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0, -90), new Vector2(760, 42));
-            tabBtnMission = CreateSciFiButton("TabMission", tabRow.transform, "pause.tab_mission", new Vector2(-250, 0), new Vector2(230, 38), () => SwitchTab("Mission"), true);
-            tabBtnSettings = CreateSciFiButton("TabSettings", tabRow.transform, "pause.tab_settings", new Vector2(0, 0), new Vector2(230, 38), () => SwitchTab("Settings"), true);
-            tabBtnCrew = CreateSciFiButton("TabCrew", tabRow.transform, "pause.tab_crew", new Vector2(250, 0), new Vector2(230, 38), () => SwitchTab("Crew"), true);
+            // Botón de reanudar rápido [X]
+            CreateDatapadButton(display, "BtnClosePause", "✕", new Vector2(360, 268), new Vector2(36, 32), ResumeGame, out var closeBg);
+            closeBg.color = new Color(0.12f, 0.16f, 0.22f, 0.9f);
 
-            if (tabBtnMission.label != null) tabBtnMission.label.fontSize = 13;
-            if (tabBtnSettings.label != null) tabBtnSettings.label.fontSize = 13;
-            if (tabBtnCrew.label != null) tabBtnCrew.label.fontSize = 13;
+            // --- FILA DE PESTAÑAS (PILLS) ---
+            var tabRow = CreateRect("TabRow", display, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0, 225), new Vector2(750, 38));
+            tabBtnMission = CreateDatapadButton(tabRow, "TabMission", "pause.tab_mission", new Vector2(-240, 0), new Vector2(230, 34), () => SwitchTab("Mission"), out tabBtnMissionBg, true);
+            tabBtnSettings = CreateDatapadButton(tabRow, "TabSettings", "pause.tab_settings", new Vector2(0, 0), new Vector2(230, 34), () => SwitchTab("Settings"), out tabBtnSettingsBg, true);
+            tabBtnCrew = CreateDatapadButton(tabRow, "TabCrew", "pause.tab_crew", new Vector2(240, 0), new Vector2(230, 34), () => SwitchTab("Crew"), out tabBtnCrewBg, true);
 
             // Contenedor principal de contenidos de pestañas
-            var contentRoot = CreateRect("TabContentArea", winRect, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0, -40), new Vector2(760, 480));
+            var contentRoot = CreateRect("TabContentArea", display, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0, -32), new Vector2(760, 440));
 
             // ================= 1. TAB: MISIÓN =================
-            tabContentMission = CreateRect("MissionContent", contentRoot.transform, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero).gameObject;
+            tabContentMission = CreateRect("MissionContent", contentRoot, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero).gameObject;
             BuildMissionTab(tabContentMission.transform);
 
             // ================= 2. TAB: AJUSTES =================
-            tabContentSettings = CreateRect("SettingsContent", contentRoot.transform, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero).gameObject;
+            tabContentSettings = CreateRect("SettingsContent", contentRoot, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero).gameObject;
             BuildSettingsTab(tabContentSettings.transform);
 
             // ================= 3. TAB: TRIPULACIÓN =================
-            tabContentCrew = CreateRect("CrewContent", contentRoot.transform, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero).gameObject;
+            tabContentCrew = CreateRect("CrewContent", contentRoot, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero).gameObject;
             BuildCrewTab(tabContentCrew.transform);
 
             SwitchTab("Mission");
@@ -401,34 +469,30 @@ namespace GameJam.UI
         private void BuildMissionTab(Transform parent)
         {
             // Botón Continuar
-            var btnResume = CreateSciFiButton("BtnResume", parent, "pause.btn_resume", new Vector2(0, 160), new Vector2(500, 54), ResumeGame, true);
-            if (btnResume.label != null)
-            {
-                btnResume.label.fontSize = 15;
-                btnResume.label.enableAutoSizing = true;
-                btnResume.label.fontSizeMin = 12;
-                btnResume.label.fontSizeMax = 16;
-            }
+            var btnResume = CreateDatapadButton(parent, "BtnResume", "pause.btn_resume", new Vector2(0, 150), new Vector2(520, 48), ResumeGame, out var resumeBg, true);
+            resumeBg.color = new Color(0.00f, 0.45f, 0.52f, 0.95f);
+            var resumeTxt = btnResume.GetComponentInChildren<TextMeshProUGUI>();
+            if (resumeTxt != null) { resumeTxt.fontSize = 14; resumeTxt.fontStyle = FontStyles.Bold; }
+
+            // Botón Volver al Lobby
+            var btnReturnLobby = CreateDatapadButton(parent, "BtnReturnLobby", "pause.btn_return_lobby", new Vector2(0, 92), new Vector2(520, 44), OnClickReturnToLobby, out var lobbyBg, true);
+            lobbyBg.color = new Color(0.12f, 0.18f, 0.26f, 0.95f);
 
             // Botón Desconectar
-            var btnDisconnect = CreateSciFiButton("BtnDisconnect", parent, "pause.btn_disconnect", new Vector2(0, 95), new Vector2(500, 48), OnClickDisconnect, true);
-            if (btnDisconnect.label != null)
-            {
-                btnDisconnect.label.fontSize = 14;
-                btnDisconnect.label.enableAutoSizing = true;
-                btnDisconnect.label.fontSizeMin = 11;
-                btnDisconnect.label.fontSizeMax = 15;
-            }
+            var btnDisconnect = CreateDatapadButton(parent, "BtnDisconnect", "pause.btn_disconnect", new Vector2(0, 38), new Vector2(520, 40), OnClickDisconnect, out var discBg, true);
+            discBg.color = new Color(0.24f, 0.08f, 0.10f, 0.95f);
+            var discTxt = btnDisconnect.GetComponentInChildren<TextMeshProUGUI>();
+            if (discTxt != null) discTxt.color = new Color(1f, 0.65f, 0.65f, 1f);
 
             // Tarjeta de Controles
-            var controlsCard = CreateInsetCard("ControlsCard", parent, new Vector2(0, -70), new Vector2(720, 230));
-            var cardTitle = CreateLabel(controlsCard.transform, "controls.title", 14, new Vector2(0, 85), new Vector2(680, 24), AccentGlow, true);
+            var controlsCard = CreateCard(parent, "ControlsCard", new Vector2(720, 195), new Vector2(0, -95));
+            var cardTitle = CreateLabel(controlsCard, "controls.title", 12, new Vector2(0, 72), new Vector2(680, 22), AmberAccent, true);
             cardTitle.alignment = TextAlignmentOptions.Center;
 
             string[] controlKeys = { "controls.move", "controls.jump", "controls.tablet", "controls.voice", "controls.pause" };
             for (int i = 0; i < controlKeys.Length; i++)
             {
-                var label = CreateLabel(controlsCard.transform, controlKeys[i], 13, new Vector2(0, 48 - i * 32), new Vector2(660, 26), TextWhite, true);
+                var label = CreateLabel(controlsCard, controlKeys[i], 12, new Vector2(0, 38 - i * 28), new Vector2(660, 24), InkWhite, true);
                 label.alignment = TextAlignmentOptions.Left;
             }
         }
@@ -436,65 +500,59 @@ namespace GameJam.UI
         private void BuildSettingsTab(Transform parent)
         {
             // --- SELECTOR DE IDIOMA EN PAUSA ---
-            var langCard = CreateInsetCard("PauseLangCard", parent, new Vector2(0, 165), new Vector2(720, 90));
-            var langLabel = CreateLabel(langCard.transform, "lang.title", 13, new Vector2(0, 24), new Vector2(680, 22), AccentGlow, true);
+            var langCard = CreateCard(parent, "PauseLangCard", new Vector2(720, 80), new Vector2(0, 145));
+            var langLabel = CreateLabel(langCard, "lang.title", 12, new Vector2(0, 20), new Vector2(680, 20), AmberAccent, true);
             langLabel.alignment = TextAlignmentOptions.Center;
 
-            var langRow = CreateRect("PauseLangRow", langCard.transform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0, -12), new Vector2(680, 36));
-            btnPauseLangEs = CreateSciFiButton("BtnPauseES", langRow.transform, "ES · Español", new Vector2(-220, 0), new Vector2(200, 34), () => SelectLanguage(GameLanguage.Spanish));
-            btnPauseLangEn = CreateSciFiButton("BtnPauseEN", langRow.transform, "EN · English", new Vector2(0, 0), new Vector2(200, 34), () => SelectLanguage(GameLanguage.English));
-            btnPauseLangPt = CreateSciFiButton("BtnPausePT", langRow.transform, "PT · Brasil", new Vector2(220, 0), new Vector2(200, 34), () => SelectLanguage(GameLanguage.Portuguese));
-
-            if (btnPauseLangEs.label != null) btnPauseLangEs.label.fontSize = 11;
-            if (btnPauseLangEn.label != null) btnPauseLangEn.label.fontSize = 11;
-            if (btnPauseLangPt.label != null) btnPauseLangPt.label.fontSize = 11;
+            var langRow = CreateRect("PauseLangRow", langCard, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0, -12), new Vector2(680, 34));
+            btnPauseLangEs = CreateDatapadButton(langRow, "BtnPauseES", "ES · Español", new Vector2(-220, 0), new Vector2(200, 32), () => SelectLanguage(GameLanguage.Spanish), out btnPauseLangEsBg);
+            btnPauseLangEn = CreateDatapadButton(langRow, "BtnPauseEN", "EN · English", new Vector2(0, 0), new Vector2(200, 32), () => SelectLanguage(GameLanguage.English), out btnPauseLangEnBg);
+            btnPauseLangPt = CreateDatapadButton(langRow, "BtnPausePT", "PT · Brasil", new Vector2(220, 0), new Vector2(200, 32), () => SelectLanguage(GameLanguage.Portuguese), out btnPauseLangPtBg);
 
             // --- VOLUMEN GENERAL ---
-            var audioCard = CreateInsetCard("AudioCard", parent, new Vector2(0, 60), new Vector2(720, 80));
-            var audioHeader = CreateLabel(audioCard.transform, "audio.master_volume", 13, new Vector2(0, 18), new Vector2(660, 22), TextWhite, true);
+            var audioCard = CreateCard(parent, "AudioCard", new Vector2(720, 74), new Vector2(0, 55));
+            var audioHeader = CreateLabel(audioCard, "audio.master_volume", 12, new Vector2(-60, 16), new Vector2(540, 20), InkWhite, true);
             audioHeader.alignment = TextAlignmentOptions.Left;
 
-            masterVolumePercentLabel = CreateLabel(audioCard.transform, "100%", 13, new Vector2(300, 18), new Vector2(80, 22), AccentGlow, false);
+            masterVolumePercentLabel = CreateLabel(audioCard, "100%", 12, new Vector2(300, 16), new Vector2(80, 20), CyanAccent);
             masterVolumePercentLabel.alignment = TextAlignmentOptions.Right;
 
-            masterVolumeSlider = CreateSlider("MasterVolSlider", audioCard.transform, 0f, 1f, AudioListener.volume, new Vector2(0, -15), new Vector2(660, 24));
+            masterVolumeSlider = CreateSlider(audioCard, "MasterVolSlider", 0f, 1f, AudioListener.volume, new Vector2(0, -14), new Vector2(660, 18));
             masterVolumeSlider.onValueChanged.AddListener(SetMasterVolume);
 
             // --- CONFIGURACIÓN DE VOZ POR PROXIMIDAD ---
-            var voiceCard = CreateInsetCard("VoiceCard", parent, new Vector2(0, -95), new Vector2(720, 190));
-            var voiceTitle = CreateLabel(voiceCard.transform, "voice.title", 14, new Vector2(0, 68), new Vector2(680, 24), AccentGlow, true);
+            var voiceCard = CreateCard(parent, "VoiceCard", new Vector2(720, 175), new Vector2(0, -85));
+            var voiceTitle = CreateLabel(voiceCard, "voice.title", 13, new Vector2(0, 62), new Vector2(680, 22), AmberAccent, true);
             voiceTitle.alignment = TextAlignmentOptions.Center;
 
             // Modos de transmisión
-            var modeRow = CreateRect("ModeRow", voiceCard.transform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0, 22), new Vector2(680, 40));
-            btnVoicePtt = CreateSciFiButton("BtnPTT", modeRow.transform, "voice.ptt", new Vector2(-160, 0), new Vector2(300, 36), () => SetVoiceMode(true), true);
-            btnVoiceOpenMic = CreateSciFiButton("BtnOpenMic", modeRow.transform, "voice.open_mic", new Vector2(160, 0), new Vector2(300, 36), () => SetVoiceMode(false), true);
+            var modeRow = CreateRect("ModeRow", voiceCard, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0, 22), new Vector2(680, 36));
+            btnVoicePtt = CreateDatapadButton(modeRow, "BtnPTT", "voice.ptt", new Vector2(-160, 0), new Vector2(300, 32), () => SetVoiceMode(true), out btnVoicePttBg, true);
+            btnVoiceOpenMic = CreateDatapadButton(modeRow, "BtnOpenMic", "voice.open_mic", new Vector2(160, 0), new Vector2(300, 32), () => SetVoiceMode(false), out btnVoiceOpenMicBg, true);
 
-            // Slider de volumen maestro de voz
-            var voiceVolLabel = CreateLabel(voiceCard.transform, "crew.voice_volume", 12, new Vector2(0, -22), new Vector2(660, 20), TextMuted, true);
+            // Slider de volumen de voz
+            var voiceVolLabel = CreateLabel(voiceCard, "crew.voice_volume", 12, new Vector2(-60, -20), new Vector2(540, 20), MutedCyan, true);
             voiceVolLabel.alignment = TextAlignmentOptions.Left;
 
-            voiceMasterPercentLabel = CreateLabel(voiceCard.transform, "100%", 12, new Vector2(300, -22), new Vector2(80, 20), AccentGlow, false);
+            voiceMasterPercentLabel = CreateLabel(voiceCard, "100%", 12, new Vector2(300, -20), new Vector2(80, 20), CyanAccent);
             voiceMasterPercentLabel.alignment = TextAlignmentOptions.Right;
 
-            voiceMasterVolumeSlider = CreateSlider("VoiceMasterVolSlider", voiceCard.transform, 0f, 1.5f, MarsProximityVoice.MasterVoiceVolume, new Vector2(0, -48), new Vector2(660, 20));
+            voiceMasterVolumeSlider = CreateSlider(voiceCard, "VoiceMasterVolSlider", 0f, 1.5f, MarsProximityVoice.MasterVoiceVolume, new Vector2(0, -46), new Vector2(660, 18));
             voiceMasterVolumeSlider.onValueChanged.AddListener(SetVoiceMasterVolume);
 
-            // Detalle informativo
-            var rangeLabel = CreateLabel(voiceCard.transform, "voice.distance", 11, new Vector2(0, -72), new Vector2(660, 18), TextDim, true);
+            var rangeLabel = CreateLabel(voiceCard, "voice.distance", 11, new Vector2(0, -70), new Vector2(660, 16), DimCyan, true);
             rangeLabel.alignment = TextAlignmentOptions.Center;
         }
 
         private void BuildCrewTab(Transform parent)
         {
-            var header = CreateLabel(parent, "crew.title", 16, new Vector2(0, 200), new Vector2(720, 28), AccentGlow, true);
+            var header = CreateLabel(parent, "crew.title", 15, new Vector2(0, 185), new Vector2(720, 26), AmberAccent, true);
             header.alignment = TextAlignmentOptions.Center;
 
-            // Scroll container para los miembros de la tripulación
-            var scrollArea = CreateInsetCard("CrewScrollArea", parent, new Vector2(0, -10), new Vector2(720, 360));
-            scrollArea.gameObject.AddComponent<RectMask2D>();
+            var scrollCard = CreateCard(parent, "CrewScrollCard", new Vector2(720, 340), new Vector2(0, -15));
+            scrollCard.gameObject.AddComponent<RectMask2D>();
 
-            var containerGo = CreateRect("CrewListContent", scrollArea.transform, new Vector2(0, 1), new Vector2(1, 1), new Vector2(0, 0), new Vector2(0, 360));
+            var containerGo = CreateRect("CrewListContent", scrollCard, new Vector2(0, 1), new Vector2(1, 1), Vector2.zero, new Vector2(0, 340));
             containerGo.pivot = new Vector2(0.5f, 1f);
             crewListContainer = containerGo;
 
@@ -504,218 +562,18 @@ namespace GameJam.UI
             layout.childForceExpandHeight = false;
             layout.childForceExpandWidth = true;
             layout.spacing = 8;
-            layout.padding = new RectOffset(12, 12, 12, 12);
+            layout.padding = new RectOffset(14, 14, 14, 14);
 
             var fitter = containerGo.gameObject.AddComponent<ContentSizeFitter>();
             fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
 
-            crewEmptyLabel = CreateLabel(scrollArea.transform, "crew.no_other_players", 14, Vector2.zero, new Vector2(660, 40), TextMuted, true);
+            crewEmptyLabel = CreateLabel(scrollCard, "crew.no_other_players", 13, Vector2.zero, new Vector2(660, 36), MutedCyan, true);
             crewEmptyLabel.alignment = TextAlignmentOptions.Center;
         }
 
         #endregion
 
-        #region UI Component Helpers
-
-        private RectTransform CreateWindowPanel(string name, Transform parent, Vector2 size, Vector2 anchoredPos)
-        {
-            var rect = CreateRect(name, parent, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), anchoredPos, size);
-            var go = rect.gameObject;
-            var img = go.AddComponent<Image>();
-
-            Sprite windowSprite = null;
-            if (theme != null && theme.Has("Window"))
-            {
-                var p = theme.Prefab("Window");
-                if (p != null && p.TryGetComponent<Image>(out var pImg))
-                    windowSprite = pImg.sprite;
-            }
-
-            if (windowSprite != null)
-            {
-                img.sprite = windowSprite;
-                img.type = Image.Type.Sliced;
-                img.color = Color.white;
-            }
-            else
-            {
-                img.color = new Color(0.02f, 0.04f, 0.07f, 0.98f);
-                var outline = go.AddComponent<Outline>();
-                outline.effectColor = WindowFrameCyan;
-                outline.effectDistance = new Vector2(2, -2);
-            }
-            return rect;
-        }
-
-        private RectTransform CreateInsetCard(string name, Transform parent, Vector2 anchoredPos, Vector2 size)
-        {
-            var rect = CreateRect(name, parent, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), anchoredPos, size);
-            var go = rect.gameObject;
-            var img = go.AddComponent<Image>();
-
-            Sprite insetSprite = null;
-            if (theme != null && theme.Has("InsetPanel"))
-            {
-                var p = theme.Prefab("InsetPanel");
-                if (p != null && p.TryGetComponent<Image>(out var pImg))
-                    insetSprite = pImg.sprite;
-            }
-
-            if (insetSprite != null)
-            {
-                img.sprite = insetSprite;
-                img.type = Image.Type.Sliced;
-                img.color = Color.white;
-            }
-            else
-            {
-                img.color = InsetCardBg;
-                var outline = go.AddComponent<Outline>();
-                outline.effectColor = new Color(0.00f, 0.90f, 0.95f, 0.35f);
-                outline.effectDistance = new Vector2(1, -1);
-            }
-            return rect;
-        }
-
-        private PixelButton CreateSciFiButton(string name, Transform parent, string textOrKey, Vector2 anchoredPos, Vector2 size, UnityEngine.Events.UnityAction onClick, bool isLocalized = false)
-        {
-            GameObject btnGo = null;
-            if (theme != null && theme.Has("Button"))
-            {
-                btnGo = theme.Make("Button", parent);
-                btnGo.name = name;
-            }
-            else
-            {
-                btnGo = new GameObject(name, typeof(RectTransform), typeof(Image), typeof(PixelButton));
-                btnGo.transform.SetParent(parent, false);
-            }
-
-            var rect = (RectTransform)btnGo.transform;
-            rect.anchorMin = rect.anchorMax = rect.pivot = new Vector2(0.5f, 0.5f);
-            rect.anchoredPosition = anchoredPos;
-            rect.sizeDelta = size;
-
-            var pixelBtn = btnGo.GetComponent<PixelButton>();
-            if (pixelBtn == null) pixelBtn = btnGo.AddComponent<PixelButton>();
-
-            if (isLocalized)
-            {
-                pixelBtn.text = GameLocalization.Get(textOrKey);
-                var loc = btnGo.GetComponent<LocalizedText>();
-                if (loc == null) loc = btnGo.AddComponent<LocalizedText>();
-                loc.Key = textOrKey;
-            }
-            else
-            {
-                pixelBtn.text = textOrKey;
-            }
-
-            if (pixelBtn.label != null)
-            {
-                if (fontAsset != null) pixelBtn.label.font = fontAsset;
-                pixelBtn.label.enableWordWrapping = false;
-                pixelBtn.label.overflowMode = TextOverflowModes.Ellipsis;
-            }
-
-            if (onClick != null)
-                pixelBtn.onClick.AddListener(onClick);
-
-            return pixelBtn;
-        }
-
-        private TextMeshProUGUI CreateLabel(Transform parent, string textOrKey, float fontSize, Vector2 anchoredPos, Vector2 size, Color color, bool isLocalized)
-        {
-            var go = new GameObject("Label", typeof(RectTransform), typeof(TextMeshProUGUI));
-            go.transform.SetParent(parent, false);
-            var rect = (RectTransform)go.transform;
-            rect.anchorMin = rect.anchorMax = rect.pivot = new Vector2(0.5f, 0.5f);
-            rect.anchoredPosition = anchoredPos;
-            rect.sizeDelta = size;
-
-            var tmp = go.GetComponent<TextMeshProUGUI>();
-            if (fontAsset != null) tmp.font = fontAsset;
-            tmp.fontSize = fontSize;
-            tmp.color = color;
-            tmp.raycastTarget = false;
-            tmp.textWrappingMode = TextWrappingModes.Normal;
-
-            if (isLocalized)
-            {
-                var loc = go.AddComponent<LocalizedText>();
-                loc.Key = textOrKey;
-            }
-            else
-            {
-                tmp.text = textOrKey;
-            }
-
-            return tmp;
-        }
-
-        private TMP_InputField CreateInputField(string name, Transform parent, string initialText, string placeholderKey, Vector2 anchoredPos, Vector2 size)
-        {
-            GameObject inputGo = null;
-            if (theme != null && theme.Has("InputField"))
-            {
-                inputGo = theme.Make("InputField", parent);
-                inputGo.name = name;
-            }
-            else
-            {
-                inputGo = new GameObject(name, typeof(RectTransform), typeof(Image), typeof(TMP_InputField));
-                inputGo.transform.SetParent(parent, false);
-            }
-
-            var rect = (RectTransform)inputGo.transform;
-            rect.anchorMin = rect.anchorMax = rect.pivot = new Vector2(0.5f, 0.5f);
-            rect.anchoredPosition = anchoredPos;
-            rect.sizeDelta = size;
-
-            var inputField = inputGo.GetComponent<TMP_InputField>();
-            if (inputField != null)
-            {
-                inputField.text = initialText;
-                if (inputField.placeholder is TextMeshProUGUI placeholderTmp)
-                {
-                    var loc = placeholderTmp.GetComponent<LocalizedText>();
-                    if (loc == null) loc = placeholderTmp.gameObject.AddComponent<LocalizedText>();
-                    loc.Key = placeholderKey;
-                }
-            }
-
-            return inputField;
-        }
-
-        private Slider CreateSlider(string name, Transform parent, float min, float max, float current, Vector2 anchoredPos, Vector2 size)
-        {
-            GameObject sliderGo = null;
-            if (theme != null && theme.Has("Slider"))
-            {
-                sliderGo = theme.Make("Slider", parent);
-                sliderGo.name = name;
-            }
-            else
-            {
-                sliderGo = new GameObject(name, typeof(RectTransform), typeof(Slider));
-                sliderGo.transform.SetParent(parent, false);
-            }
-
-            var rect = (RectTransform)sliderGo.transform;
-            rect.anchorMin = rect.anchorMax = rect.pivot = new Vector2(0.5f, 0.5f);
-            rect.anchoredPosition = anchoredPos;
-            rect.sizeDelta = size;
-
-            var slider = sliderGo.GetComponent<Slider>();
-            if (slider != null)
-            {
-                slider.minValue = min;
-                slider.maxValue = max;
-                slider.value = current;
-            }
-
-            return slider;
-        }
+        #region Helpers de Construcción de UI
 
         private static RectTransform CreateRect(string name, Transform parent, Vector2 anchorMin, Vector2 anchorMax, Vector2 anchoredPos, Vector2 size)
         {
@@ -729,107 +587,291 @@ namespace GameJam.UI
             return rect;
         }
 
-        #endregion
-
-        #region Language Management
-
-        public void SelectLanguage(GameLanguage lang)
+        private static RectTransform CreateRoundedPanel(Transform parent, string name, Vector2 size, float radius, Color color)
         {
-            GameLocalization.CurrentLanguage = lang;
-            UpdateLanguageButtonsHighlight();
-            RefreshAllLocalizedTexts();
+            var go = new GameObject(name, typeof(RectTransform), typeof(TabletRoundedPanel));
+            go.transform.SetParent(parent, false);
+            var rect = (RectTransform)go.transform;
+            rect.sizeDelta = size;
+            var panel = go.GetComponent<TabletRoundedPanel>();
+            panel.radius = radius;
+            panel.color = color;
+            return rect;
         }
 
-        private void UpdateLanguageButtonsHighlight()
+        private static RectTransform CreateCard(Transform parent, string name, Vector2 size, Vector2 anchoredPos)
         {
-            var current = GameLocalization.CurrentLanguage;
-            if (btnStartLangEs != null) btnStartLangEs.on = (current == GameLanguage.Spanish);
-            if (btnStartLangEn != null) btnStartLangEn.on = (current == GameLanguage.English);
-            if (btnStartLangPt != null) btnStartLangPt.on = (current == GameLanguage.Portuguese);
-
-            if (btnPauseLangEs != null) btnPauseLangEs.on = (current == GameLanguage.Spanish);
-            if (btnPauseLangEn != null) btnPauseLangEn.on = (current == GameLanguage.English);
-            if (btnPauseLangPt != null) btnPauseLangPt.on = (current == GameLanguage.Portuguese);
+            var card = CreateRoundedPanel(parent, name, size, 14, CardBg);
+            card.anchoredPosition = anchoredPos;
+            var outline = card.gameObject.AddComponent<Outline>();
+            outline.effectColor = new Color(0.00f, 0.92f, 0.88f, 0.25f);
+            outline.effectDistance = new Vector2(1, -1);
+            return card;
         }
 
-        private void RefreshAllLocalizedTexts()
+        private Button CreateDatapadButton(Transform parent, string name, string textOrKey, Vector2 anchoredPos, Vector2 size, UnityAction onClick, out TabletRoundedPanel bg, bool isLocalized = false)
         {
-            UpdateLanguageButtonsHighlight();
+            var rect = CreateRoundedPanel(parent, name, size, 10, SlotBg);
+            rect.anchoredPosition = anchoredPos;
+            bg = rect.GetComponent<TabletRoundedPanel>();
 
-            // Refrescar todos los LocalizedText hijos del Canvas
-            var localizedList = GetComponentsInChildren<LocalizedText>(true);
-            foreach (var loc in localizedList)
+            var btn = rect.gameObject.AddComponent<Button>();
+            btn.targetGraphic = bg;
+            btn.colors = new ColorBlock
             {
-                if (loc != null) loc.Refresh();
+                normalColor = Color.white,
+                highlightedColor = new Color(1.2f, 1.2f, 1.2f, 1f),
+                pressedColor = new Color(0.7f, 0.7f, 0.7f, 1f),
+                selectedColor = Color.white,
+                disabledColor = new Color(0.4f, 0.4f, 0.4f, 0.5f),
+                colorMultiplier = 1f,
+                fadeDuration = 0.08f
+            };
+            if (onClick != null) btn.onClick.AddListener(onClick);
+
+            var label = CreateLabel(rect, textOrKey, 12, Vector2.zero, size - new Vector2(12, 6), InkWhite, isLocalized);
+            label.alignment = TextAlignmentOptions.Center;
+
+            return btn;
+        }
+
+        private TMP_InputField CreateInputField(Transform parent, string name, string initialText, string placeholderKey, Vector2 anchoredPos, Vector2 size)
+        {
+            var bgRect = CreateRoundedPanel(parent, name, size, 8, InsetBg);
+            bgRect.anchoredPosition = anchoredPos;
+            var outline = bgRect.gameObject.AddComponent<Outline>();
+            outline.effectColor = new Color(0.00f, 0.92f, 0.88f, 0.20f);
+            outline.effectDistance = new Vector2(1, -1);
+
+            var textRect = CreateRect("Text", bgRect, Vector2.zero, Vector2.one, Vector2.zero, new Vector2(-20, -8));
+            var textComp = textRect.gameObject.AddComponent<TextMeshProUGUI>();
+            textComp.font = fontAsset ?? TMP_Settings.defaultFontAsset;
+            textComp.fontSize = 13;
+            textComp.color = InkWhite;
+            textComp.alignment = TextAlignmentOptions.Left;
+
+            var phRect = CreateRect("Placeholder", bgRect, Vector2.zero, Vector2.one, Vector2.zero, new Vector2(-20, -8));
+            var phComp = phRect.gameObject.AddComponent<TextMeshProUGUI>();
+            phComp.font = fontAsset ?? TMP_Settings.defaultFontAsset;
+            phComp.fontSize = 13;
+            phComp.color = DimCyan;
+            phComp.alignment = TextAlignmentOptions.Left;
+            var loc = phComp.gameObject.AddComponent<LocalizedText>();
+            loc.SetKey(placeholderKey);
+
+            var input = bgRect.gameObject.AddComponent<TMP_InputField>();
+            input.textComponent = textComp;
+            input.placeholder = phComp;
+            input.text = initialText;
+            input.characterLimit = 32;
+
+            return input;
+        }
+
+        private Slider CreateSlider(Transform parent, string name, float min, float max, float currentVal, Vector2 anchoredPos, Vector2 size)
+        {
+            var root = CreateRect(name, parent, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), anchoredPos, size);
+
+            // Pista del slider
+            var track = CreateRoundedPanel(root, "Track", new Vector2(size.x, 8), 4, new Color(0.02f, 0.035f, 0.05f));
+            track.anchoredPosition = Vector2.zero;
+
+            // Área de relleno
+            var fillArea = CreateRect("FillArea", root, Vector2.zero, Vector2.one, Vector2.zero, new Vector2(-16, 0));
+            var fill = CreateRoundedPanel(fillArea, "Fill", new Vector2(0, 8), 4, CyanAccent);
+            fill.anchorMin = new Vector2(0, 0.5f);
+            fill.anchorMax = new Vector2(0, 0.5f);
+            fill.pivot = new Vector2(0, 0.5f);
+
+            // Handle área
+            var handleArea = CreateRect("HandleArea", root, Vector2.zero, Vector2.one, Vector2.zero, new Vector2(-16, 0));
+            var handle = CreateRoundedPanel(handleArea, "Handle", new Vector2(16, 16), 8, InkWhite);
+            var handlePin = CreateRoundedPanel(handle, "Pin", new Vector2(6, 6), 3, new Color(0.00f, 0.50f, 0.60f));
+            handlePin.anchoredPosition = Vector2.zero;
+
+            var slider = root.gameObject.AddComponent<Slider>();
+            slider.fillRect = fill;
+            slider.handleRect = handle;
+            slider.targetGraphic = handle.GetComponent<TabletRoundedPanel>();
+            slider.direction = Slider.Direction.LeftToRight;
+            slider.minValue = min;
+            slider.maxValue = max;
+            slider.value = currentVal;
+
+            return slider;
+        }
+
+        private TextMeshProUGUI CreateLabel(Transform parent, string textOrKey, float fontSize, Vector2 anchoredPos, Vector2 size, Color color, bool isLocalized = false)
+        {
+            var rect = CreateRect("Label", parent, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), anchoredPos, size);
+            var tmp = rect.gameObject.AddComponent<TextMeshProUGUI>();
+            tmp.font = fontAsset ?? TMP_Settings.defaultFontAsset;
+            tmp.fontSize = fontSize;
+            tmp.color = color;
+            tmp.raycastTarget = false;
+
+            if (isLocalized)
+            {
+                var loc = tmp.gameObject.AddComponent<LocalizedText>();
+                loc.SetKey(textOrKey);
+            }
+            else
+            {
+                tmp.text = textOrKey;
             }
 
-            // Actualizar textos dinámicos
-            if (masterVolumePercentLabel != null)
-                masterVolumePercentLabel.text = Mathf.RoundToInt(AudioListener.volume * 100f) + "%";
-
-            if (voiceMasterPercentLabel != null)
-                voiceMasterPercentLabel.text = Mathf.RoundToInt(MarsProximityVoice.MasterVoiceVolume * 100f) + "%";
+            return tmp;
         }
 
-        #endregion
-
-        #region Audio & Voice Controls
-
-        public void SetMasterVolume(float vol)
+        private static void CreateArmorCornerBumpers(RectTransform parent, Vector2 halfSize)
         {
-            AudioListener.volume = Mathf.Clamp01(vol);
-            PlayerPrefs.SetFloat("GameJam.MasterVolume", vol);
-            PlayerPrefs.Save();
-            if (masterVolumePercentLabel != null)
-                masterVolumePercentLabel.text = Mathf.RoundToInt(vol * 100f) + "%";
-        }
+            Vector2[] corners = {
+                new(-halfSize.x + 18, halfSize.y - 18),
+                new( halfSize.x - 18, halfSize.y - 18),
+                new(-halfSize.x + 18, -halfSize.y + 18),
+                new( halfSize.x - 18, -halfSize.y + 18)
+            };
 
-        public void SetVoiceMasterVolume(float vol)
-        {
-            float clamped = Mathf.Clamp(vol, 0f, 2f);
-            MarsProximityVoice.MasterVoiceVolume = clamped;
-            PlayerPrefs.SetFloat("GameJam.MasterVoiceVolume", clamped);
-            PlayerPrefs.Save();
-            if (voiceMasterPercentLabel != null)
-                voiceMasterPercentLabel.text = Mathf.RoundToInt(clamped * 100f) + "%";
-        }
-
-        public void SetVoiceMode(bool ptt)
-        {
-            PlayerPrefs.SetInt("GameJam.VoiceMode", ptt ? 1 : 0);
-            PlayerPrefs.Save();
-            UpdateVoiceModeButtons(ptt);
-
-            // Actualizar local proximity voice
-            var voices = FindObjectsByType<MarsProximityVoice>(FindObjectsSortMode.None);
-            foreach (var v in voices)
+            foreach (var pos in corners)
             {
-                if (v != null) v.SetPushToTalk(ptt);
+                var plate = CreateRoundedPanel(parent, "CornerArmor", new Vector2(30, 30), 8, ArmorBumper);
+                plate.anchoredPosition = pos;
+
+                var boltRim = CreateRoundedPanel(plate, "HexBolt", new Vector2(10, 10), 5, HexBolt);
+                boltRim.anchoredPosition = Vector2.zero;
+
+                var boltCenter = CreateRoundedPanel(boltRim, "Pin", new Vector2(4, 4), 2, new Color(0.08f, 0.12f, 0.16f));
+                boltCenter.anchoredPosition = Vector2.zero;
             }
         }
 
-        private void UpdateVoiceModeButtons(bool ptt)
+        private static void CreateTopHardwareSensors(RectTransform parent, float width)
         {
-            if (btnVoicePtt != null) btnVoicePtt.on = ptt;
-            if (btnVoiceOpenMic != null) btnVoiceOpenMic.on = !ptt;
+            var cluster = CreateRect("SensorCluster", parent, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0, -14), new Vector2(width * 0.5f, 18));
+
+            var atmosGrille = CreateRoundedPanel(cluster, "AtmosSensorGrille", new Vector2(44, 4), 2, new Color(0.02f, 0.035f, 0.05f));
+            atmosGrille.anchoredPosition = new Vector2(-55, 0);
+
+            var lensRim = CreateRoundedPanel(cluster, "VisualLensRim", new Vector2(12, 12), 6, new Color(0.02f, 0.03f, 0.05f));
+            lensRim.anchoredPosition = new Vector2(-15, 0);
+            var lensIris = CreateRoundedPanel(lensRim, "LensIris", new Vector2(6, 6), 3, new Color(0.10f, 0.40f, 0.70f));
+            lensIris.anchoredPosition = Vector2.zero;
+
+            var irLens = CreateRoundedPanel(cluster, "IRSensor", new Vector2(8, 8), 4, new Color(0.25f, 0.08f, 0.12f));
+            irLens.anchoredPosition = new Vector2(2, 0);
+
+            var led = CreateRoundedPanel(cluster, "StatusLED", new Vector2(6, 6), 3, new Color(0.00f, 0.96f, 0.74f, 0.95f));
+            led.anchoredPosition = new Vector2(40, 0);
+        }
+
+        private static void CreateBottomHardwareDock(RectTransform parent, float width, string serial)
+        {
+            float halfH = parent.sizeDelta.y * 0.5f;
+
+            var leftStamp = CreateRect("StampLeft", parent, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
+                new Vector2(-width * 0.28f, -halfH + 12), new Vector2(width * 0.42f, 16)).gameObject.AddComponent<TextMeshProUGUI>();
+            leftStamp.font = TMP_Settings.defaultFontAsset;
+            leftStamp.fontSize = 9;
+            leftStamp.color = HardwareStamp;
+            leftStamp.text = "ORBIT AEROSPACE // EXP-DATAPAD MK-VII";
+            leftStamp.alignment = TextAlignmentOptions.Left;
+
+            var rightStamp = CreateRect("StampRight", parent, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
+                new Vector2(width * 0.28f, -halfH + 12), new Vector2(width * 0.42f, 16)).gameObject.AddComponent<TextMeshProUGUI>();
+            rightStamp.font = TMP_Settings.defaultFontAsset;
+            rightStamp.fontSize = 9;
+            rightStamp.color = HardwareStamp;
+            rightStamp.text = serial;
+            rightStamp.alignment = TextAlignmentOptions.Right;
+
+            var dockSlot = CreateRoundedPanel(parent, "PogoDockConnector", new Vector2(80, 7), 3.5f, new Color(0.02f, 0.035f, 0.05f));
+            dockSlot.anchoredPosition = new Vector2(0, -halfH + 12);
+
+            for (int p = -2; p <= 2; p++)
+            {
+                var pin = CreateRoundedPanel(dockSlot, $"Pin_{p}", new Vector2(4, 4), 2, GoldPin);
+                pin.anchoredPosition = new Vector2(p * 14, 0);
+            }
         }
 
         #endregion
 
-        #region Tab Management
+        #region Control de Visibilidad y Pestañas
 
-        public void SwitchTab(string tab)
+        public void SetStartMenuVisible(bool visible)
         {
-            activeTab = tab;
-            if (tabBtnMission != null) tabBtnMission.on = (tab == "Mission");
-            if (tabBtnSettings != null) tabBtnSettings.on = (tab == "Settings");
-            if (tabBtnCrew != null) tabBtnCrew.on = (tab == "Crew");
+            // La terminal de inicio NUNCA debe mostrarse fuera del Lobby
+            if (visible && !IsLobbyScene)
+            {
+                visible = false;
+            }
 
-            if (tabContentMission != null) tabContentMission.SetActive(tab == "Mission");
-            if (tabContentSettings != null) tabContentSettings.SetActive(tab == "Settings");
-            if (tabContentCrew != null) tabContentCrew.SetActive(tab == "Crew");
+            if (startMenuGroup != null)
+            {
+                startMenuGroup.alpha = visible ? 1f : 0f;
+                startMenuGroup.blocksRaycasts = visible;
+                startMenuGroup.interactable = visible;
+            }
 
-            if (tab == "Crew")
+            if (visible)
+            {
+                Cursor.lockState = CursorLockMode.None;
+                Cursor.visible = true;
+            }
+            else if (pauseMenuGroup == null || pauseMenuGroup.alpha < 0.5f)
+            {
+                if (session != null && session.Runner != null && session.Runner.IsRunning)
+                {
+                    Cursor.lockState = CursorLockMode.Locked;
+                    Cursor.visible = false;
+                }
+            }
+        }
+
+        public void SetPauseMenuVisible(bool visible)
+        {
+            if (pauseMenuGroup != null)
+            {
+                pauseMenuGroup.alpha = visible ? 1f : 0f;
+                pauseMenuGroup.blocksRaycasts = visible;
+                pauseMenuGroup.interactable = visible;
+            }
+
+            if (visible)
+            {
+                Cursor.lockState = CursorLockMode.None;
+                Cursor.visible = true;
+                SwitchTab("Mission");
+            }
+            else if (startMenuGroup == null || startMenuGroup.alpha < 0.5f)
+            {
+                if (session != null && session.Runner != null && session.Runner.IsRunning)
+                {
+                    Cursor.lockState = CursorLockMode.Locked;
+                    Cursor.visible = false;
+                }
+            }
+        }
+
+        public void OpenPauseMenu() => SetPauseMenuVisible(true);
+
+        public void ResumeGame() => SetPauseMenuVisible(false);
+
+        public void SwitchTab(string tabName)
+        {
+            activeTab = tabName;
+            if (tabContentMission != null) tabContentMission.SetActive(tabName == "Mission");
+            if (tabContentSettings != null) tabContentSettings.SetActive(tabName == "Settings");
+            if (tabContentCrew != null) tabContentCrew.SetActive(tabName == "Crew");
+
+            Color activeTabColor = new(0.00f, 0.45f, 0.52f, 0.95f);
+            Color inactiveTabColor = SlotBg;
+
+            if (tabBtnMissionBg != null) tabBtnMissionBg.color = tabName == "Mission" ? activeTabColor : inactiveTabColor;
+            if (tabBtnSettingsBg != null) tabBtnSettingsBg.color = tabName == "Settings" ? activeTabColor : inactiveTabColor;
+            if (tabBtnCrewBg != null) tabBtnCrewBg.color = tabName == "Crew" ? activeTabColor : inactiveTabColor;
+
+            if (tabName == "Crew")
             {
                 UpdateCrewList();
             }
@@ -837,146 +879,16 @@ namespace GameJam.UI
 
         #endregion
 
-        #region Crew List Updates (Individual Volume Sliders)
-
-        private void UpdateCrewList()
-        {
-            if (crewListContainer == null) return;
-
-            var avatars = FindObjectsByType<MarsFusionAvatar>(FindObjectsSortMode.None);
-            int remoteCount = 0;
-
-            // Asegurar widgets para cada avatar
-            for (int i = 0; i < avatars.Length; i++)
-            {
-                var avatar = avatars[i];
-                if (avatar == null || avatar.Object == null || !avatar.Object.IsValid) continue;
-
-                bool isLocal = avatar.HasStateAuthority || (avatar.Runner != null && avatar.Object.InputAuthority == avatar.Runner.LocalPlayer);
-                if (!isLocal) remoteCount++;
-
-                CrewRowWidget widget = null;
-                if (i < activeCrewRows.Count)
-                {
-                    widget = activeCrewRows[i];
-                    widget.Root.SetActive(true);
-                }
-                else
-                {
-                    widget = CreateCrewRowWidget(crewListContainer);
-                    activeCrewRows.Add(widget);
-                }
-
-                BindCrewRowWidget(widget, avatar, isLocal);
-            }
-
-            // Ocultar widgets sobrantes
-            for (int i = avatars.Length; i < activeCrewRows.Count; i++)
-            {
-                activeCrewRows[i].Root.SetActive(false);
-            }
-
-            if (crewEmptyLabel != null)
-            {
-                crewEmptyLabel.gameObject.SetActive(remoteCount == 0);
-            }
-        }
-
-        private CrewRowWidget CreateCrewRowWidget(Transform parent)
-        {
-            var rowCard = CreateInsetCard("CrewRow", parent, Vector2.zero, new Vector2(680, 56));
-            var widget = new CrewRowWidget { Root = rowCard.gameObject };
-
-            // Icono de Astronauta
-            var iconGo = CreateRect("AstronautIcon", rowCard.transform, new Vector2(0, 0.5f), new Vector2(0, 0.5f), new Vector2(26, 0), new Vector2(30, 30)).gameObject;
-            widget.AvatarIcon = iconGo.AddComponent<Image>();
-            widget.AvatarIcon.color = WindowFrameCyan;
-
-            // Nombre del Jugador
-            var nameGo = CreateRect("NameLabel", rowCard.transform, new Vector2(0, 0.5f), new Vector2(0, 0.5f), new Vector2(175, 0), new Vector2(240, 34)).gameObject;
-            widget.NameLabel = nameGo.AddComponent<TextMeshProUGUI>();
-            if (fontAsset != null) widget.NameLabel.font = fontAsset;
-            widget.NameLabel.fontSize = 15;
-            widget.NameLabel.color = TextWhite;
-            widget.NameLabel.alignment = TextAlignmentOptions.Left;
-
-            // Indicador de Voz (Hablando)
-            var speakingGo = CreateRect("SpeakingBadge", rowCard.transform, new Vector2(0, 0.5f), new Vector2(0, 0.5f), new Vector2(330, 0), new Vector2(80, 26)).gameObject;
-            widget.SpeakingBadge = speakingGo.AddComponent<Image>();
-            widget.SpeakingBadge.color = new Color(0.18f, 0.92f, 0.45f, 0.25f);
-
-            var speakTextGo = CreateRect("SpeakText", speakingGo.transform, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero).gameObject;
-            widget.SpeakingLabel = speakTextGo.AddComponent<TextMeshProUGUI>();
-            if (fontAsset != null) widget.SpeakingLabel.font = fontAsset;
-            widget.SpeakingLabel.fontSize = 11;
-            widget.SpeakingLabel.color = SpeakingGreen;
-            widget.SpeakingLabel.text = "VOZ";
-            widget.SpeakingLabel.alignment = TextAlignmentOptions.Center;
-
-            // Contenedor de Slider de Volumen Individual (para remotos)
-            var volGroupGo = CreateRect("VolumeControl", rowCard.transform, new Vector2(1, 0.5f), new Vector2(1, 0.5f), new Vector2(-130, 0), new Vector2(240, 40));
-            widget.VolumeControlGroup = volGroupGo.gameObject;
-
-            var percentGo = CreateRect("VolPercent", volGroupGo.transform, new Vector2(1, 0.5f), new Vector2(1, 0.5f), new Vector2(30, 0), new Vector2(50, 20)).gameObject;
-            widget.VolumePercentLabel = percentGo.AddComponent<TextMeshProUGUI>();
-            if (fontAsset != null) widget.VolumePercentLabel.font = fontAsset;
-            widget.VolumePercentLabel.fontSize = 12;
-            widget.VolumePercentLabel.color = AccentGlow;
-            widget.VolumePercentLabel.alignment = TextAlignmentOptions.Right;
-
-            widget.VolumeSlider = CreateSlider("IndivVolSlider", volGroupGo.transform, 0f, 1.5f, 1f, new Vector2(-35, 0), new Vector2(160, 18));
-
-            return widget;
-        }
-
-        private void BindCrewRowWidget(CrewRowWidget widget, MarsFusionAvatar avatar, bool isLocal)
-        {
-            widget.Avatar = avatar;
-
-            string pName = avatar.PlayerName.ToString();
-            if (string.IsNullOrEmpty(pName)) pName = "Astronauta";
-            if (isLocal) pName += "  " + GameLocalization.Get("crew.you");
-
-            widget.NameLabel.text = pName;
-
-            // Tint del color de traje
-            if (avatar.SuitColorIndex < MarsPlayerIdentityView.Palette.Length)
-            {
-                widget.AvatarIcon.color = MarsPlayerIdentityView.Palette[avatar.SuitColorIndex];
-            }
-
-            var proximityVoice = avatar.GetComponent<MarsProximityVoice>();
-            bool speaking = (proximityVoice != null && proximityVoice.IsSpeaking) || avatar.VoiceLevel > 15;
-            widget.SpeakingBadge.gameObject.SetActive(speaking);
-
-            if (isLocal)
-            {
-                widget.VolumeControlGroup.SetActive(false);
-            }
-            else
-            {
-                widget.VolumeControlGroup.SetActive(true);
-                float curVol = proximityVoice != null ? proximityVoice.IndividualVolume : 1f;
-
-                widget.VolumeSlider.onValueChanged.RemoveAllListeners();
-                widget.VolumeSlider.value = curVol;
-                widget.VolumePercentLabel.text = Mathf.RoundToInt(curVol * 100f) + "%";
-
-                widget.VolumeSlider.onValueChanged.AddListener(val =>
-                {
-                    if (proximityVoice != null) proximityVoice.SetIndividualVolume(val);
-                    widget.VolumePercentLabel.text = Mathf.RoundToInt(val * 100f) + "%";
-                });
-            }
-        }
-
-        #endregion
-
-        #region Start & Session Actions
+        #region Lógica de Sesión y Transiciones
 
         private void OnClickStartOnline()
         {
             if (session == null || session.Busy) return;
+
+            string room = roomCodeInput != null ? roomCodeInput.text.Trim() : "MARTE-01";
+            if (string.IsNullOrEmpty(room)) room = "MARTE-01";
+            session.roomName = room;
+
             _ = session.StartSession(false);
         }
 
@@ -986,27 +898,39 @@ namespace GameJam.UI
             _ = session.StartSession(true);
         }
 
+        private void OnClickReturnToLobby()
+        {
+            int lobbyIndex = SceneUtility.GetBuildIndexByScenePath("Assets/00_Scenes/j_LobyDeEspera.unity");
+            if (lobbyIndex < 0) lobbyIndex = 11;
+
+            if (session != null && session.Runner != null && session.Runner.IsRunning)
+            {
+                if (session.Runner.IsServer || session.Runner.IsSharedModeMasterClient)
+                {
+                    // Autoridad / Host: devuelve a todo el escuadrón conectado al Lobby
+                    ResumeGame();
+                    session.Runner.LoadScene(Fusion.SceneRef.FromIndex(lobbyIndex));
+                    return;
+                }
+            }
+
+            // Cliente o sin sesión: desconectar y volver al lobby
+            OnClickDisconnect();
+        }
+
         private void OnClickDisconnect()
         {
-            if (session == null || session.Busy) return;
-            _ = session.Disconnect();
-            SetPauseMenuVisible(false);
-            SetStartMenuVisible(true);
-        }
-
-        public void ResumeGame()
-        {
-            SetPauseMenuVisible(false);
-            Cursor.lockState = CursorLockMode.Locked;
-            Cursor.visible = false;
-        }
-
-        public void OpenPauseMenu()
-        {
-            SetPauseMenuVisible(true);
-            Cursor.lockState = CursorLockMode.None;
-            Cursor.visible = true;
-            SwitchTab(activeTab);
+            ResumeGame();
+            if (session != null)
+            {
+                _ = session.Disconnect();
+            }
+            else
+            {
+                int lobbyIndex = SceneUtility.GetBuildIndexByScenePath("Assets/00_Scenes/j_LobyDeEspera.unity");
+                if (lobbyIndex >= 0)
+                    SceneManager.LoadScene(lobbyIndex);
+            }
         }
 
         private void UpdateStartMenuState()
@@ -1024,48 +948,241 @@ namespace GameJam.UI
 
             if (statusDot != null)
             {
-                if (session.Runner != null && session.Runner.IsRunning)
+                if (session.Busy)
+                    statusDot.color = AmberAccent;
+                else if (session.Runner != null && session.Runner.IsRunning)
                     statusDot.color = SpeakingGreen;
-                else if (session.Busy)
-                    statusDot.color = new Color(1f, 0.8f, 0.2f, 1f);
                 else
-                    statusDot.color = AccentGlow;
-            }
-
-            // Si la sesión conectó con éxito, ocultar menú de inicio y bloquear cursor
-            if (session.Runner != null && session.Runner.IsRunning)
-            {
-                SetStartMenuVisible(false);
-                Cursor.lockState = CursorLockMode.Locked;
-                Cursor.visible = false;
+                    statusDot.color = CyanAccent;
             }
         }
 
-        public void SetStartMenuVisible(bool visible)
-        {
-            if (startMenuGroup == null) return;
-            startMenuGroup.alpha = visible ? 1f : 0f;
-            startMenuGroup.interactable = visible;
-            startMenuGroup.blocksRaycasts = visible;
+        #endregion
 
-            if (visible)
+        #region Ajustes de Audio y Modo de Voz
+
+        public void SelectLanguage(GameLanguage lang)
+        {
+            GameLocalization.CurrentLanguage = lang;
+            UpdateLanguageButtonsHighlight();
+        }
+
+        private void UpdateLanguageButtonsHighlight()
+        {
+            var cur = GameLocalization.CurrentLanguage;
+            Color activeColor = new(0.00f, 0.45f, 0.52f, 0.95f);
+            Color inactiveColor = SlotBg;
+
+            if (btnStartLangEsBg != null) btnStartLangEsBg.color = cur == GameLanguage.Spanish ? activeColor : inactiveColor;
+            if (btnStartLangEnBg != null) btnStartLangEnBg.color = cur == GameLanguage.English ? activeColor : inactiveColor;
+            if (btnStartLangPtBg != null) btnStartLangPtBg.color = cur == GameLanguage.Portuguese ? activeColor : inactiveColor;
+
+            if (btnPauseLangEsBg != null) btnPauseLangEsBg.color = cur == GameLanguage.Spanish ? activeColor : inactiveColor;
+            if (btnPauseLangEnBg != null) btnPauseLangEnBg.color = cur == GameLanguage.English ? activeColor : inactiveColor;
+            if (btnPauseLangPtBg != null) btnPauseLangPtBg.color = cur == GameLanguage.Portuguese ? activeColor : inactiveColor;
+        }
+
+        private void SetMasterVolume(float val)
+        {
+            AudioListener.volume = val;
+            PlayerPrefs.SetFloat("GameJam.MasterVolume", val);
+            PlayerPrefs.Save();
+            if (masterVolumePercentLabel != null)
+                masterVolumePercentLabel.text = Mathf.RoundToInt(val * 100f) + "%";
+        }
+
+        private void SetVoiceMode(bool ptt)
+        {
+            PlayerPrefs.SetInt("GameJam.VoiceMode", ptt ? 1 : 0);
+            PlayerPrefs.Save();
+
+            MarsProximityVoice.LocalPushToTalk = ptt;
+            var localAvatar = MarsFusionAvatar.Local;
+            if (localAvatar != null && localAvatar.TryGetComponent<MarsProximityVoice>(out var voice))
             {
-                Cursor.lockState = CursorLockMode.None;
-                Cursor.visible = true;
+                voice.SetPushToTalk(ptt);
+            }
+
+            UpdateVoiceModeButtons(ptt);
+        }
+
+        private void UpdateVoiceModeButtons(bool ptt)
+        {
+            Color activeColor = new(0.00f, 0.45f, 0.52f, 0.95f);
+            Color inactiveColor = SlotBg;
+
+            if (btnVoicePttBg != null) btnVoicePttBg.color = ptt ? activeColor : inactiveColor;
+            if (btnVoiceOpenMicBg != null) btnVoiceOpenMicBg.color = !ptt ? activeColor : inactiveColor;
+        }
+
+        private void SetVoiceMasterVolume(float val)
+        {
+            MarsProximityVoice.MasterVoiceVolume = val;
+            PlayerPrefs.SetFloat("GameJam.MasterVoiceVolume", val);
+            PlayerPrefs.Save();
+
+            if (voiceMasterPercentLabel != null)
+                voiceMasterPercentLabel.text = Mathf.RoundToInt(val * 100f) + "%";
+        }
+
+        private void RefreshAllLocalizedTexts()
+        {
+            foreach (var loc in FindObjectsByType<LocalizedText>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+            {
+                loc.Refresh();
+            }
+
+            if (masterVolumeSlider != null && masterVolumePercentLabel != null)
+                masterVolumePercentLabel.text = Mathf.RoundToInt(masterVolumeSlider.value * 100f) + "%";
+
+            if (voiceMasterVolumeSlider != null && voiceMasterPercentLabel != null)
+                voiceMasterPercentLabel.text = Mathf.RoundToInt(voiceMasterVolumeSlider.value * 100f) + "%";
+
+            UpdateLanguageButtonsHighlight();
+        }
+
+        #endregion
+
+        #region Lista de Tripulación y Audio Individual
+
+        private void UpdateCrewList()
+        {
+            if (crewListContainer == null) return;
+
+            var allAvatars = FindObjectsByType<MarsFusionAvatar>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+            var localAvatar = MarsFusionAvatar.Local;
+
+            int neededRows = allAvatars.Length;
+            while (activeCrewRows.Count < neededRows)
+            {
+                activeCrewRows.Add(CreateCrewRowWidget());
+            }
+
+            for (int i = 0; i < activeCrewRows.Count; i++)
+            {
+                if (i < neededRows)
+                {
+                    activeCrewRows[i].Root.SetActive(true);
+                    BindCrewRow(activeCrewRows[i], allAvatars[i], localAvatar);
+                }
+                else
+                {
+                    activeCrewRows[i].Root.SetActive(false);
+                }
+            }
+
+            if (crewEmptyLabel != null)
+            {
+                crewEmptyLabel.gameObject.SetActive(neededRows <= 1);
             }
         }
 
-        public void SetPauseMenuVisible(bool visible)
+        private CrewRowWidget CreateCrewRowWidget()
         {
-            if (pauseMenuGroup == null) return;
-            pauseMenuGroup.alpha = visible ? 1f : 0f;
-            pauseMenuGroup.interactable = visible;
-            pauseMenuGroup.blocksRaycasts = visible;
+            var widget = new CrewRowWidget();
 
-            if (visible)
+            var rowCard = CreateRoundedPanel(crewListContainer, "CrewRow", new Vector2(680, 56), 10, CardBg);
+            widget.Root = rowCard.gameObject;
+
+            var outline = rowCard.gameObject.AddComponent<Outline>();
+            outline.effectColor = new Color(0.00f, 0.92f, 0.88f, 0.20f);
+            outline.effectDistance = new Vector2(1, -1);
+
+            // Icono de casco
+            var avatarPill = CreateRoundedPanel(rowCard, "AvatarPill", new Vector2(36, 36), 18, InsetBg);
+            avatarPill.anchoredPosition = new Vector2(-310, 0);
+
+            var avatarDot = CreateRoundedPanel(avatarPill, "AvatarCenter", new Vector2(16, 16), 8, CyanAccent);
+            avatarDot.anchoredPosition = Vector2.zero;
+
+            // Nombre del astronauta
+            widget.NameLabel = CreateLabel(rowCard, "Astronauta", 13, new Vector2(-170, 0), new Vector2(230, 26), InkWhite);
+            widget.NameLabel.alignment = TextAlignmentOptions.Left;
+            widget.NameLabel.fontStyle = FontStyles.Bold;
+
+            // Indicador de habla
+            var speakPill = CreateRoundedPanel(rowCard, "SpeakPill", new Vector2(120, 28), 6, InsetBg);
+            speakPill.anchoredPosition = new Vector2(30, 0);
+
+            var dotRect = CreateRoundedPanel(speakPill, "Dot", new Vector2(8, 8), 4, DimCyan);
+            dotRect.anchoredPosition = new Vector2(-44, 0);
+            widget.SpeakingDot = dotRect.GetComponent<TabletRoundedPanel>();
+
+            widget.SpeakingLabel = CreateLabel(speakPill, "crew.muted", 10, new Vector2(10, 0), new Vector2(80, 20), DimCyan, true);
+            widget.SpeakingLabel.alignment = TextAlignmentOptions.Left;
+
+            // Slider de volumen individual
+            var sliderRoot = CreateRect("VolumeGroup", rowCard, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(230, 0), new Vector2(170, 40));
+
+            var volLabel = CreateLabel(sliderRoot, "VOL", 10, new Vector2(-70, 0), new Vector2(30, 20), MutedCyan);
+            volLabel.alignment = TextAlignmentOptions.Center;
+
+            widget.VolumePercentLabel = CreateLabel(sliderRoot, "100%", 10, new Vector2(65, 0), new Vector2(40, 20), CyanAccent);
+            widget.VolumePercentLabel.alignment = TextAlignmentOptions.Left;
+
+            widget.VolumeSlider = CreateSlider(sliderRoot, "IndivVolSlider", 0f, 1.5f, 1f, new Vector2(2, 0), new Vector2(90, 16));
+
+            return widget;
+        }
+
+        private void BindCrewRow(CrewRowWidget widget, MarsFusionAvatar avatar, MarsFusionAvatar localAvatar)
+        {
+            widget.Avatar = avatar;
+            bool isSelf = avatar != null && avatar == localAvatar;
+
+            string name = avatar != null ? avatar.PlayerName : "Astronauta";
+            if (isSelf)
             {
-                Cursor.lockState = CursorLockMode.None;
-                Cursor.visible = true;
+                name += " " + GameLocalization.Get("crew.you", "(Tú)");
+            }
+            widget.NameLabel.text = name;
+
+            bool isSpeaking = false;
+            if (avatar != null && avatar.TryGetComponent<MarsProximityVoice>(out var voice))
+            {
+                isSpeaking = voice.IsSpeaking;
+            }
+
+            if (widget.SpeakingDot != null)
+            {
+                widget.SpeakingDot.color = isSpeaking ? SpeakingGreen : DimCyan;
+            }
+
+            if (widget.SpeakingLabel != null)
+            {
+                widget.SpeakingLabel.text = isSpeaking
+                    ? GameLocalization.Get("crew.speaking", "TRANSMITIENDO")
+                    : GameLocalization.Get("crew.muted", "EN ESPERA");
+                widget.SpeakingLabel.color = isSpeaking ? SpeakingGreen : DimCyan;
+            }
+
+            if (widget.VolumeSlider != null)
+            {
+                widget.VolumeSlider.gameObject.SetActive(!isSelf);
+                if (widget.VolumePercentLabel != null)
+                    widget.VolumePercentLabel.gameObject.SetActive(!isSelf);
+
+                if (!isSelf && avatar != null)
+                {
+                    widget.VolumeSlider.onValueChanged.RemoveAllListeners();
+                    string prefKey = "GameJam.PlayerVol_" + avatar.PlayerName;
+                    float savedVol = PlayerPrefs.GetFloat(prefKey, 1f);
+                    widget.VolumeSlider.value = savedVol;
+                    if (widget.VolumePercentLabel != null)
+                        widget.VolumePercentLabel.text = Mathf.RoundToInt(savedVol * 100f) + "%";
+
+                    widget.VolumeSlider.onValueChanged.AddListener(val =>
+                    {
+                        PlayerPrefs.SetFloat(prefKey, val);
+                        if (widget.VolumePercentLabel != null)
+                            widget.VolumePercentLabel.text = Mathf.RoundToInt(val * 100f) + "%";
+
+                        if (avatar.TryGetComponent<MarsProximityVoice>(out var v))
+                        {
+                            v.SetIndividualVolume(val);
+                        }
+                    });
+                }
             }
         }
 

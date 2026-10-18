@@ -16,6 +16,7 @@ namespace GameJam.Ship
 
         // Fusion genera el almacenamiento y la replicacion de esta propiedad.
         [Networked] private NetworkBool Repaired { get; set; }
+        [Networked] private TickTimer ReturnToLobbyTimer { get; set; }
 
         private bool repairAnnounced;
 
@@ -110,7 +111,37 @@ namespace GameJam.Ship
 
             // La siguiente peticion ya encuentra la nave reparada. No hay consumo.
             Repaired = true;
+            ReturnToLobbyTimer = TickTimer.CreateFromSeconds(Runner, 8f);
             RpcRepairEffect();
+        }
+
+        public override void FixedUpdateNetwork()
+        {
+            if (HasStateAuthority && Repaired && ReturnToLobbyTimer.Expired(Runner))
+            {
+                ReturnToLobbyTimer = TickTimer.None;
+                int lobbyIndex = UnityEngine.SceneManagement.SceneUtility.GetBuildIndexByScenePath("Assets/00_Scenes/j_LobyDeEspera.unity");
+                if (lobbyIndex >= 0)
+                {
+                    Debug.Log("[ShipRepair] Misión completada. Regresando a la nave nodriza...");
+                    Runner.LoadScene(SceneRef.FromIndex(lobbyIndex));
+                }
+            }
+        }
+
+        private void OnGUI()
+        {
+            if (Repaired && Object != null && Object.IsValid && ReturnToLobbyTimer.IsRunning)
+            {
+                float remaining = ReturnToLobbyTimer.RemainingTime(Runner) ?? 0;
+                var style = new GUIStyle(GUI.skin.box);
+                style.fontSize = 17;
+                style.fontStyle = FontStyle.Bold;
+                style.normal.textColor = new Color(0.2f, 1f, 0.45f);
+                style.alignment = TextAnchor.MiddleCenter;
+                GUI.Box(new Rect(Screen.width * 0.5f - 280, 40, 560, 54),
+                    $"¡MISIÓN COMPLETADA · NAVE REPARADA!\nRegresando a la nave nodriza en {Mathf.CeilToInt(remaining)}s...", style);
+            }
         }
 
         [Rpc(RpcSources.StateAuthority,RpcTargets.All)]

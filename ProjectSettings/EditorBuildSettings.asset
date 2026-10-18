@@ -33,7 +33,7 @@ EditorBuildSettings:
     path: Assets/00_Scenes/j_TabletPrototype.unity
     guid: ad7050d41d12cfe4b969870dd3441809
   - enabled: 1
-    path: Assets/00_Scenes/j_MarsFusion.unity
+    path: Assets/00_Scenes/Mars.unity
     guid: 3dc97565509d4a4449c08df8700e5677
   - enabled: 1
     path: Assets/00_Scenes/A_MarsFusion.unity

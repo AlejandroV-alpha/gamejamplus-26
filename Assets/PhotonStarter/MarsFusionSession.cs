@@ -165,7 +165,14 @@ namespace GameJam.Multiplayer
             {
                 Runner = null; Busy = false; SetMenu(true);
                 // Fusion removes scene NetworkObjects on shutdown. Restore them before another session.
-                if (Application.isPlaying) SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+                if (Application.isPlaying)
+                {
+                    int lobbyIndex = SceneUtility.GetBuildIndexByScenePath("Assets/00_Scenes/j_LobyDeEspera.unity");
+                    if (lobbyIndex >= 0)
+                        SceneManager.LoadScene(lobbyIndex);
+                    else
+                        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+                }
             }
         }
 
@@ -177,6 +184,15 @@ namespace GameJam.Multiplayer
             Status = "Sesión cerrada: " + reason;
             shutdownMessage = Status;
             SetMenu(true);
+            if (Application.isPlaying)
+            {
+                string curScene = SceneManager.GetActiveScene().name;
+                if (!curScene.Contains("Loby") && !curScene.Contains("Lobby"))
+                {
+                    int lobbyIndex = SceneUtility.GetBuildIndexByScenePath("Assets/00_Scenes/j_LobyDeEspera.unity");
+                    if (lobbyIndex >= 0) SceneManager.LoadScene(lobbyIndex);
+                }
+            }
         }
 
         public void SetMenu(bool visible)
