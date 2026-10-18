@@ -60,6 +60,38 @@ captura de micrófono y comunicación audible entre dos clientes online.
 
 ## Fallo de replicación de Fusion 2.1.1
 
+### Jugador virtual: manifest ausente y configuración no disponible
+
+Si el log muestra `appIdPresent=true appIdFormatValid=true`, el App ID sí se
+leyó: no es necesario volver a configurarlo. `FusionInstaller` intentaba leer
+`Library/VP/.../Packages/manifest.json`, que no existe en el proyecto virtual.
+Se añadió una condición para que el instalador solo se ejecute en el Editor
+principal, igual que la protección del Hub. Los jugadores virtuales usan los
+paquetes y la configuración importada por ese Editor.
+
+Se encontró además que `FusionCustomDependency.InitializeEager` conservaba en
+`SessionState` una marca de inicialización anterior a la actualización. Faltaban
+los comandos persistentes `Fusion.ScriptOrderDependency` y
+`Fusion.PrefabsDependency` en `Temp/FusionMppm`, necesarios para sincronizar la
+configuración importada. Ahora se publican las dependencias en cada recarga del
+dominio del Editor principal; los jugadores virtuales reciben esos hashes y no
+calculan hashes propios. Se comprobó que ambos comandos vuelven a generarse y
+que el Editor principal sigue cargando `NetworkProjectConfigAsset` sin errores.
+Después de reimportar el asset desde el Editor principal, se verificó también en
+el proceso Player 2: `resourceLoaded=True assetDatabaseLoaded=True globalLoaded=True`.
+El menú `GameJam > Photon > Validate virtual player configuration`, fuera de
+Play, repite la comprobación en el Editor y los jugadores virtuales conectados.
+Sus resultados, sin credenciales, quedan en `Temp/MarsFusionVirtualConfig`.
+
+Después de actualizar el SDK, detén Play y reinicia el jugador virtual desde
+Multiplayer Play Mode para que reciba las importaciones nuevas. Si continúa
+`Asset Database is set to Read Only` junto con `Failed to load
+NetworkProjectConfigAsset`, la copia virtual aún no está sincronizada. No copies
+un manifest a mano ni reemplaces la configuración por una vacía. Comprueba
+primero que el Editor principal haya terminado de importar. El usuario confirmó
+que la prueba volvió a funcionar después de aplicar la corrección. El aviso de
+Account API de Unity AI pertenece a otro servicio.
+
 El log de la prueba del 18/10/2026 muestra el fallo
 `AssertException: tick >= sc._latestTickAcknowledged` en
 `Fusion.Simulation.StateReplicator.OnPacketDelivered`, seguido de desconexión de la
