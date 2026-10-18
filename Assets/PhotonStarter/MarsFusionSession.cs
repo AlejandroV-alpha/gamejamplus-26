@@ -16,6 +16,8 @@ namespace GameJam.Multiplayer
         public Transform spawnPoint;
         public int maxPlayers = 4;
         public string roomName = "Mars-Coop";
+        [Tooltip("Height above the spawn point where the ground raycast starts. Keep it below the ceiling in indoor scenes.")]
+        public float groundProbeHeight = 100f;
         public NetworkRunner Runner { get; private set; }
         public string Status { get; private set; } = "Photon Fusion — listo";
         public bool MenuOpen { get; private set; } = true;
@@ -36,6 +38,17 @@ namespace GameJam.Multiplayer
             previousBackground = Application.runInBackground;
             Application.runInBackground = true;
             if (!string.IsNullOrEmpty(shutdownMessage)) { Status = shutdownMessage; shutdownMessage = null; }
+            // Arriving from another scene of the same session (e.g. lobby -> mission): keep the running runner.
+            foreach (var runner in NetworkRunner.Instances)
+            {
+                if (runner == null || !runner.IsRunning) continue;
+                Runner = runner;
+                runner.GetComponent<NetworkEvents>()?.OnShutdown.AddListener(OnShutdown);
+                Status = "Conectado — " + runner.SessionInfo.Name;
+                LogStage("runner-adopted", "scene=" + SceneManager.GetActiveScene().name);
+                SetMenu(false);
+                return;
+            }
             SetMenu(true);
         }
 
@@ -108,12 +121,23 @@ namespace GameJam.Multiplayer
 
         public void SpawnLocalPlayer(NetworkRunner runner)
         {
-            if (runner.GetPlayerObject(runner.LocalPlayer) != null) { LogStage("player-already-spawned"); return; }
+            var existing = runner.GetPlayerObject(runner.LocalPlayer);
             var position = spawnPoint != null ? spawnPoint.position : transform.position;
             var offset = UnityEngine.Random.insideUnitCircle * 1.5f;
             position += new Vector3(offset.x, 0, offset.y);
-            if (Physics.Raycast(position + Vector3.up * 100f, Vector3.down, out var hit, 200f, 1, QueryTriggerInteraction.Ignore))
+            if (Physics.Raycast(position + Vector3.up * groundProbeHeight, Vector3.down, out var hit, groundProbeHeight + 100f, 1, QueryTriggerInteraction.Ignore))
                 position.y = hit.point.y + .1f;
+            if (existing != null)
+            {
+                // The player survived a scene change: move it to this scene's spawn instead of spawning twice.
+                if (spawnPoint != null && existing.HasStateAuthority && existing.TryGetComponent<Fusion.Addons.SimpleKCC.SimpleKCC>(out var kcc))
+                {
+                    kcc.SetPosition(position);
+                    kcc.SetLookRotation(spawnPoint.rotation);
+                }
+                LogStage("player-already-spawned");
+                return;
+            }
             var player = runner.Spawn(playerPrefab, position, spawnPoint != null ? spawnPoint.rotation : Quaternion.identity, runner.LocalPlayer);
             runner.SetPlayerObject(runner.LocalPlayer, player);
             LogStage("player-spawned", "valid=" + (player != null && player.IsValid));
