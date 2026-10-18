@@ -87,6 +87,18 @@ namespace GameJam.Environment.Mars
         /// <summary>
         /// Elige el siguiente intervalo solamente desde la autoridad del evento.
         /// </summary>
+        [ContextMenu("Iniciar tormenta ahora (Play, autoridad)")]
+        private void StartStormFromInspector() { TryStartStorm(); }
+
+        // Call on the storm authority; no coroutine or extra network messages per particle.
+        public bool TryStartStorm()
+        {
+            if (!IsReady() || !HasStateAuthority) return false;
+            stormActive = true;
+            phaseTimer = TickTimer.CreateFromSeconds(Runner, stormDuration);
+            return true;
+        }
+
         private void ScheduleNextStorm()
         {
             float interval = Random.Range(minSpawnInterval, maxSpawnInterval);

@@ -627,6 +627,13 @@ GameObject:
   - component: {fileID: 9187963699599013282}
   - component: {fileID: 529085963295796802}
   - component: {fileID: 1092763326960064342}
+  - component: {fileID: 7644729017117151190}
+  - component: {fileID: 1056180860864049227}
+  - component: {fileID: 2757298304770010657}
+  - component: {fileID: 2807487215228919419}
+  - component: {fileID: 7417582317096606280}
+  - component: {fileID: 2970041377782251518}
+  - component: {fileID: 8390952095215049936}
   m_Layer: 2
   m_Name: j_FusionAstronaut
   m_TagString: Untagged
@@ -675,6 +682,13 @@ MonoBehaviour:
   - {fileID: 1105301317831960609}
   - {fileID: 7969052409205033395}
   - {fileID: 9187963699599013282}
+  - {fileID: 7644729017117151190}
+  - {fileID: 1056180860864049227}
+  - {fileID: 2757298304770010657}
+  - {fileID: 2807487215228919419}
+  - {fileID: 7417582317096606280}
+  - {fileID: 2970041377782251518}
+  - {fileID: 8390952095215049936}
   ForceRemoteRenderTimeframe: 0
 --- !u!54 &1572134779871167590
 Rigidbody:
@@ -770,8 +784,9 @@ MonoBehaviour:
   CameraPivot: {fileID: 6608314389182396887}
   CameraHandle: {fileID: 5864237138245083233}
   ShoulderCameraHandle: {fileID: 0}
-  WalkSpeed: 3
-  SprintSpeed: 6
+  CrosshairPrefab: {fileID: 0}
+  WalkSpeed: 10
+  SprintSpeed: 24
   JumpImpulse: 10
   UpGravity: -25
   DownGravity: -40
@@ -814,7 +829,7 @@ MonoBehaviour:
   openMouth: {fileID: 21300000, guid: 7cd79282949414e49b29d92be8cfa63e, type: 3}
   hurtMouth: {fileID: 21300000, guid: 8e5cf857c42d26d4da4eafe286db2fac, type: 3}
   deadMouth: {fileID: 21300000, guid: 4fd08b22468880648b0db2abc13e49f0, type: 3}
-  healthSource: {fileID: 0}
+  healthSource: {fileID: 1056180860864049227}
   _Stamina: 0
   _TabletOpen:
     RawValue: 0
@@ -844,6 +859,9 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 57b1499ca0d04d23b250bf09d7a37089, type: 2}
   - {fileID: 11400000, guid: 6453654fe44ffdc429c6fff7b65ceb59, type: 2}
   - {fileID: 11400000, guid: 7ec212f3fbb1eef4f9d6494a2b8d86a0, type: 2}
+  - {fileID: 11400000, guid: b664c05e1cff2aa46bf4044d125ba007, type: 2}
+  - {fileID: 11400000, guid: fe963d5cfe3259e4882942ae5540f20e, type: 2}
+  - {fileID: 11400000, guid: fb38869e8509b0a4db810781f1881176, type: 2}
 --- !u!114 &2804070628670475856
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -929,6 +947,108 @@ MonoBehaviour:
   hearingDistance: 22
   pushToTalk: 1
   pushToTalkKey: 36
+--- !u!114 &7644729017117151190
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3827797598262270737}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f0b3143648a204140823c9efc9fe7148, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GameJam.Multiplayer.PlayerExplorationBoundary
+--- !u!114 &1056180860864049227
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3827797598262270737}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8409b0a4b44d9274e9b9c352e14afac9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GameJam.Combat.PlayerHealth
+  startingHealth: 100
+  _CurrentHealth: 0
+  _MaxHealth: 0
+  _IsAlive: 0
+--- !u!114 &2757298304770010657
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3827797598262270737}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c99680bc2a331044e95c213e50b39cc1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GameJam.Gameplay.PlayerCollector
+  searchRadius: 2.5
+  collectionLayers:
+    serializedVersion: 2
+    m_Bits: 4294967291
+--- !u!114 &2807487215228919419
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3827797598262270737}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b19206aa959dfe446945dd380ce890bf, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GameJam.Crafting.PlayerCrafter
+  firstRecipeKey: 44
+  secondRecipeKey: 45
+  thirdRecipeKey: 46
+  interactionDistance: 3
+--- !u!114 &7417582317096606280
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3827797598262270737}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 62fe4448bf8854f47b6c343ece32a035, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GameJam.Ship.PlayerShipRepair
+  interactionDistance: 3
+--- !u!114 &2970041377782251518
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3827797598262270737}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f30e1c0cb0ed03841b98dcd9e2e742e4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GameJam.Inventory.InventoryDeathRecovery
+--- !u!114 &8390952095215049936
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3827797598262270737}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 18221863ddd62df44bc070131a5544cf, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GameJam.Multiplayer.PlayerInteractionAction
+  feedbackMaterial: {fileID: 2100000, guid: e66d2b428db84106b7c426dce22f1003, type: 2}
+  weaponVisual: {fileID: 0}
+  pickupSeconds: 0.8
+  repairSeconds: 2.4
+  _ActionKind: 0
 --- !u!1 &3836924219179165295
 GameObject:
   m_ObjectHideFlags: 0

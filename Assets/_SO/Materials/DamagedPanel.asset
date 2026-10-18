@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c60ab5cbfabf4c3585fa53c0fc37f842, type: 3}
+  m_Name: DamagedPanel
+  m_EditorClassIdentifier: Assembly-CSharp::GameJam.Inventory.MaterialData
+  id: damaged_panel
+  materialName: Panel de casco danado
+  description: Pieza recuperada de la nave. Necesaria junto con minerales para reparar.
+  icon: {fileID: 0}
+  prefab: {fileID: 7295482496710079465, guid: d024b6c33a9a89542b31a3e17d809fae, type: 3}

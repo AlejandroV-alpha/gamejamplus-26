@@ -1,4 +1,6 @@
 using Fusion;
+using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using GameJam.Combat;
 using GameJam.Tablet;
 using Starter.ThirdPersonCharacter;
@@ -29,6 +31,17 @@ namespace GameJam.Multiplayer
         [Networked] public NetworkString<_32> PlayerName { get; private set; }
         [Networked] public NetworkBool LobbyReady { get; private set; }
         [Networked] private NetworkBool IdentityInitialized { get; set; }
+        // Session-scoped identity survives scene/avatar recreation, but not a new runner.
+        // Runner keys also isolate local multiplayer peers in the same process.
+        private static ConditionalWeakTable<NetworkRunner, Dictionary<PlayerRef, byte>> sessionColors =
+            new ConditionalWeakTable<NetworkRunner, Dictionary<PlayerRef, byte>>();
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetSessionColors()
+        {
+            sessionColors = new ConditionalWeakTable<NetworkRunner, Dictionary<PlayerRef, byte>>();
+        }
+
         private MarsPlayerIdentityView identityView;
         private PlayerInput input;
         private MarsFusionSession session;
@@ -53,21 +66,35 @@ namespace GameJam.Multiplayer
             if (HasStateAuthority) Stamina = 100;
             if (HasStateAuthority && !IdentityInitialized)
             {
-                SuitColorIndex = (byte)Random.Range(0, MarsPlayerIdentityView.Palette.Length);
-                // Prefer an unused color among players already present in this session.
-                var players = FindObjectsByType<MarsFusionAvatar>(FindObjectsSortMode.None);
-                for (int offset = 0; offset < MarsPlayerIdentityView.Palette.Length; offset++)
-                {
-                    byte candidate = (byte)((SuitColorIndex + offset) % MarsPlayerIdentityView.Palette.Length);
-                    bool used = false;
-                    foreach (var other in players)
-                        if (other != this && other.Runner == Runner && other.Object != null && other.Object.IsValid
-                            && other.IdentityInitialized && other.SuitColorIndex == candidate) { used = true; break; }
-                    if (!used) { SuitColorIndex = candidate; break; }
-                }
                 var owner = Runner.GameMode == GameMode.Shared ? Object.StateAuthority : Object.InputAuthority;
+                var colors = sessionColors.GetOrCreateValue(Runner);
+                byte savedColor;
+                if (colors.TryGetValue(owner, out savedColor))
+                {
+                    SuitColorIndex = savedColor;
+                }
+                else
+                {
+                    SuitColorIndex = (byte)Random.Range(0, MarsPlayerIdentityView.Palette.Length);
+                    var players = FindObjectsByType<MarsFusionAvatar>(FindObjectsSortMode.None);
+                    for (int offset = 0; offset < MarsPlayerIdentityView.Palette.Length; offset++)
+                    {
+                        byte candidate = (byte)((SuitColorIndex + offset) % MarsPlayerIdentityView.Palette.Length);
+                        bool used = colors.ContainsValue(candidate);
+                        foreach (var other in players)
+                            if (other != this && other.Runner == Runner && other.Object != null && other.Object.IsValid
+                                && other.IdentityInitialized && other.SuitColorIndex == candidate) { used = true; break; }
+                        if (!used) { SuitColorIndex = candidate; break; }
+                    }
+                    colors[owner] = SuitColorIndex;
+                }
                 PlayerName = "Astronauta " + owner.PlayerId;
                 IdentityInitialized = true;
+            }
+            if (HasStateAuthority)
+            {
+                var owner = Runner.GameMode == GameMode.Shared ? Object.StateAuthority : Object.InputAuthority;
+                sessionColors.GetOrCreateValue(Runner)[owner] = SuitColorIndex;
             }
             identityView = gameObject.AddComponent<MarsPlayerIdentityView>();
             identityView.Initialize(this);
@@ -172,7 +199,7 @@ namespace GameJam.Multiplayer
                 if (VoiceLevel != level) VoiceLevel = level;
             }
             bool tabletVisible = TabletOpen || (ui != null && ui.IsVisible);
-            input.ControlsEnabled = !menu && !tabletVisible && IsAlive && !SceneTransitionVideo.IsBlockingInput && !LobbyDepartureEffects.IsBlockingInput && !PortalWhiteTransition.IsBlockingInput;
+            input.ControlsEnabled = !menu && !tabletVisible && IsAlive && !SceneTransitionVideo.IsBlockingInput && !LobbyDepartureEffects.IsBlockingInput && !PortalWhiteTransition.IsBlockingInput && !(GetComponent<PlayerInteractionAction>()?.IsBusy ?? false);
             bool cursor = menu || tabletVisible || !IsAlive;
             Cursor.lockState = cursor ? CursorLockMode.None : CursorLockMode.Locked;
             Cursor.visible = cursor;

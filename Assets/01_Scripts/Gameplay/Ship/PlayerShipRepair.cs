@@ -6,7 +6,7 @@ using UnityEngine.InputSystem;
 namespace GameJam.Ship
 {
     /// <summary>
-    /// Solicita reparar con R desde el astronauta local.
+    /// Solicita reparar con F desde el astronauta local.
     /// </summary>
     [DisallowMultipleComponent]
     [RequireComponent(typeof(PlayerCrafter))]
@@ -15,6 +15,8 @@ namespace GameJam.Ship
         [SerializeField, Min(0.1f)] private float interactionDistance = 3f;
 
         private PlayerCrafter player;
+        private ShipRepairStation promptStation;
+        private float nextPromptScan;
 
         /// <summary>
         /// Reutiliza las comprobaciones existentes de estado y control local.
@@ -25,7 +27,7 @@ namespace GameJam.Ship
         }
 
         /// <summary>
-        /// Lee R solo cuando el jugador local puede interactuar.
+        /// Lee F solo cuando el jugador local puede interactuar.
         /// </summary>
         private void Update()
         {
@@ -34,16 +36,35 @@ namespace GameJam.Ship
                 return;
             }
 
+            if (Time.time >= nextPromptScan)
+            {
+                nextPromptScan = Time.time + .25f;
+                promptStation = null;
+                float nearest = interactionDistance * interactionDistance;
+                foreach(var station in FindObjectsByType<ShipRepairStation>(FindObjectsSortMode.None))
+                {
+                    if(station.Object==null || !station.Object.IsValid || station.Runner!=Runner || station.IsRepaired()) continue;
+                    float distance=(station.transform.position-transform.position).sqrMagnitude;
+                    if(distance<nearest){nearest=distance;promptStation=station;}
+                }
+            }
             Keyboard keyboard = Keyboard.current;
             if (keyboard == null)
             {
                 return;
             }
 
-            if (keyboard.rKey.wasPressedThisFrame)
+            if (keyboard.fKey.wasPressedThisFrame)
             {
                 TryRepairNearest();
             }
+        }
+
+        private void OnGUI()
+        {
+            if (promptStation==null || player==null || !player.CanCraftLocally()) return;
+            if(promptStation.Object==null || !promptStation.Object.IsValid || promptStation.IsRepaired())return;
+            GUI.Box(new Rect(Screen.width*.5f-140,Screen.height*.84f,280,32),"F  |  Reparar nave");
         }
 
         /// <summary>
@@ -83,7 +104,8 @@ namespace GameJam.Ship
                 return false;
             }
 
-            return nearestStation.RequestRepair();
+            var action = GetComponent<GameJam.Multiplayer.PlayerInteractionAction>();
+            return action != null ? action.TryRepair(nearestStation) : nearestStation.RequestRepair();
         }
     }
 }

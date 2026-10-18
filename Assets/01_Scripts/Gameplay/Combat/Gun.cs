@@ -264,6 +264,12 @@ namespace GameJam.Combat
         /// </summary>
         private void ApplyHitDamage(Collider target)
         {
+            var enemy = target.GetComponentInParent<ReksaiFusionEnemy>();
+            if (enemy != null && enemy.Runner == Runner)
+            {
+                enemy.TakeDamage(damage);
+                return;
+            }
             MarsFusionAvatar targetAvatar = target.GetComponentInParent<MarsFusionAvatar>();
             if (targetAvatar != null)
             {

@@ -22,3 +22,5 @@ MonoBehaviour:
     amount: 2
   - material: {fileID: 11400000, guid: 57b1499ca0d04d23b250bf09d7a37089, type: 2}
     amount: 1
+  - material: {fileID: 11400000, guid: fe963d5cfe3259e4882942ae5540f20e, type: 2}
+    amount: 1

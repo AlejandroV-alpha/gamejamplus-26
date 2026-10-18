@@ -43,7 +43,15 @@ namespace GameJam.Ship
         /// <summary>
         /// Solicita reparar desde un jugador local cercano y habilitado.
         /// </summary>
-        public bool RequestRepair()
+        public Material feedbackMaterial;
+
+        public bool CanBeginRepair()
+        {
+            return IsReady() && !Repaired && craftingTable!=null && craftingTable.Runner==Runner
+                && craftingTable.IsPlanetCompleted() && GetValidPlayer(Runner.LocalPlayer)!=null;
+        }
+
+        public bool RequestRepair(bool finishingAnimation=false)
         {
             if (!IsReady())
             {
@@ -51,7 +59,7 @@ namespace GameJam.Ship
             }
 
             PlayerCrafter player = GetValidPlayer(Runner.LocalPlayer);
-            if (player == null || !player.CanCraftLocally())
+            if (player == null || (!finishingAnimation && !player.CanCraftLocally()))
             {
                 return false;
             }
@@ -102,6 +110,13 @@ namespace GameJam.Ship
 
             // La siguiente peticion ya encuentra la nave reparada. No hay consumo.
             Repaired = true;
+            RpcRepairEffect();
+        }
+
+        [Rpc(RpcSources.StateAuthority,RpcTargets.All)]
+        private void RpcRepairEffect()
+        {
+            GameJam.Multiplayer.InteractionFeedback.Burst(transform.position+Vector3.up,feedbackMaterial,new Color(.25f,1,.6f));
         }
 
         /// <summary>

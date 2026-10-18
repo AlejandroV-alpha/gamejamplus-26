@@ -27,17 +27,23 @@ MonoBehaviour:
         amount: 3
       - mineral: Cristal de hielo
         amount: 2
+      - mineral: Turbina danada
+        amount: 1
     - component: Navegador
       ingredients:
       - mineral: Circuito
         amount: 2
       - mineral: Cristal de hielo
         amount: 1
+      - mineral: Toma de aire danada
+        amount: 1
     - component: Blindaje
       ingredients:
       - mineral: Metal
         amount: 3
       - mineral: Circuito
+        amount: 1
+      - mineral: Panel de casco danado
         amount: 1
   - name: Marte
     objective: "Reparar los da\xF1os de la tormenta"
@@ -53,17 +59,23 @@ MonoBehaviour:
         amount: 2
       - mineral: Mineral rojo
         amount: 2
+      - mineral: Turbina danada
+        amount: 1
     - component: Filtro de aire
       ingredients:
       - mineral: Mineral rojo
         amount: 2
       - mineral: Circuito
         amount: 1
+      - mineral: Toma de aire danada
+        amount: 1
     - component: Radar
       ingredients:
       - mineral: Circuito
         amount: 2
       - mineral: Metal
+        amount: 1
+      - mineral: Panel de casco danado
         amount: 1
   - name: Saturno
     objective: Preparar el viaje final

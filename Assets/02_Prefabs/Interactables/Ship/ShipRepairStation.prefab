@@ -180,3 +180,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::GameJam.Ship.ShipRepairStation
   craftingTable: {fileID: 0}
   interactionDistance: 3
+  feedbackMaterial: {fileID: 2100000, guid: e66d2b428db84106b7c426dce22f1003, type: 2}

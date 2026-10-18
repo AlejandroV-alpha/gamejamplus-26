@@ -72,11 +72,13 @@ namespace Starter.ThirdPersonCharacter
         private bool _ownsCrosshair;
         private const float CrosshairAimThreshold = 0.85f;
         private GameJam.Multiplayer.MarsFusionAvatar _avatar;
+        private GameJam.Environment.Mars.PlayerSandstorm _sandstorm;
         private int _handsLayer = -1;
 
         public override void Spawned()
         {
             _avatar = GetComponent<GameJam.Multiplayer.MarsFusionAvatar>();
+            _sandstorm = GetComponent<GameJam.Environment.Mars.PlayerSandstorm>();
             if (Animator != null)
             {
                 _handsLayer = Animator.GetLayerIndex("HandsLayer");
@@ -311,12 +313,13 @@ namespace Starter.ThirdPersonCharacter
                 _moveVelocity = projectedVector;
             }
 
-            KCC.Move(_moveVelocity, jumpImpulse);
+            var finalVelocity = _sandstorm != null ? _sandstorm.ModifyMovementVelocity(_moveVelocity) : _moveVelocity;
+            KCC.Move(finalVelocity, jumpImpulse);
         }
 
         private bool IsAimingPose()
         {
-            return _isAiming && !_isSprinting && KCC.IsGrounded && !_isJumping;
+            return _isAiming && !_isSprinting && KCC.IsGrounded && !_isJumping && !(GetComponent<GameJam.Multiplayer.PlayerInteractionAction>()?.IsBusy ?? false);
         }
 
         private void UpdateAimRig()

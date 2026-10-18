@@ -118,7 +118,8 @@ namespace GameJam.Gameplay
             }
 
             Debug.Log($"[Interaction E] Requesting {nearestPickup.name} at {Mathf.Sqrt(nearestDistanceSquared):F2} m.", nearestPickup);
-            return nearestPickup.RequestCollection();
+            var action = GetComponent<GameJam.Multiplayer.PlayerInteractionAction>();
+            return action != null ? action.TryCollect(nearestPickup) : nearestPickup.RequestCollection();
         }
 
         /// <summary>

@@ -18,9 +18,14 @@ namespace GameJam.Collectibles
         [SerializeField, Min(0.1f)] private float collectionDistance = 2.5f;
         [SerializeField] private GameObject visual;
 
+        [Networked] private TickTimer despawnAfter { get; set; }
+        [Networked] public int DroppedAmount { get; set; }
+        private int Quantity => DroppedAmount > 0 ? DroppedAmount : amount;
+
         [Networked] private NetworkBool IsClaimed { get; set; }
         [Networked] private PlayerRef Claimant { get; set; }
 
+        public Material feedbackMaterial;
         private Collider pickupCollider;
         private bool claimHandled;
         private bool rewardApplied;
@@ -148,7 +153,7 @@ namespace GameJam.Collectibles
             }
 
             claimHandled = true;
-            rewardApplied = inventory.AddMaterial(material, amount);
+            rewardApplied = inventory.AddMaterial(material, Quantity);
             RPC_ConfirmCollection(rewardApplied);
         }
 
@@ -175,12 +180,19 @@ namespace GameJam.Collectibles
 
             if (rewardAdded)
             {
-                Runner.Despawn(Object);
+                RPC_CollectedEffect();
+                despawnAfter = TickTimer.CreateFromSeconds(Runner,.2f);
                 return;
             }
 
             Claimant = PlayerRef.None;
             IsClaimed = false;
+        }
+
+        [Rpc(RpcSources.StateAuthority,RpcTargets.All)]
+        private void RPC_CollectedEffect()
+        {
+            GameJam.Multiplayer.InteractionFeedback.Burst(transform.position+Vector3.up*.4f,feedbackMaterial,new Color(.3f,1,.85f));
         }
 
         /// <summary>
@@ -193,6 +205,11 @@ namespace GameJam.Collectibles
                 return;
             }
 
+            if (despawnAfter.IsRunning)
+            {
+                if (despawnAfter.Expired(Runner)) Runner.Despawn(Object);
+                return;
+            }
             if (!IsClaimed)
             {
                 return;

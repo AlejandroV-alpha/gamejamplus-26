@@ -630,6 +630,8 @@ GameObject:
   - component: {fileID: 5931604338576117655}
   - component: {fileID: 7120236602243917132}
   - component: {fileID: 5271227319738946965}
+  - component: {fileID: 2819627458678147882}
+  - component: {fileID: 6983377339507177076}
   m_Layer: 2
   m_Name: A_MarsSandstormAstronaut
   m_TagString: Untagged
@@ -682,6 +684,8 @@ MonoBehaviour:
   - {fileID: 7169554143392359341}
   - {fileID: 900500001}
   - {fileID: 5931604338576117655}
+  - {fileID: 2819627458678147882}
+  - {fileID: 6983377339507177076}
   ForceRemoteRenderTimeframe: 0
 --- !u!54 &1572134779871167590
 Rigidbody:
@@ -844,6 +848,9 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 57b1499ca0d04d23b250bf09d7a37089, type: 2}
   - {fileID: 11400000, guid: 6453654fe44ffdc429c6fff7b65ceb59, type: 2}
   - {fileID: 11400000, guid: 7ec212f3fbb1eef4f9d6494a2b8d86a0, type: 2}
+  - {fileID: 11400000, guid: b664c05e1cff2aa46bf4044d125ba007, type: 2}
+  - {fileID: 11400000, guid: fe963d5cfe3259e4882942ae5540f20e, type: 2}
+  - {fileID: 11400000, guid: fb38869e8509b0a4db810781f1881176, type: 2}
 --- !u!114 &5253031688877814740
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -976,6 +983,35 @@ MonoBehaviour:
   hearingDistance: 22
   pushToTalk: 1
   pushToTalkKey: 36
+--- !u!114 &2819627458678147882
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3827797598262270737}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f30e1c0cb0ed03841b98dcd9e2e742e4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GameJam.Inventory.InventoryDeathRecovery
+--- !u!114 &6983377339507177076
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3827797598262270737}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 18221863ddd62df44bc070131a5544cf, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GameJam.Multiplayer.PlayerInteractionAction
+  feedbackMaterial: {fileID: 2100000, guid: e66d2b428db84106b7c426dce22f1003, type: 2}
+  weaponVisual: {fileID: 0}
+  pickupSeconds: 0.8
+  repairSeconds: 2.4
+  _ActionKind: 0
 --- !u!1 &3836924219179165295
 GameObject:
   m_ObjectHideFlags: 0

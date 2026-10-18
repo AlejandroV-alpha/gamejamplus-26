@@ -11,10 +11,10 @@ namespace GameJam.Inventory
     [DisallowMultipleComponent]
     public sealed class Inventory : NetworkBehaviour
     {
-        private const int MaterialTypeCount = 5;
+        private const int MaterialTypeCount = 8;
 
         [SerializeField]
-        [Tooltip("Los cinco tipos de material. Conservar el mismo orden en todos los clientes.")]
+        [Tooltip("Materiales y piezas recuperadas. Conservar el mismo orden en todos los clientes.")]
         private MaterialData[] materials = new MaterialData[MaterialTypeCount];
 
         // Fusion reemplaza esta propiedad por acceso al estado replicado.
