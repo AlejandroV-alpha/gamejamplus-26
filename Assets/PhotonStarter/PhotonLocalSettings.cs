@@ -6,6 +6,37 @@ namespace GameJam.Multiplayer
     public static class PhotonLocalSettings
     {
         public static string LastDiagnostic { get; private set; } = "Sin comprobar";
+        public static string LastVoiceDiagnostic { get; private set; } = "Sin comprobar";
+
+        public static string ReadVoiceAppId()
+        {
+            string path = System.IO.Path.Combine(System.Environment.GetFolderPath(System.Environment.SpecialFolder.LocalApplicationData), "GameJamPlus26", "Photon", "voice-appid.dpapi");
+            if (!System.IO.File.Exists(path))
+            {
+                var directory = new System.IO.DirectoryInfo(System.IO.Path.GetDirectoryName(UnityEngine.Application.dataPath));
+                for (int i = 0; i < 6 && directory != null; i++, directory = directory.Parent)
+                {
+                    var candidate = System.IO.Path.Combine(directory.FullName, ".local", "Photon", "voice-appid.dpapi");
+                    if (System.IO.File.Exists(candidate)) { path = candidate; break; }
+                }
+            }
+            if (!System.IO.File.Exists(path)) { LastVoiceDiagnostic = "Falta configurar el App ID local de Voice."; return null; }
+            byte[] bytes = null;
+            try
+            {
+                bytes = Unprotect(System.IO.File.ReadAllBytes(path));
+                string id = System.Text.Encoding.UTF8.GetString(bytes).Trim();
+                if (!System.Guid.TryParse(id, out _)) { LastVoiceDiagnostic = "El App ID cifrado de Voice no tiene formato válido."; return null; }
+                LastVoiceDiagnostic = "Voice: configuración cifrada cargada.";
+                return id;
+            }
+            catch (System.Exception exception) when (exception is System.IO.IOException || exception is System.UnauthorizedAccessException || exception is System.ComponentModel.Win32Exception || exception is System.DllNotFoundException)
+            {
+                LastVoiceDiagnostic = "No se pudo leer la configuración cifrada de Voice en este usuario de Windows.";
+                return null;
+            }
+            finally { if (bytes != null) System.Array.Clear(bytes, 0, bytes.Length); }
+        }
         [UnityEngine.RuntimeInitializeOnLoadMethod(UnityEngine.RuntimeInitializeLoadType.BeforeSceneLoad)]
         private static void Initialize()
         {
