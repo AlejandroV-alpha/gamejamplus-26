@@ -13456,6 +13456,7 @@ MonoBehaviour:
   spawnPoint: {fileID: 1044430306}
   maxPlayers: 4
   roomName: Mars-Coop
+  groundProbeHeight: 100
 --- !u!4 &464451377
 Transform:
   m_ObjectHideFlags: 0
@@ -59221,7 +59222,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5714082956184778013, guid: 2b8863f40fa3b804793911245b831ded, type: 3}
       propertyPath: GlobalObjectIdHash
-      value: 681691879
+      value: 397824742
       objectReference: {fileID: 0}
     - target: {fileID: 5714082956184778013, guid: 2b8863f40fa3b804793911245b831ded, type: 3}
       propertyPath: SceneMigrationSynchronization
@@ -64977,7 +64978,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5714082956184778013, guid: 2b8863f40fa3b804793911245b831ded, type: 3}
       propertyPath: GlobalObjectIdHash
-      value: 2338717449
+      value: 1708884972
       objectReference: {fileID: 0}
     - target: {fileID: 5714082956184778013, guid: 2b8863f40fa3b804793911245b831ded, type: 3}
       propertyPath: SceneMigrationSynchronization
@@ -81958,7 +81959,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5714082956184778013, guid: 2b8863f40fa3b804793911245b831ded, type: 3}
       propertyPath: GlobalObjectIdHash
-      value: 2281895052
+      value: 3022083906
       objectReference: {fileID: 0}
     - target: {fileID: 5714082956184778013, guid: 2b8863f40fa3b804793911245b831ded, type: 3}
       propertyPath: SceneMigrationSynchronization
@@ -125903,7 +125904,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5714082956184778013, guid: 2b8863f40fa3b804793911245b831ded, type: 3}
       propertyPath: GlobalObjectIdHash
-      value: 578638176
+      value: 3757933396
       objectReference: {fileID: 0}
     - target: {fileID: 5714082956184778013, guid: 2b8863f40fa3b804793911245b831ded, type: 3}
       propertyPath: SceneMigrationSynchronization
