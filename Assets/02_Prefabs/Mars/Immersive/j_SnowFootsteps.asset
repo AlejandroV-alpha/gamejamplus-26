@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0260a8f7aaf991f43b9fc8fd56c6da6b, type: 3}
+  m_Name: j_SnowFootsteps
+  m_EditorClassIdentifier: Assembly-CSharp::GameJam.Mars.MarsFootstepProfile
+  leftPrint: {fileID: 11400000, guid: 49d0c2b8b381b42498cf139d2799f976, type: 2}
+  rightPrint: {fileID: 11400000, guid: a17da7dac9a9bb74d81a06b754634c80, type: 2}
+  leftSound: {fileID: 11400000, guid: ef85e4413cf411c48b1507f69dbfc8eb, type: 2}
+  rightSound: {fileID: 11400000, guid: d67b7dfa43c8a37419b26b687e69b8d2, type: 2}
+  leftMark: {fileID: 2100000, guid: f20a0c7547fab21408ced098cf9712f2, type: 2}
+  rightMark: {fileID: 2100000, guid: 232b1ca42f6f62648b5867f1c0cc5f1b, type: 2}
+  footprintSize: {x: 0.28, y: 0.48}
+  volume: 0.3
+  lifetime: 22

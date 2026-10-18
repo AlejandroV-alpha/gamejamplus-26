@@ -6,6 +6,7 @@ Shader "GameJam/Mars/TwinSunSky"
         _Horizon("Horizon haze",Color)=(0.94,0.49,0.29,1)
         _SunA("Primary sun direction",Vector)=(-0.4,0.14,0.906,0)
         _SunB("Secondary sun direction",Vector)=(-0.21,0.07,0.975,0)
+        _Haze("Low atmospheric haze",Color)=(0.70,0.48,0.42,1)
     }
     SubShader
     {
@@ -17,7 +18,7 @@ Shader "GameJam/Mars/TwinSunSky"
             #pragma vertex Vert
             #pragma fragment Frag
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
-            float4 _Zenith, _Horizon, _SunA, _SunB;
+            float4 _Zenith, _Horizon, _SunA, _SunB, _Haze;
             struct Attributes { float4 positionOS:POSITION; };
             struct Varyings { float4 positionCS:SV_POSITION; float3 direction:TEXCOORD0; };
             Varyings Vert(Attributes input)
@@ -32,6 +33,10 @@ Shader "GameJam/Mars/TwinSunSky"
                 float3 d=normalize(input.direction);
                 float altitude=saturate(d.y);
                 float3 color=lerp(_Horizon.rgb,_Zenith.rgb,pow(altitude,0.6));
+                float lowHaze=exp(-abs(d.y)*15)*.38;
+                color=lerp(color,_Haze.rgb,lowHaze);
+                float wisps=sin(d.x*13+d.z*7+sin(d.z*19)*.5);
+                color+=float3(.022,.016,.012)*wisps*exp(-pow((d.y-.17)*7,2));
                 float a=length(d-normalize(_SunA.xyz));
                 float b=length(d-normalize(_SunB.xyz));
                 color+=float3(1.0,0.42,0.10)*exp(-a*13)*0.7;

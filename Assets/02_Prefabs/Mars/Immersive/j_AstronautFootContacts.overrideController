@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!221 &22100000
+AnimatorOverrideController:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: j_AstronautFootContacts
+  m_Controller: {fileID: 9100000, guid: a8479a0604b6ec04aa461b845c07b3a0, type: 2}
+  m_Clips:
+  - m_OriginalClip: {fileID: 7400000, guid: 064a5a7b7f0c47942b496569fb4d00a1, type: 2}
+    m_OverrideClip: {fileID: 0}
+  - m_OriginalClip: {fileID: 7400000, guid: 39c718482cbc621419a28af00de94274, type: 2}
+    m_OverrideClip: {fileID: 7400000, guid: bff2ca8e2965ffb4ca0d73b02f043c8b, type: 2}
+  - m_OriginalClip: {fileID: 7400000, guid: ce0aa730c92058e49b7543fdfcb8e318, type: 2}
+    m_OverrideClip: {fileID: 7400000, guid: 7b1a2427db97cd248b44078cbbf60e3e, type: 2}
+  - m_OriginalClip: {fileID: 7400000, guid: 8c12d8ab13d46964fb7da8697186d045, type: 2}
+    m_OverrideClip: {fileID: 0}

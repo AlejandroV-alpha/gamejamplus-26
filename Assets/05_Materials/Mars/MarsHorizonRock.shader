@@ -7,6 +7,8 @@ Shader "GameJam/Mars/HorizonRock"
         _TextureScale("Grain scale", Float) = 0.12
         _GrainStrength("Grain strength", Range(0,1)) = 1
         _StrataStrength("Strata strength", Range(0,1)) = 1
+        _HazeColor("Distance haze", Color) = (0.58,0.40,0.36,1)
+        _HazeStrength("Distance haze strength", Range(0,1)) = 0.18
     }
     SubShader
     {
@@ -27,6 +29,8 @@ Shader "GameJam/Mars/HorizonRock"
                 float _TextureScale;
                 float _GrainStrength;
                 float _StrataStrength;
+                float4 _HazeColor;
+                float _HazeStrength;
             CBUFFER_END
             struct Attributes { float4 positionOS:POSITION; float3 normalOS:NORMAL; UNITY_VERTEX_INPUT_INSTANCE_ID };
             struct Varyings { float4 positionCS:SV_POSITION; float3 positionWS:TEXCOORD0; float3 normalWS:TEXCOORD1; float fog:TEXCOORD2; };
@@ -55,6 +59,9 @@ Shader "GameJam/Mars/HorizonRock"
                 float toon=0.38+0.28*smoothstep(0.22,0.28,diffuse)+0.34*smoothstep(0.65,0.71,diffuse);
                 half3 lighting=SampleSH(n)*0.8+sun.color*toon;
                 half3 color=lerp(half3(1,1,1),grain,_GrainStrength)*_BaseColor.rgb*lerp(1,bands,_StrataStrength)*lighting;
+                float broad=sin(input.positionWS.x*.013+sin(input.positionWS.z*.009))*0.045;
+                color*=1+broad;
+                color=lerp(color,_HazeColor.rgb,_HazeStrength);
                 return half4(MixFog(color,input.fog),1);
             }
             ENDHLSL

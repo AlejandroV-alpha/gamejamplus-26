@@ -623,6 +623,7 @@ GameObject:
   - component: {fileID: 8230556496750205269}
   - component: {fileID: 1105301317831960609}
   - component: {fileID: 7969052409205033395}
+  - component: {fileID: 2804070628670475856}
   m_Layer: 2
   m_Name: j_FusionAstronaut
   m_TagString: Untagged
@@ -824,6 +825,21 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 57b1499ca0d04d23b250bf09d7a37089, type: 2}
   - {fileID: 11400000, guid: 6453654fe44ffdc429c6fff7b65ceb59, type: 2}
   - {fileID: 11400000, guid: 7ec212f3fbb1eef4f9d6494a2b8d86a0, type: 2}
+--- !u!114 &2804070628670475856
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3827797598262270737}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e50afcf041a95cf44af342cc3d4bfaa8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GameJam.Mars.MarsFusionFootsteps
+  decalPrefab: {fileID: 1961025457343015111, guid: 3fa22a2a6d8ea4c4086ed372255277c2, type: 3}
+  leftFoot: {fileID: 2478181999759414505}
+  rightFoot: {fileID: 3627647319763041435}
 --- !u!1 &3836924219179165295
 GameObject:
   m_ObjectHideFlags: 0
@@ -1877,6 +1893,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2922759979444337575}
   - component: {fileID: 1861680653700957010}
+  - component: {fileID: 6717346547320147478}
   m_Layer: 2
   m_Name: AstronautVisual
   m_TagString: Untagged
@@ -1911,7 +1928,7 @@ Animator:
   m_GameObject: {fileID: 8598949745826544242}
   m_Enabled: 1
   m_Avatar: {fileID: 9000000, guid: 2e1ef1324ed4a6247867216909bd9690, type: 3}
-  m_Controller: {fileID: 9100000, guid: a8479a0604b6ec04aa461b845c07b3a0, type: 2}
+  m_Controller: {fileID: 22100000, guid: 42c23431ee4a55246b555364f3fcf8d8, type: 2}
   m_CullingMode: 0
   m_UpdateMode: 0
   m_ApplyRootMotion: 0
@@ -1923,6 +1940,18 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
+--- !u!114 &6717346547320147478
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8598949745826544242}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 851eacc300096494d9dbc7f06074e4fa, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GameJam.Mars.MarsFootContactEvents
 --- !u!1 &8891927565827229894
 GameObject:
   m_ObjectHideFlags: 0
