@@ -16,6 +16,8 @@ namespace GameJam.Combat
     public sealed class Gun : NetworkBehaviour
     {
         [SerializeField] private Transform firePoint;
+        [SerializeField] private Transform aimPoint;
+        [SerializeField] private Transform recoilTarget;
         [SerializeField] private AudioSource audioSource;
         [SerializeField] private AudioClip gunshot;
         [SerializeField] private AudioClip gunreload;
@@ -54,8 +56,8 @@ namespace GameJam.Combat
             character = GetComponentInParent<Character>();
             characterInput = GetComponentInParent<CharacterInput>();
             avatar = GetComponentInParent<MarsFusionAvatar>();
-            restPosition = transform.localPosition;
-            restRotation = transform.localRotation;
+            restPosition = RecoilBody.localPosition;
+            restRotation = RecoilBody.localRotation;
             if (tracer != null)
             {
                 tracer.enabled = false;
@@ -84,6 +86,8 @@ namespace GameJam.Combat
             {
                 return;
             }
+
+            UpdateAimPoint();
 
             Keyboard keyboard = Keyboard.current;
             if (keyboard != null && keyboard.rKey.wasPressedThisFrame)
@@ -402,14 +406,14 @@ namespace GameJam.Combat
             while (elapsed < recoilDuration)
             {
                 float progress = elapsed / recoilDuration;
-                transform.localPosition = Vector3.Lerp(kickedPosition, restPosition, progress);
-                transform.localRotation = Quaternion.Slerp(kickedRotation, restRotation, progress);
+                RecoilBody.localPosition = Vector3.Lerp(kickedPosition, restPosition, progress);
+                RecoilBody.localRotation = Quaternion.Slerp(kickedRotation, restRotation, progress);
                 elapsed += Time.deltaTime;
                 yield return null;
             }
 
-            transform.localPosition = restPosition;
-            transform.localRotation = restRotation;
+            RecoilBody.localPosition = restPosition;
+            RecoilBody.localRotation = restRotation;
             recoilCoroutine = null;
         }
 
@@ -425,9 +429,34 @@ namespace GameJam.Combat
             {
                 tracer.enabled = false;
             }
-            transform.localPosition = restPosition;
-            transform.localRotation = restRotation;
+            RecoilBody.localPosition = restPosition;
+            RecoilBody.localRotation = restRotation;
         }
+
+        /// <summary>
+        /// Coloca el AimPoint del rig en el impacto del mismo rayo que usa el disparo.
+        /// </summary>
+        private void UpdateAimPoint()
+        {
+            if (aimPoint == null || firePoint == null)
+            {
+                return;
+            }
+
+            if (aimCamera == null)
+            {
+                aimCamera = Camera.main;
+            }
+            if (aimCamera == null)
+            {
+                return;
+            }
+
+            FindShotImpact(firePoint.position, out Vector3 endpoint, out _);
+            aimPoint.position = endpoint;
+        }
+
+        private Transform RecoilBody => recoilTarget != null ? recoilTarget : transform;
 
         /// <summary>
         /// Valida autoridad, vida, tablet y controles antes de aceptar una accion.

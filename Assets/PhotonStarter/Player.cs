@@ -43,6 +43,7 @@ namespace Starter.ThirdPersonCharacter
 
         [Header("Aim Rig")]
         public MultiAimConstraint AimHand;
+        public MultiAimConstraint AimBody;
         public TwoBoneIKConstraint RightHandGrabPistol;
         public TwoBoneIKConstraint LeftHandGrabPistol;
         public float AimWeightBlendDuration = 0.2f;
@@ -69,10 +70,17 @@ namespace Starter.ThirdPersonCharacter
         private GameObject _crosshair;
         private const float CrosshairAimThreshold = 0.85f;
         private GameJam.Multiplayer.MarsFusionAvatar _avatar;
+        private int _handsLayer = -1;
 
         public override void Spawned()
         {
             _avatar = GetComponent<GameJam.Multiplayer.MarsFusionAvatar>();
+            if (Animator != null)
+            {
+                _handsLayer = Animator.GetLayerIndex("HandsLayer");
+                if (_handsLayer >= 0)
+                    Animator.SetLayerWeight(_handsLayer, 0f);
+            }
             if (HasStateAuthority)
                 SetupLocalCameras();
         }
@@ -305,10 +313,14 @@ namespace Starter.ThirdPersonCharacter
             _aimBlend = Mathf.SmoothDamp(_aimBlend, aimingPose ? 1f : 0f, ref _aimBlendVelocity, duration);
             if (AimHand != null)
                 AimHand.weight = _aimBlend;
+            if (AimBody != null)
+                AimBody.weight = _aimBlend;
             if (LeftHandGrabPistol != null)
                 LeftHandGrabPistol.weight = _aimBlend;
             if (RightHandGrabPistol != null)
                 RightHandGrabPistol.weight = _aimBlend;
+            if (Animator != null && _handsLayer >= 0)
+                Animator.SetLayerWeight(_handsLayer, _aimBlend);
         }
 
         // Animation event
