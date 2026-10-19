@@ -28,6 +28,8 @@ namespace GameJam.Multiplayer
         private bool previousBackground;
         private static string shutdownMessage;
         private int connectionAttempt;
+        private PlayerRef sessionHost;
+        private bool hostDepartureHandled;
 
         private void LogStage(string stage, string details = "") =>
             Debug.Log("[Mars Fusion pid=" + System.Diagnostics.Process.GetCurrentProcess().Id + " attempt=" + connectionAttempt + "] stage=" + stage + " " + details, this);
@@ -50,7 +52,7 @@ namespace GameJam.Multiplayer
                 if (runner == null || !runner.IsRunning) continue;
                 Runner = runner;
                 FusionLoadDiagnostics.Attach(runner);
-                runner.GetComponent<NetworkEvents>()?.OnShutdown.AddListener(OnShutdown);
+                AttachSessionEvents(runner);
                 Status = "Conectado — " + runner.SessionInfo.Name;
                 LogStage("runner-adopted", "scene=" + SceneManager.GetActiveScene().name);
                 SetMenu(false);
@@ -90,8 +92,7 @@ namespace GameJam.Multiplayer
             LogStage("runner-created");
             try
             {
-                var events = runner.GetComponent<NetworkEvents>();
-                events.OnShutdown.AddListener(OnShutdown);
+                AttachSessionEvents(runner);
                 var scenes = runner.GetComponent<NetworkSceneManagerDefault>();
                 if (scenes == null) scenes = runner.gameObject.AddComponent<NetworkSceneManagerDefault>();
                 Status = offline ? "Iniciando prueba local..." : "Conectando con Photon...";
@@ -107,6 +108,7 @@ namespace GameJam.Multiplayer
                 });
                 LogStage("start-result", "ok=" + result.Ok + " reason=" + result.ShutdownReason);
                 if (!result.Ok) throw new InvalidOperationException(result.ShutdownReason.ToString());
+                RememberSessionHost(runner);
                 // StartGame can finish while the default scene manager is still taking over the scene.
                 // Wait before spawning, otherwise scene cleanup can remove the new player.
                 while (scenes != null && scenes.IsBusy && runner != null && runner.IsRunning)
@@ -220,7 +222,9 @@ namespace GameJam.Multiplayer
         {
             if (Busy) return;
             Busy = true;
-            try { if (Runner != null) await Runner.Shutdown(); }
+            var runner = Runner;
+            DetachSessionEvents(runner);
+            try { if (runner != null) await runner.Shutdown(); }
             finally
             {
                 Runner = null; Busy = false; SetMenu(true);
@@ -234,6 +238,63 @@ namespace GameJam.Multiplayer
                         SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
                 }
             }
+        }
+
+        private void AttachSessionEvents(NetworkRunner runner)
+        {
+            var events = runner.GetComponent<NetworkEvents>();
+            if (events == null) return;
+            events.OnShutdown.RemoveListener(OnShutdown);
+            events.PlayerJoined.RemoveListener(OnPlayerJoined);
+            events.PlayerLeft.RemoveListener(OnPlayerLeft);
+            events.OnShutdown.AddListener(OnShutdown);
+            events.PlayerJoined.AddListener(OnPlayerJoined);
+            events.PlayerLeft.AddListener(OnPlayerLeft);
+            RememberSessionHost(runner);
+        }
+
+        private void DetachSessionEvents(NetworkRunner runner)
+        {
+            if (runner == null) return;
+            var events = runner.GetComponent<NetworkEvents>();
+            if (events == null) return;
+            events.OnShutdown.RemoveListener(OnShutdown);
+            events.PlayerJoined.RemoveListener(OnPlayerJoined);
+            events.PlayerLeft.RemoveListener(OnPlayerLeft);
+        }
+
+        private void RememberSessionHost(NetworkRunner runner)
+        {
+            if (runner == null || !runner.IsRunning || runner.GameMode != GameMode.Shared) return;
+            PlayerRef master = runner.GetMasterClient();
+            if (master.IsRealPlayer) sessionHost = master;
+        }
+
+        private void OnPlayerJoined(NetworkRunner runner, PlayerRef player)
+        {
+            if (runner == null || runner != Runner) return;
+            RememberSessionHost(runner);
+        }
+
+        /// <summary>
+        /// En modo compartido el anfitrion es el Master Client. Si se va, la sala no se cierra sola:
+        /// el resto vuelve al lobby y la partida termina.
+        /// </summary>
+        private void OnPlayerLeft(NetworkRunner runner, PlayerRef player)
+        {
+            if (hostDepartureHandled || runner == null || runner != Runner || runner.GameMode != GameMode.Shared) return;
+            if (!sessionHost.IsRealPlayer || player != sessionHost) return;
+            hostDepartureHandled = true;
+            shutdownMessage = "El anfitrión salió de la partida. Volviendo al lobby...";
+            Status = shutdownMessage;
+            LogStage("host-left", "player=" + player);
+            StartCoroutine(ReturnLobbyAfterHostLeft());
+        }
+
+        private System.Collections.IEnumerator ReturnLobbyAfterHostLeft()
+        {
+            yield return null;
+            if (this != null && Runner != null) _ = Disconnect();
         }
 
         private void OnShutdown(NetworkRunner runner, ShutdownReason reason)
@@ -317,6 +378,7 @@ namespace GameJam.Multiplayer
 
         private void OnDestroy()
         {
+            DetachSessionEvents(Runner);
             Cursor.lockState = previousLock;
             Cursor.visible = previousVisible;
             Application.runInBackground = previousBackground;
