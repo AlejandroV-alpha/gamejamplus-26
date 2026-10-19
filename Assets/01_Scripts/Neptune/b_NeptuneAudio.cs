@@ -24,6 +24,19 @@ public sealed class b_NeptuneAudio : MonoBehaviour
     {
         weather = FindFirstObjectByType<b_NeptuneWeather>();
         ScheduleCrack();
+        var clip = Resources.Load<AudioClip>("Music/Neptune/MusicaAmbienteNeptuno");
+        if (clip != null)
+        {
+            if (musicSource == null) musicSource = gameObject.AddComponent<AudioSource>();
+            musicSource.Stop();
+            musicSource.playOnAwake = false;
+            musicSource.clip = clip;
+            musicSource.loop = true;
+            musicSource.spatialBlend = 0f;
+            musicSource.volume = 0f;
+            musicSource.priority = 160;
+            musicSource.Play();
+        }
         // Offset the two wind loops so the gust layer does not double the same waveform.
         if (gustSource != null && gustSource.clip != null)
             gustSource.time = gustSource.clip.length * .37f;
@@ -31,6 +44,11 @@ public sealed class b_NeptuneAudio : MonoBehaviour
 
     void Update()
     {
+        if (musicSource != null && musicSource.clip != null)
+        {
+            float targetVolume = GameJam.Multiplayer.SceneTransitionVideo.IsPresent ? 0f : .25f;
+            musicSource.volume = Mathf.MoveTowards(musicSource.volume, targetVolume, Time.unscaledDeltaTime * .3f);
+        }
         float gust = weather != null ? weather.GustStrength : 0;
         float smoothing = 1 - Mathf.Exp(-Time.deltaTime * 2);
         if (windSource != null)

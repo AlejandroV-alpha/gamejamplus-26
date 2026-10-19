@@ -37,8 +37,34 @@ public sealed class JungleNightmareFusionEnemy : NetworkBehaviour, ITakeDamage
 
     public bool IsAlive => Object != null && Object.IsValid && !Dead;
 
+    AudioSource monsterVoice;
+
+    void SetupMonsterVoice()
+    {
+        var clip = Resources.Load<AudioClip>("Audio/Monsters/JungleNightmare");
+        if (clip == null) return;
+        monsterVoice = gameObject.AddComponent<AudioSource>();
+        monsterVoice.playOnAwake = false;
+        monsterVoice.loop = false;
+        monsterVoice.clip = clip;
+        monsterVoice.volume = .6f;
+        monsterVoice.spatialBlend = 1f;
+        monsterVoice.rolloffMode = AudioRolloffMode.Linear;
+        monsterVoice.minDistance = 3f;
+        monsterVoice.maxDistance = 35f;
+        monsterVoice.dopplerLevel = 0f;
+        monsterVoice.priority = 128;
+    }
+
+    void PlayMonsterVoice()
+    {
+        if (monsterVoice != null && !monsterVoice.isPlaying
+            && !SceneTransitionVideo.IsPresent) monsterVoice.Play();
+    }
+
     public override void Spawned()
     {
+        SetupMonsterVoice();
         actor = GetComponentInChildren<FrostActor>();
         bodyCollider = GetComponent<Collider>();
         // Las variantes grandes pegan mas fuerte, aguantan mas y alcanzan mas lejos.
@@ -129,6 +155,7 @@ public sealed class JungleNightmareFusionEnemy : NetworkBehaviour, ITakeDamage
         if (Dead && !shownDead)
         {
             shownDead = true;
+            if (monsterVoice != null) monsterVoice.Stop();
             deathStartedAt = Time.time;
             deathScale = transform.localScale;
             var anim = actor.GetComponent<Animator>();
@@ -151,6 +178,7 @@ public sealed class JungleNightmareFusionEnemy : NetworkBehaviour, ITakeDamage
         if (AttackCount != shownAttacks)
         {
             shownAttacks = AttackCount;
+            PlayMonsterVoice();
             actor.Attack();
         }
     }
@@ -244,7 +272,7 @@ public sealed class JungleNightmareFusionEnemy : NetworkBehaviour, ITakeDamage
         if (target == null || !target.IsAlive) return;
         var delta = target.transform.position - transform.position; delta.y = 0;
         if (delta.magnitude > attackRange + .5f || Vector3.Angle(transform.forward, delta) > 80) return;
-        ((ITakeDamage)target).TakeDamage(Mathf.CeilToInt(damage));
+        target.TakeMonsterDamage(Mathf.CeilToInt(damage));
         // Solo los grandes congelan; los medianos solo hacen dano.
         if (transform.localScale.x >= freezeMinScale) RPC_FrostHit(target.Object);
     }

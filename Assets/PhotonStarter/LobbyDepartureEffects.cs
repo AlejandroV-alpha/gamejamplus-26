@@ -11,6 +11,7 @@ namespace GameJam.Multiplayer
         private static LobbyDepartureEffects current;
         private readonly List<(Transform part, Vector3 closed)> doorParts = new();
         private GameObject portal;
+        private AudioSource lobbyMusic;
         private AudioSource alarm;
         private AudioClip alarmClip;
         private AudioSource collisions;
@@ -26,6 +27,18 @@ namespace GameJam.Multiplayer
         private void Start()
         {
             current = this;
+            var lobbyClip = Resources.Load<AudioClip>("Music/Lobby/MusicaDeFondo1");
+            if (lobbyClip != null)
+            {
+                lobbyMusic = gameObject.AddComponent<AudioSource>();
+                lobbyMusic.playOnAwake = false;
+                lobbyMusic.loop = true;
+                lobbyMusic.spatialBlend = 0f;
+                lobbyMusic.volume = 0f;
+                lobbyMusic.priority = 160;
+                lobbyMusic.clip = lobbyClip;
+            }
+            else Debug.LogWarning("[Lobby music] No se encontro MusicaDeFondo1.", this);
             foreach (var part in FindObjectsByType<Transform>())
                 if (part.name == "Puerta_A_Hoja" || part.name == "Puerta_A_Barra"
                     || part.name.StartsWith("Puerta_A_Ventanilla") || part.name.StartsWith("Puerta_A_Relieve")
@@ -81,6 +94,7 @@ namespace GameJam.Multiplayer
 
         private void Update()
         {
+            UpdateLobbyMusic();
             if (alert == null || !alert.DepartureActive) return;
             int phase = alert.DeparturePhase;
             if (soundPhase != phase)
@@ -155,6 +169,19 @@ namespace GameJam.Multiplayer
                 camera.transform.position -= camera.transform.forward * (Mathf.Cos(elapsed*28)*strength*.2f);
         }
 
+        private void UpdateLobbyMusic()
+        {
+            if (lobbyMusic == null) return;
+            var runner = alert != null ? alert.Runner : null;
+            bool waiting = runner != null && runner.IsRunning
+                && runner.GetPlayerObject(runner.LocalPlayer) != null
+                && !alert.DepartureActive && !SceneTransitionVideo.IsPresent;
+            if (waiting && !lobbyMusic.isPlaying) lobbyMusic.Play();
+            lobbyMusic.volume = Mathf.MoveTowards(lobbyMusic.volume, waiting ? .25f : 0f,
+                Time.unscaledDeltaTime * .3f);
+            if (!waiting && lobbyMusic.volume <= 0f && lobbyMusic.isPlaying) lobbyMusic.Stop();
+        }
+
         private void LateUpdate()
         {
             // Run after Cinemachine's aim/shoulder blend has placed the local camera.
@@ -171,6 +198,7 @@ namespace GameJam.Multiplayer
         private void OnDestroy()
         {
             if (current == this) current = null;
+            if (lobbyMusic != null) lobbyMusic.Stop();
             if (alarm != null) alarm.Stop();
             if (collisions != null) collisions.Stop();
             if (alarmClip != null) Destroy(alarmClip);

@@ -209,17 +209,49 @@ namespace GameJam.Multiplayer
             if (Object != null && Object.IsValid && HasStateAuthority) HurtSequence++;
         }
 
+        private AudioSource monsterHurtAudio;
+        private AudioClip monsterHurtClip;
+
+        public void TakeMonsterDamage(int damage)
+        {
+            if (damage <= 0 || Object == null || !Object.IsValid) return;
+            RPC_ForwardDamage(damage, true);
+        }
+
         public void TakeDamage(int damage)
         {
             if (damage <= 0 || Object == null || !Object.IsValid) return;
             RPC_ForwardDamage(damage);
         }
 
+        private void PlayMonsterHurtSound()
+        {
+            if (monsterHurtClip == null)
+                monsterHurtClip = Resources.Load<AudioClip>("Audio/Player/SonidoJugadorReccibeDano");
+            if (monsterHurtClip == null) return;
+            if (monsterHurtAudio == null)
+            {
+                monsterHurtAudio = gameObject.AddComponent<AudioSource>();
+                monsterHurtAudio.playOnAwake = false;
+                monsterHurtAudio.spatialBlend = 0f;
+                monsterHurtAudio.volume = .65f;
+                monsterHurtAudio.priority = 64;
+            }
+            monsterHurtAudio.PlayOneShot(monsterHurtClip);
+        }
+
         [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
-        private void RPC_ForwardDamage(int damage)
+        private void RPC_ForwardDamage(int damage, bool fromMonster = false)
         {
             if (damage <= 0) return;
-            if (HealthSource != null) HealthSource.TakeDamage(damage);
+            if (HealthSource != null)
+            {
+                var health = HealthSource;
+                float before = health.CurrentHealth;
+                health.TakeDamage(damage);
+                // Only the victim's authority receives this RPC and plays the 2D feedback once.
+                if (fromMonster && health.CurrentHealth < before) PlayMonsterHurtSound();
+            }
             else if (!warnedMissingHealth)
             {
                 warnedMissingHealth = true;

@@ -47,6 +47,7 @@ public sealed class GusanoExcavadorFusion : NetworkBehaviour, ITakeDamage
     [Networked] Vector3 SyncedPosition { get; set; }
     [Networked] Quaternion SyncedRotation { get; set; }
 
+    AudioSource wormVoice;
     Animator animator;
     Renderer[] renderers;
     Vector3 home;
@@ -57,6 +58,21 @@ public sealed class GusanoExcavadorFusion : NetworkBehaviour, ITakeDamage
 
     public override void Spawned()
     {
+        var voiceClip = Resources.Load<AudioClip>("Audio/Monsters/GusanoExcavador");
+        if (voiceClip != null)
+        {
+            wormVoice = gameObject.AddComponent<AudioSource>();
+            wormVoice.playOnAwake = false;
+            wormVoice.loop = false;
+            wormVoice.clip = voiceClip;
+            wormVoice.volume = .6f;
+            wormVoice.spatialBlend = 1f;
+            wormVoice.rolloffMode = AudioRolloffMode.Linear;
+            wormVoice.minDistance = 3f;
+            wormVoice.maxDistance = 35f;
+            wormVoice.dopplerLevel = 0f;
+            wormVoice.priority = 128;
+        }
         animator = GetComponentInChildren<Animator>();
         if (animator != null) animator.applyRootMotion = false;
         renderers = GetComponentsInChildren<Renderer>();
@@ -129,7 +145,7 @@ public sealed class GusanoExcavadorFusion : NetworkBehaviour, ITakeDamage
                 if (Runner.SimulationTime >= nextHoldDamage)
                 {
                     nextHoldDamage = Runner.SimulationTime + holdDamageInterval;
-                    ((ITakeDamage)victim).TakeDamage(holdDamage);
+                    victim.TakeMonsterDamage(holdDamage);
                 }
                 break;
         }
@@ -156,6 +172,12 @@ public sealed class GusanoExcavadorFusion : NetworkBehaviour, ITakeDamage
         foreach (var r in renderers) if (r.enabled != visible) r.enabled = visible;
         if (shown == Current) return;
         shown = Current;
+        if (wormVoice != null)
+        {
+            if (Current == State.Hidden || Current == State.Burrow) wormVoice.Stop();
+            else if ((Current == State.Emerge || Current == State.EmergeJump || Current == State.Attack || Current == State.Hold)
+                && !wormVoice.isPlaying && !SceneTransitionVideo.IsPresent) wormVoice.Play();
+        }
         string clip = ClipFor(Current);
         if (clip != null)
         {
@@ -230,7 +252,7 @@ public sealed class GusanoExcavadorFusion : NetworkBehaviour, ITakeDamage
         if (target == null || damage <= 0) return;
         Vector3 delta = Flat(target.transform.position - transform.position);
         if (delta.magnitude > attackRange + 1f || Vector3.Angle(transform.forward, delta) > 70f) return;
-        ((ITakeDamage)target).TakeDamage(damage);
+        target.TakeMonsterDamage(damage);
         if (target.IsAlive && target.Object != null)
         {
             // Lo atrapa entre los dientes hasta que lo liberen a balazos.
