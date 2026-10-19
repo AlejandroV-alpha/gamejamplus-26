@@ -10,6 +10,11 @@ namespace GameJam.Multiplayer
 
         public static string ReadVoiceAppId()
         {
+#if !UNITY_EDITOR
+            string bundledId = PhotonBuildConfiguration.VoiceAppId;
+            LastVoiceDiagnostic = System.Guid.TryParse(bundledId, out _) ? "Voice: configuración de distribución cargada." : "Falta configuración de Voice en esta build; vuelve a generarla.";
+            return bundledId;
+#else
             string path = System.IO.Path.Combine(System.Environment.GetFolderPath(System.Environment.SpecialFolder.LocalApplicationData), "GameJamPlus26", "Photon", "voice-appid.dpapi");
             if (!System.IO.File.Exists(path))
             {
@@ -36,16 +41,29 @@ namespace GameJam.Multiplayer
                 return null;
             }
             finally { if (bytes != null) System.Array.Clear(bytes, 0, bytes.Length); }
+#endif
         }
         [UnityEngine.RuntimeInitializeOnLoadMethod(UnityEngine.RuntimeInitializeLoadType.BeforeSceneLoad)]
         private static void Initialize()
         {
+#if UNITY_EDITOR
             Read();
             UnityEngine.Debug.Log("[Photon local config] " + LastDiagnostic);
+#endif
         }
 
         public static FusionAppSettings Read()
         {
+#if !UNITY_EDITOR
+            string bundledId = PhotonBuildConfiguration.FusionAppId;
+            if (!System.Guid.TryParse(bundledId, out _))
+            {
+                LastDiagnostic = "Falta configuración de Fusion en esta build; vuelve a generarla.";
+                return null;
+            }
+            LastDiagnostic = "Configuración de distribución cargada.";
+            return new FusionAppSettings { AppIdFusion = bundledId, AppVersion = "MarsCoop-v1", FixedRegion = string.Empty, ClientLogging = Photon.Client.LogLevel.Error };
+#else
             if (UnityEngine.Application.platform != UnityEngine.RuntimePlatform.WindowsEditor &&
                 UnityEngine.Application.platform != UnityEngine.RuntimePlatform.WindowsPlayer)
             {
@@ -107,6 +125,7 @@ namespace GameJam.Multiplayer
                 LastDiagnostic = "Windows denegó el acceso al archivo cifrado.";
             }
             return null;
+#endif
         }
 
         [System.Runtime.InteropServices.StructLayout(System.Runtime.InteropServices.LayoutKind.Sequential)]
