@@ -198,27 +198,28 @@ namespace GameJam.Combat
             return currentAmmo;
         }
 
+        // Margen para que el rayo de la boca alcance la superficie que ya toco la mira.
+        private const float ShotSurfaceSkin = 0.2f;
+
         /// <summary>
         /// Apunta con la camara y comprueba obstrucciones hasta la boca del arma.
+        /// Si la mira toca un objeto, ese impacto se conserva aunque el rayo desplazado de la boca lo roce y falle.
         /// </summary>
         private Collider FindShotImpact(Vector3 origin, out Vector3 endpoint, out Vector3 normal)
         {
             Ray aimRay = aimCamera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f));
-            Vector3 aimPoint = aimRay.origin + aimRay.direction * range;
-            RaycastHit hit;
-            if (TryGetClosestHit(aimRay.origin, aimRay.direction, range, out hit))
-            {
-                aimPoint = hit.point;
-            }
+            bool aimedAtSurface = TryGetClosestHit(aimRay.origin, aimRay.direction, range, out RaycastHit cameraHit);
+            Vector3 aimPoint = aimedAtSurface ? cameraHit.point : aimRay.GetPoint(range);
 
             // Este segmento impide disparar desde una boca que atraviesa una pared.
             Vector3 shoulder = character.CameraPivot.position;
             Vector3 muzzleOffset = origin - shoulder;
-            if (TryGetClosestHit(shoulder, muzzleOffset.normalized, muzzleOffset.magnitude, out hit))
+            if (muzzleOffset.sqrMagnitude > 0.0001f
+                && TryGetClosestHit(shoulder, muzzleOffset.normalized, muzzleOffset.magnitude, out RaycastHit blocked))
             {
-                endpoint = hit.point;
-                normal = hit.normal;
-                return hit.collider;
+                endpoint = blocked.point;
+                normal = blocked.normal;
+                return blocked.collider;
             }
 
             Collider[] overlaps = Physics.OverlapSphere(origin, 0.015f, hitLayers, QueryTriggerInteraction.Ignore);
@@ -232,18 +233,50 @@ namespace GameJam.Combat
                 }
             }
 
-            Vector3 direction = aimPoint - origin;
-            float shotDistance = Mathf.Min(range, direction.magnitude);
-            if (TryGetClosestHit(origin, direction.normalized, shotDistance, out hit))
+            Vector3 shot = aimPoint - origin;
+            if (shot.sqrMagnitude < 0.0001f)
             {
-                endpoint = hit.point;
-                normal = hit.normal;
-                return hit.collider;
+                return UseAimImpact(aimedAtSurface, cameraHit, origin, out endpoint, out normal);
             }
 
-            endpoint = origin + direction.normalized * shotDistance;
+            Vector3 shotDirection = shot.normalized;
+            float distanceToAim = shot.magnitude;
+            float castDistance = Mathf.Min(range, distanceToAim + (aimedAtSurface ? ShotSurfaceSkin : 0f));
+            if (TryGetClosestHit(origin, shotDirection, castDistance, out RaycastHit muzzleHit)
+                && (!aimedAtSurface || muzzleHit.distance < distanceToAim - 0.05f))
+            {
+                endpoint = muzzleHit.point;
+                normal = muzzleHit.normal;
+                return muzzleHit.collider;
+            }
+
+            if (aimedAtSurface)
+            {
+                endpoint = cameraHit.point;
+                normal = cameraHit.normal;
+                return cameraHit.collider;
+            }
+
+            endpoint = origin + shotDirection * Mathf.Min(range, distanceToAim);
             normal = Vector3.up;
             return null;
+        }
+
+        /// <summary>
+        /// Devuelve el impacto de la mira cuando la boca del arma ya esta sobre ese punto.
+        /// </summary>
+        private Collider UseAimImpact(bool aimedAtSurface, RaycastHit cameraHit, Vector3 origin, out Vector3 endpoint, out Vector3 normal)
+        {
+            if (!aimedAtSurface)
+            {
+                endpoint = origin;
+                normal = Vector3.up;
+                return null;
+            }
+
+            endpoint = cameraHit.point;
+            normal = cameraHit.normal;
+            return cameraHit.collider;
         }
 
         /// <summary>
@@ -254,10 +287,12 @@ namespace GameJam.Combat
             closestHit = default;
             bool found = false;
             float closestDistance = distance;
-            RaycastHit[] hits = Physics.RaycastAll(origin, direction, distance, hitLayers, QueryTriggerInteraction.Ignore);
+            // Algunos objetivos usan colliders trigger para su cuerpo; deben poder recibir disparos.
+            // Los triggers de zonas/sensores siguen ignorados para que no tapen la linea de tiro.
+            RaycastHit[] hits = Physics.RaycastAll(origin, direction, distance, hitLayers, QueryTriggerInteraction.Collide);
             foreach (RaycastHit hit in hits)
             {
-                if (IsOwnCollider(hit.collider))
+                if (!BlocksShot(hit.collider))
                 {
                     continue;
                 }
@@ -270,6 +305,71 @@ namespace GameJam.Combat
             }
 
             return found;
+        }
+
+        /// <summary>
+        /// Un collider solido detiene el tiro. Un trigger solo lo detiene si es el cuerpo
+        /// de algo que recibe dano; las esferas de deteccion se ignoran cuando ya hay cuerpo solido.
+        /// </summary>
+        private bool BlocksShot(Collider target)
+        {
+            if (IsOwnCollider(target))
+            {
+                return false;
+            }
+            if (!target.isTrigger)
+            {
+                return true;
+            }
+            if (!CanReceiveShotDamage(target))
+            {
+                return false;
+            }
+
+            Transform owner = target.transform;
+            foreach (MonoBehaviour component in target.GetComponentsInParent<MonoBehaviour>())
+            {
+                if (component is ITakeDamage)
+                {
+                    owner = component.transform;
+                    break;
+                }
+            }
+
+            foreach (Collider body in owner.GetComponentsInChildren<Collider>())
+            {
+                if (body.enabled && !body.isTrigger)
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// Solo los triggers de entidades con una ruta de dano pueden detener el disparo.
+        /// </summary>
+        private bool CanReceiveShotDamage(Collider target)
+        {
+            if (target.GetComponentInParent<ReksaiFusionEnemy>() != null
+                || target.GetComponentInParent<GusanoExcavadorFusion>() != null
+                || target.GetComponentInParent<JungleNightmareFusionEnemy>() != null
+                || target.GetComponentInParent<MarsFusionAvatar>() != null
+                || target.GetComponentInParent<GiantGolemEnemy>() != null)
+            {
+                return true;
+            }
+
+            foreach (MonoBehaviour component in target.GetComponentsInParent<MonoBehaviour>())
+            {
+                if (component is ITakeDamage)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         /// <summary>
@@ -369,14 +469,14 @@ namespace GameJam.Combat
             {
                 // El impacto espera a que la bala visual llegue al objetivo.
                 EnergyBolt bolt = Instantiate(boltEffect, origin, Quaternion.identity);
-                bolt.Launch(origin, endpoint, hasImpact ? () => ShowImpactEffect(endpoint, normal) : (System.Action)null);
+                bolt.Launch(origin, endpoint, hasImpact ? () => ShowImpactEffect(endpoint, normal, endpoint - origin) : (System.Action)null);
                 return;
             }
 
             ShowTracer(origin, endpoint);
             if (hasImpact)
             {
-                ShowImpactEffect(endpoint, normal);
+                ShowImpactEffect(endpoint, normal, endpoint - origin);
             }
         }
 
@@ -411,15 +511,48 @@ namespace GameJam.Combat
         /// <summary>
         /// Crea un impacto visual local y lo elimina tras su duracion.
         /// </summary>
-        private void ShowImpactEffect(Vector3 position, Vector3 normal)
+        private void ShowImpactEffect(Vector3 position, Vector3 normal, Vector3 shotDirection)
         {
+            Vector3 incomingDirection = shotDirection.sqrMagnitude > 0.0001f
+                ? shotDirection.normalized
+                : Vector3.zero;
+
+            if (normal.sqrMagnitude < 0.0001f)
+            {
+                normal = incomingDirection.sqrMagnitude > 0.0001f ? -incomingDirection : Vector3.up;
+            }
+            else
+            {
+                normal.Normalize();
+            }
+
+            // Mesh colliders on some objects can return a backface normal. Keep the VFX
+            // outside the surface by making the normal face against the incoming shot.
+            if (incomingDirection.sqrMagnitude > 0.0001f && Vector3.Dot(normal, incomingDirection) > 0f)
+            {
+                normal = -normal;
+            }
+
             EnemyBloodFx.TryBleedAt(position, normal);
             if (impactEffect == null)
             {
                 return;
             }
 
-            GameObject effect = Instantiate(impactEffect, position + normal * 0.01f, Quaternion.LookRotation(normal));
+            // Orienta el frente del VFX hacia afuera de la superficie y usa el tiro como referencia
+            // para evitar giros arbitrarios cuando la normal queda cerca del eje vertical.
+            Vector3 effectUp = Vector3.ProjectOnPlane(-incomingDirection, normal);
+            if (effectUp.sqrMagnitude < 0.0001f)
+            {
+                effectUp = Vector3.ProjectOnPlane(Vector3.up, normal);
+            }
+            if (effectUp.sqrMagnitude < 0.0001f)
+            {
+                effectUp = Vector3.ProjectOnPlane(Vector3.right, normal);
+            }
+
+            Quaternion effectRotation = Quaternion.LookRotation(normal, effectUp.normalized);
+            GameObject effect = Instantiate(impactEffect, position + normal * 0.05f, effectRotation);
             Destroy(effect, impactEffectDuration);
         }
 
