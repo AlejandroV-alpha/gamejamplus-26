@@ -327,6 +327,7 @@ namespace GameJam.UI
             }
         }
 
+
         /// <summary>
         /// Solicita soltar una unidad del material seleccionado.
         /// </summary>
@@ -344,13 +345,15 @@ namespace GameJam.UI
             }
 
             button.interactable = false;
+
             bool dropped = materialDrop.TryDropOne(selected);
+
             if (dropped)
             {
                 RefreshInventory();
             }
 
-            button.interactable = dropButton.gameObject.activeSelf;
+            button.interactable = true;
         }
 
         private void UpdateSafeArea()
