@@ -10,7 +10,7 @@ using UnityEngine.UI;
 
 namespace GameJam.Tablet
 {
-    public sealed class TabletGuideUI : MonoBehaviour
+    public sealed partial class TabletGuideUI : MonoBehaviour
     {
         private RectTransform chassis, screen, workspace;
         private CanvasGroup overlay;
@@ -149,6 +149,7 @@ namespace GameJam.Tablet
 
             pageGroup = workspace.gameObject.AddComponent<CanvasGroup>();
             RenderPage();
+            BuildMissionFeedback();
         }
 
         private void EnsureInputEventSystem()
@@ -419,7 +420,7 @@ namespace GameJam.Tablet
         {
             if (section == "Bitacora") section = "Inicio";
             if (section == "Checklist") section = "Tareas";
-            if (section != "Inicio" && section != "Tareas" && section != "Recetas" && section != "Minerales" && section != "Planetas") return;
+            if (section != "Inicio" && section != "Tareas" && section != "Recetas" && section != "Minerales" && section != "Planetas" && section != "Registro") return;
             if (workspace == null || section == page) return;
             pageHistory.Push(page);
             page = section;
@@ -428,6 +429,7 @@ namespace GameJam.Tablet
 
         private void RenderPage()
         {
+            missionBindings.Clear();
             for (int i = workspace.childCount - 1; i >= 0; i--)
             {
                 var child = workspace.GetChild(i).gameObject;
@@ -449,6 +451,7 @@ namespace GameJam.Tablet
             else if (page == "Tareas") RenderChecklist();
             else if (page == "Recetas") RenderRecipes();
             else if (page == "Minerales") RenderMinerals();
+            else if (page == "Registro") RenderMissionJournal();
             else RenderPlanets();
         }
 
@@ -464,16 +467,22 @@ namespace GameJam.Tablet
             CreateLabel(mission, Clean(GameJam.Localization.GameLocalization.Get("tablet.mission")), 12, new Vector2(-450, 0), new Vector2(100, 28), CyanAccent);
             var objective = CreateLabel(mission, Clean(Planet.objective), 20, new Vector2(45, 0), new Vector2(830, 48), InkWhite);
             objective.alignment = TextAlignmentOptions.Left;
+            missionBindings.Add(() => objective.text = Clean(Planet.objective) + "\n" + MissionSummary);
+            objective.fontSize = 17;
+            missionBindings[missionBindings.Count - 1]();
 
             // En Marte mostramos las aplicaciones esenciales solicitadas: Checklist y Recetario
-            App(Clean(GameJam.Localization.GameLocalization.Get("tablet.checklist")), "Tareas", skin != null ? skin.objectives : null, -200, new Color(0.88f,0.39f,0.20f), Clean(GameJam.Localization.GameLocalization.Get("tablet.mission_guide")));
-            App(Clean(GameJam.Localization.GameLocalization.Get("tablet.recipes")), "Recetas", skin != null ? skin.repair : null, 200, new Color(0.18f,0.48f,0.56f), Clean(GameJam.Localization.GameLocalization.Get("tablet.recipes_subtitle")));
-            CreateLabel(workspace, Clean(GameJam.Localization.GameLocalization.Get("tablet.apps_prompt")), 15, new Vector2(0, -225), new Vector2(1000, 28), MutedCyan);
+            App(Clean(GameJam.Localization.GameLocalization.Get("tablet.checklist")), "Tareas", skin != null ? skin.objectives : null, -320, new Color(0.88f,0.39f,0.20f), Clean(GameJam.Localization.GameLocalization.Get("tablet.mission_guide")));
+            App(Clean(GameJam.Localization.GameLocalization.Get("tablet.recipes")), "Recetas", skin != null ? skin.repair : null, 0, new Color(0.18f,0.48f,0.56f), Clean(GameJam.Localization.GameLocalization.Get("tablet.recipes_subtitle")));
+            App("Registro", "Registro", skin != null ? skin.objectives : null, 320, new Color(.25f,.55f,.4f), "Actividad del equipo en vivo");
+            var latest = CreateLabel(workspace, "", 15, new Vector2(0, -225), new Vector2(1000, 28), MutedCyan);
+            BindMissionLabel(() => latest.text = Clean(this.mission != null ? this.mission.LatestActivity : "Guía de campo · Sin misión conectada"));
         }
 
         // ================= PAGE 2: CHECKLIST (OPERATIONAL STEPS FOR MARS) =================
         private void RenderChecklist()
         {
+            if (RenderMissionChecklist()) return;
             PageHeader(Clean(GameJam.Localization.GameLocalization.Get("tablet.checklist")), Clean(Planet.objective));
             string pName = Clean(Planet.name);
             string[] steps = {
@@ -495,6 +504,7 @@ namespace GameJam.Tablet
         // ================= PAGE 3: RECETAS (ENGINEERING BLUEPRINTS - MARS) =================
         private void RenderRecipes()
         {
+            if (RenderMissionRecipes()) return;
             PageHeader(Clean(GameJam.Localization.GameLocalization.Get("tablet.recipes")), Clean(GameJam.Localization.GameLocalization.Get("tablet.recipes_subtitle")) + " / " + Clean(Planet.name));
             var recipes = Planet.recipes;
             if (recipes == null || recipes.Length == 0) { PageNote(Clean(GameJam.Localization.GameLocalization.Get("tablet.no_recipes"))); return; }
@@ -527,12 +537,13 @@ namespace GameJam.Tablet
             RenderPage();
         }
 
-        private void PageHeader(string title, string subtitle)
+        private TextMeshProUGUI PageHeader(string title, string subtitle)
         {
             var heading = CreateLabel(workspace, title, 30, new Vector2(0, 215), new Vector2(1050, 48), InkWhite);
             heading.alignment = TextAlignmentOptions.Left;
             var sub = CreateLabel(workspace, subtitle, 17, new Vector2(0, 169), new Vector2(1050, 38), MutedCyan);
             sub.alignment = TextAlignmentOptions.Left;
+            return sub;
         }
 
         private void PageNote(string text) => CreateLabel(workspace, text, 13, new Vector2(0,-239), new Vector2(1050,30), DimCyan);
@@ -738,6 +749,7 @@ namespace GameJam.Tablet
 
         private void Update()
         {
+            UpdateMissionFeedback();
             if (overlay == null || chassis == null) return;
             pageFade = Mathf.MoveTowards(pageFade, 1f, Time.unscaledDeltaTime * 7f);
             if (pageGroup != null) pageGroup.alpha = pageFade;

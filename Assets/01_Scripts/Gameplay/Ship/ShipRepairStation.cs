@@ -23,6 +23,7 @@ namespace GameJam.Ship
         private Collider[] hullColliders;
         private bool repairAnnounced;
 
+        public CraftingTable CraftingTable => craftingTable;
         public GameJam.Crafting.RecipeData GetComponentRecipe(int index) => craftingTable != null ? craftingTable.GetRecipe(index) : null;
         public bool IsComponentInstalled(int index) => IsReady() && index >= 0 && index < 3 && (installedComponents & (1 << index)) != 0;
         public int InstalledCount => !IsReady() ? 0 : ((installedComponents & 1) != 0 ? 1 : 0) + ((installedComponents & 2) != 0 ? 1 : 0) + ((installedComponents & 4) != 0 ? 1 : 0);

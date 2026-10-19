@@ -22,6 +22,7 @@ MonoBehaviour:
     accent: {r: 0.15, g: 0.52, b: 0.85, a: 1}
     recipes:
     - component: Motor
+      source: {fileID: 11400000, guid: 4f29e631fe3419e448e4de3b54cfac82, type: 2}
       ingredients:
       - mineral: Metal
         amount: 3
@@ -30,6 +31,7 @@ MonoBehaviour:
       - mineral: Turbina danada
         amount: 1
     - component: Navegador
+      source: {fileID: 11400000, guid: 5884ead3a19f93b41acbd70937fad4bc, type: 2}
       ingredients:
       - mineral: Circuito
         amount: 2
@@ -38,6 +40,7 @@ MonoBehaviour:
       - mineral: Toma de aire danada
         amount: 1
     - component: Blindaje
+      source: {fileID: 11400000, guid: dbb20a8b76f851745b560dc945127bc8, type: 2}
       ingredients:
       - mineral: Metal
         amount: 3
@@ -54,6 +57,7 @@ MonoBehaviour:
     accent: {r: 0.8, g: 0.24, b: 0.22, a: 1}
     recipes:
     - component: Propulsor
+      source: {fileID: 11400000, guid: bea00ea60f87c6b46a0aedf53132f873, type: 2}
       ingredients:
       - mineral: Metal
         amount: 2
@@ -62,6 +66,7 @@ MonoBehaviour:
       - mineral: Turbina danada
         amount: 1
     - component: Filtro de aire
+      source: {fileID: 11400000, guid: 75141b4e5ff7cf84997b3959fb8110ab, type: 2}
       ingredients:
       - mineral: Mineral rojo
         amount: 2
@@ -70,6 +75,7 @@ MonoBehaviour:
       - mineral: Toma de aire danada
         amount: 1
     - component: Radar
+      source: {fileID: 11400000, guid: 5f834a5b82f9f75449e7f66967a7b81d, type: 2}
       ingredients:
       - mineral: Circuito
         amount: 2
@@ -86,18 +92,21 @@ MonoBehaviour:
     accent: {r: 0.65, g: 0.32, b: 0.85, a: 1}
     recipes:
     - component: "N\xFAcleo energ\xE9tico"
+      source: {fileID: 11400000, guid: 1dd6fa570fa6b0e40951a7f8e93788cb, type: 2}
       ingredients:
       - mineral: "Cristal energ\xE9tico"
         amount: 2
       - mineral: Circuito
         amount: 2
     - component: Estabilizador
+      source: {fileID: 11400000, guid: 97a90e76f57160b46b46a5056d555804, type: 2}
       ingredients:
       - mineral: Metal
         amount: 3
       - mineral: "Cristal energ\xE9tico"
         amount: 1
     - component: Hiperpropulsor
+      source: {fileID: 11400000, guid: 47cab01a78c1c534594724cd51483df0, type: 2}
       ingredients:
       - mineral: Metal
         amount: 2

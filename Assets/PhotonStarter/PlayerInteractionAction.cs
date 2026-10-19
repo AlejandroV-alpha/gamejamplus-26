@@ -27,6 +27,7 @@ namespace GameJam.Multiplayer
         private readonly Dictionary<Renderer,bool> weaponVisibility=new Dictionary<Renderer,bool>();
         private readonly Dictionary<Transform,Quaternion> rest=new Dictionary<Transform,Quaternion>();
         public bool IsBusy => Object!=null && Object.IsValid && StateBufferIsValid && ActionKind!=0;
+        public NetworkObject TargetObject => IsBusy ? target : null;
         public float Progress => !IsBusy?0:1-Mathf.Clamp01(deadline.RemainingTime(Runner).GetValueOrDefault()/(ActionKind==1?pickupSeconds:repairSeconds));
         public override void Spawned()
         {

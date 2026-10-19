@@ -123,6 +123,7 @@ namespace GameJam.Multiplayer
             {
                 ui = new GameObject("Local Fusion Tablet").AddComponent<TabletGuideUI>();
                 ui.Build(CloseTablet, tablet.catalog, tablet.skin);
+                ui.BindMission(this);
                 ui.TargetOpen = TabletOpen;
             }
             if (HasStateAuthority)
