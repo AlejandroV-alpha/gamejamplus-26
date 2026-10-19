@@ -788,8 +788,8 @@ MonoBehaviour:
   Animator: {fileID: 1861680653700957010}
   CameraPivot: {fileID: 6608314389182396887}
   CameraHandle: {fileID: 5864237138245083233}
-  WalkSpeed: 3
-  SprintSpeed: 6
+  WalkSpeed: 4
+  SprintSpeed: 8
   JumpImpulse: 8
   UpGravity: -25
   DownGravity: -40
@@ -839,7 +839,7 @@ MonoBehaviour:
   _LobbyReady:
     RawValue: 0
   maximumStamina: 100
-  sprintCostPerSecond: 15
+  sprintCostPerSecond: 12
   recoveryPerSecond: 10
   recoveryThreshold: 25
   _IsExhausted:
@@ -1105,6 +1105,7 @@ MonoBehaviour:
   groundLayers:
     serializedVersion: 2
     m_Bits: 4294967295
+  burstScale: 1
 --- !u!114 &6287456844562574414
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1140,6 +1141,7 @@ MonoBehaviour:
   _Rescuer: {fileID: 0}
   _ActiveAttempt: 0
   _AuthorityGeneration: 0
+  _Emote: 0
 --- !u!1 &3836924219179165295
 GameObject:
   m_ObjectHideFlags: 0

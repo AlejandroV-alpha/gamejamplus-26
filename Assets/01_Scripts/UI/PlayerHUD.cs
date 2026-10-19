@@ -10,6 +10,7 @@ using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.UI;
 using UnityEngine.UI;
+using UnityEngine.SceneManagement;
 using PlayerInventory = GameJam.Inventory.Inventory;
 
 namespace GameJam.UI
@@ -28,6 +29,7 @@ namespace GameJam.UI
         private PlayerCold cold;
         private PlayerInteractionAction action;
         private bool marsEnvironment;
+        private bool showEnvironment;
         private RectTransform safeRoot;
         private CanvasGroup hud, modal;
         private Image eyeImage, mouthImage, detailIcon;
@@ -77,6 +79,8 @@ namespace GameJam.UI
             cold = source.GetComponent<PlayerCold>();
             action = source.GetComponent<PlayerInteractionAction>();
             marsEnvironment = source.GetComponent<GameJam.Environment.Mars.PlayerSandstorm>() != null;
+            showEnvironment = cold != null && cold.isActiveAndEnabled &&
+                SceneManager.GetActiveScene().name.IndexOf("Nept", System.StringComparison.OrdinalIgnoreCase) >= 0;
             font = source.tablet != null && source.tablet.skin != null ? source.tablet.skin.tmpFont : TMP_Settings.defaultFontAsset;
             var canvas = gameObject.AddComponent<Canvas>();
             canvas.renderMode = RenderMode.ScreenSpaceOverlay;
@@ -113,16 +117,17 @@ namespace GameJam.UI
             LocalLabel(tablet, "hud.tablet", new Vector2(28, 0), new Vector2(155, 44), 19, "TAB  ·  ");
             Button(tablet, () => { if (CanInteract()) { CloseInventory(); avatar.ToggleTablet(); } });
 
-            var status = Panel("Player status", hud.transform, new Vector2(0, 0), new Vector2(285, 106), new Vector2(520, 164));
+            var status = Panel("Player status", hud.transform, new Vector2(0, 0), new Vector2(285, showEnvironment ? 106 : 90), new Vector2(520, showEnvironment ? 164 : 132));
             var portrait = Rect("Helmet silhouette", status, new Vector2(.5f, .5f), new Vector2(.5f, .5f), new Vector2(-185, 0), new Vector2(120, 132));
             helmet = portrait.gameObject.AddComponent<PlayerHelmetGraphic>();
             helmet.raycastTarget = false;
             helmet.color = Cream;
             eyeImage = Icon(portrait, new Vector2(0, 1), new Vector2(76, 76));
             mouthImage = Icon(portrait, new Vector2(0, 1), new Vector2(76, 76));
-            healthBar = CreateBar(status, new Vector2(65, 0), "hud.health", new Color32(239, 83, 88, 255));
-            staminaBar = CreateBar(status, new Vector2(65, -48), "hud.stamina", Accent);
+            healthBar = CreateBar(status, new Vector2(65, showEnvironment ? 0 : 24), "hud.health", new Color32(239, 83, 88, 255));
+            staminaBar = CreateBar(status, new Vector2(65, -24 - (showEnvironment ? 24 : 0)), "hud.stamina", Accent);
             environmentBar = CreateBar(status, new Vector2(65, 48), "hud.environment", new Color32(89, 185, 255, 255));
+            environmentBar.Root.gameObject.SetActive(showEnvironment);
 
             var equipment = Panel("Equipment", hud.transform, new Vector2(1, .5f), new Vector2(-135, 0), new Vector2(220, 164));
             LocalLabel(equipment, "hud.equipped", new Vector2(0, 48), new Vector2(198, 30), 17);
@@ -227,7 +232,7 @@ namespace GameJam.UI
                 health != null ? $"{health.CurrentHealth:0}/{health.MaxHealth:0}" : "—");
             float maximum = avatar is SurvivalAvatar survival ? survival.MaximumStamina : 100;
             SetBar(staminaBar, avatar.Stamina / maximum, $"{avatar.Stamina:0}/{maximum:0}");
-            bool hasCold = cold != null && cold.isActiveAndEnabled;
+            bool hasCold = showEnvironment && cold != null && cold.isActiveAndEnabled;
             SetBar(environmentBar, hasCold ? cold.GetColdPercentage() / 100 : 0,
                 hasCold ? $"{cold.GetColdPercentage():0}%" : GameLocalization.Get("hud.no_sensor"));
             string environmentKey = hasCold ? "hud.cold" : marsEnvironment ? "hud.heat" : "hud.environment";

@@ -7,7 +7,7 @@ namespace GameJam.Survival
     public sealed class SurvivalAvatar : MarsFusionAvatar
     {
         [SerializeField, Min(1f)] private float maximumStamina = 100f;
-        [SerializeField, Min(0f)] private float sprintCostPerSecond = 15f;
+        [SerializeField, Min(0f)] private float sprintCostPerSecond = 12f;
         [SerializeField, Min(0f)] private float recoveryPerSecond = 10f;
         [SerializeField, Min(0.01f)] private float recoveryThreshold = 25f;
 

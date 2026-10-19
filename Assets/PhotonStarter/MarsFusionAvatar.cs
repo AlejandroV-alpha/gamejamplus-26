@@ -244,7 +244,7 @@ namespace GameJam.Multiplayer
             float staminaChange = 10f;
             if (sprint)
             {
-                staminaChange = -15f;
+                staminaChange = -12f;
             }
             Stamina = Mathf.Clamp(Stamina + staminaChange * Runner.DeltaTime, 0, 100);
         }

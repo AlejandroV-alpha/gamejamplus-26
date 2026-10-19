@@ -935,8 +935,8 @@ MonoBehaviour:
   CameraHandle: {fileID: 5864237138245083233}
   ShoulderCameraHandle: {fileID: 0}
   CrosshairPrefab: {fileID: 3236472220937120975, guid: a3b5e0f6bfedf8840ad64f87410b11ab, type: 3}
-  WalkSpeed: 3
-  SprintSpeed: 6
+  WalkSpeed: 3.6
+  SprintSpeed: 7.2
   JumpImpulse: 8
   UpGravity: -25
   DownGravity: -40
