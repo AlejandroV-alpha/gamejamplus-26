@@ -127308,7 +127308,6 @@ GameObject:
   - component: {fileID: 410348530068986017}
   - component: {fileID: 8590139516578699172}
   - component: {fileID: 3086754318429315363}
-  - component: {fileID: 559818484035908138}
   - component: {fileID: 8590139516578699173}
   m_Layer: 0
   m_Name: MedicalStation
@@ -127395,20 +127394,6 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 2.280789, y: 1.2938777, z: 1.8076816}
   m_Center: {x: 0.00062179565, y: 0.64707756, z: 0.0032691956}
---- !u!114 &559818484035908138
-MonoBehaviour:
-  m_ObjectHideFlags: 59
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 318435801293887830}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 1541381998, guid: e725a070cec140c4caffb81624c8c787, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Fusion.Runtime.dll::Fusion.NetworkObjectPrefabData
-  Guid:
-    RawGuidValue: 4eff7d3ec65e4dafb540521adb05d22a
 --- !u!1001 &726201165631058421
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -129557,6 +129542,18 @@ PrefabInstance:
     m_TransformParent: {fileID: 0}
     m_Modifications:
     - target: {fileID: 1944384792634709290, guid: b09bed5769314f77a97aded0f319a15a, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: 1944384792634709290, guid: b09bed5769314f77a97aded0f319a15a, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: 1944384792634709290, guid: b09bed5769314f77a97aded0f319a15a, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: 1944384792634709290, guid: b09bed5769314f77a97aded0f319a15a, type: 3}
       propertyPath: m_LocalPosition.x
       value: -105
       objectReference: {fileID: 0}
@@ -129602,7 +129599,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5918237461029384803, guid: b09bed5769314f77a97aded0f319a15a, type: 3}
       propertyPath: SortKey
-      value: 3900000400
+      value: 2422608111
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
