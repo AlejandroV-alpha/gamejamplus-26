@@ -17,6 +17,40 @@ namespace GameJam.Environment.Neptune
         [SerializeField, Min(0f)] private float middleHeatRate = 10f;
         [SerializeField, Min(0f)] private float outerHeatRate = 5f;
 
+        [SerializeField] private bool placeOnTerrain;
+        [SerializeField] private bool showWarmLight;
+
+        private void Start()
+        {
+            if (placeOnTerrain)
+            {
+                foreach (Terrain terrain in Terrain.activeTerrains)
+                {
+                    if (terrain.gameObject.scene != gameObject.scene) continue;
+                    Vector3 local = terrain.transform.InverseTransformPoint(transform.position);
+                    Vector3 size = terrain.terrainData.size;
+                    if (local.x < 0 || local.z < 0 || local.x > size.x || local.z > size.z) continue;
+                    local.y = terrain.terrainData.GetInterpolatedHeight(local.x / size.x, local.z / size.z);
+                    transform.position = terrain.transform.TransformPoint(local) + Vector3.up * 0.5f;
+                    break;
+                }
+            }
+            if (!showWarmLight) return;
+            var glow = new GameObject("Warm light");
+            glow.transform.SetParent(transform, false);
+            glow.transform.localPosition = Vector3.up;
+            Light light = glow.AddComponent<Light>();
+            light.type = LightType.Point;
+            light.color = new Color(1f, 0.35f, 0.06f);
+            light.range = outerRadius * 2f;
+            light.intensity = 5f;
+            light.shadows = LightShadows.None;
+            var tint = new MaterialPropertyBlock();
+            tint.SetColor("_BaseColor", light.color);
+            tint.SetColor("_Color", light.color);
+            foreach (Renderer renderer in GetComponentsInChildren<Renderer>()) renderer.SetPropertyBlock(tint);
+        }
+
         private static readonly HashSet<HeatSource> activeSources = new HashSet<HeatSource>();
 
         /// <summary>

@@ -80,7 +80,7 @@ namespace GameJam.UI
             action = source.GetComponent<PlayerInteractionAction>();
             marsEnvironment = source.GetComponent<GameJam.Environment.Mars.PlayerSandstorm>() != null;
             showEnvironment = cold != null && cold.isActiveAndEnabled &&
-                SceneManager.GetActiveScene().name.IndexOf("Nept", System.StringComparison.OrdinalIgnoreCase) >= 0;
+                cold.IsColdEnvironment;
             font = source.tablet != null && source.tablet.skin != null ? source.tablet.skin.tmpFont : TMP_Settings.defaultFontAsset;
             var canvas = gameObject.AddComponent<Canvas>();
             canvas.renderMode = RenderMode.ScreenSpaceOverlay;

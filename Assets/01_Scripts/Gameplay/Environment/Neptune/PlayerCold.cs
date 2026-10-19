@@ -26,6 +26,8 @@ namespace GameJam.Environment.Neptune
         [Networked] private float damageElapsed { get; set; }
 
         private PlayerHealth playerHealth;
+        public bool IsColdEnvironment => gameObject.scene.name.IndexOf("Nept", System.StringComparison.OrdinalIgnoreCase) >= 0;
+
 
         /// <summary>
         /// Obtiene la salud existente e inicia el frio desde su autoridad.
@@ -48,6 +50,13 @@ namespace GameJam.Environment.Neptune
         {
             if (!HasStateAuthority)
             {
+                return;
+            }
+
+            if (!IsColdEnvironment)
+            {
+                currentCold = 0f;
+                damageElapsed = 0f;
                 return;
             }
 

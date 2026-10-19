@@ -1086,6 +1086,7 @@ GameObject:
   - component: {fileID: 1676844090218703059}
   - component: {fileID: 874000000000000001}
   - component: {fileID: 874000000000000002}
+  - component: {fileID: 900100002}
   m_Layer: 2
   m_Name: A_FusionAstronaut
   m_TagString: Untagged
@@ -1146,6 +1147,7 @@ MonoBehaviour:
   - {fileID: 2943991575602987810}
   - {fileID: 874000000000000001}
   - {fileID: 874000000000000002}
+  - {fileID: 900100002}
   ForceRemoteRenderTimeframe: 0
 --- !u!54 &1572134779871167590
 Rigidbody:
@@ -3515,3 +3517,20 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 3548260476922820544, guid: cd976b636adfaeb4988ea2a014ea2581, type: 3}
   m_PrefabInstance: {fileID: 1199793683982394380}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &900100002
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3827797598262270737}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1bb94ef5f9874a01b2455b10e447a9fc, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  maxCold: 100
+  coldIncreaseRate: 2.5
+  damageThreshold: 80
+  coldDamage: 5
+  damageInterval: 2
