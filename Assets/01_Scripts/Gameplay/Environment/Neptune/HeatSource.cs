@@ -20,6 +20,8 @@ namespace GameJam.Environment.Neptune
         [SerializeField] private bool placeOnTerrain;
         [SerializeField] private bool showWarmLight;
 
+        [SerializeField] private Material heatParticleMaterial;
+
         private void Start()
         {
             if (placeOnTerrain)
@@ -27,15 +29,30 @@ namespace GameJam.Environment.Neptune
                 foreach (Terrain terrain in Terrain.activeTerrains)
                 {
                     if (terrain.gameObject.scene != gameObject.scene) continue;
-                    Vector3 local = terrain.transform.InverseTransformPoint(transform.position);
-                    Vector3 size = terrain.terrainData.size;
-                    if (local.x < 0 || local.z < 0 || local.x > size.x || local.z > size.z) continue;
-                    local.y = terrain.terrainData.GetInterpolatedHeight(local.x / size.x, local.z / size.z);
-                    transform.position = terrain.transform.TransformPoint(local) + Vector3.up * 0.5f;
+                    var ground = terrain.GetComponent<TerrainCollider>();
+                    if (ground == null) continue;
+                    var ray = new Ray(new Vector3(transform.position.x, ground.bounds.max.y + 10f,
+                        transform.position.z), Vector3.down);
+                    if (!ground.Raycast(ray, out RaycastHit hit, ground.bounds.size.y + 30f)) continue;
+                    transform.position = hit.point + Vector3.up * 0.02f;
                     break;
                 }
             }
             if (!showWarmLight) return;
+            // A low heat vent resting on the ground, instead of a floating cube.
+            Transform plate = transform.Find("Visual/Cube");
+            if (plate != null)
+            {
+                plate.localPosition = Vector3.up * 0.06f;
+                plate.localScale = new Vector3(1.8f, 0.12f, 1.8f);
+            }
+            var box = GetComponent<BoxCollider>();
+            if (box != null)
+            {
+                box.center = Vector3.up * 0.06f;
+                box.size = new Vector3(1.8f, 0.12f, 1.8f);
+            }
+
             var glow = new GameObject("Warm light");
             glow.transform.SetParent(transform, false);
             glow.transform.localPosition = Vector3.up;
@@ -49,6 +66,46 @@ namespace GameJam.Environment.Neptune
             tint.SetColor("_BaseColor", light.color);
             tint.SetColor("_Color", light.color);
             foreach (Renderer renderer in GetComponentsInChildren<Renderer>()) renderer.SetPropertyBlock(tint);
+            CreateHeatParticles();
+        }
+
+        private void CreateHeatParticles()
+        {
+            if (heatParticleMaterial == null) return;
+            var effect = new GameObject("Rising heat embers");
+            effect.transform.SetParent(transform, false);
+            effect.transform.localPosition = Vector3.up * 0.18f;
+            effect.transform.localRotation = Quaternion.Euler(-90f, 0f, 0f);
+            var particles = effect.AddComponent<ParticleSystem>();
+            particles.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+            var main = particles.main;
+            main.loop = true;
+            main.playOnAwake = false;
+            main.maxParticles = 100;
+            main.startLifetime = new ParticleSystem.MinMaxCurve(1.2f, 2.4f);
+            main.startSpeed = new ParticleSystem.MinMaxCurve(0.7f, 1.5f);
+            main.startSize = new ParticleSystem.MinMaxCurve(0.1f, 0.35f);
+            main.startColor = new ParticleSystem.MinMaxGradient(new Color(1f, 0.25f, 0.02f),
+                new Color(1f, 0.8f, 0.2f));
+            main.simulationSpace = ParticleSystemSimulationSpace.Local;
+            var emission = particles.emission;
+            emission.rateOverTime = 30f;
+            var shape = particles.shape;
+            shape.shapeType = ParticleSystemShapeType.Cone;
+            shape.angle = 12f;
+            shape.radius = 0.7f;
+            var color = particles.colorOverLifetime;
+            color.enabled = true;
+            var fade = new Gradient();
+            fade.SetKeys(new[] { new GradientColorKey(Color.white, 0f), new GradientColorKey(Color.white, 1f) },
+                new[] { new GradientAlphaKey(0f, 0f), new GradientAlphaKey(1f, 0.15f), new GradientAlphaKey(0f, 1f) });
+            color.color = fade;
+            var renderer = particles.GetComponent<ParticleSystemRenderer>();
+            renderer.sharedMaterial = heatParticleMaterial;
+            renderer.renderMode = ParticleSystemRenderMode.Billboard;
+            renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            renderer.receiveShadows = false;
+            particles.Play();
         }
 
         private static readonly HashSet<HeatSource> activeSources = new HashSet<HeatSource>();

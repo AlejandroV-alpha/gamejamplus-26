@@ -23361,6 +23361,7 @@ MonoBehaviour:
   outerHeatRate: 5
   placeOnTerrain: 1
   showWarmLight: 1
+  heatParticleMaterial: {fileID: 2100000, guid: a8d08c58654441c3b2de4f3180832d35, type: 2}
 --- !u!1 &890000000000000100
 GameObject:
   m_ObjectHideFlags: 0
@@ -23558,6 +23559,7 @@ MonoBehaviour:
   outerHeatRate: 5
   placeOnTerrain: 1
   showWarmLight: 1
+  heatParticleMaterial: {fileID: 2100000, guid: a8d08c58654441c3b2de4f3180832d35, type: 2}
 --- !u!1 &890000000000000200
 GameObject:
   m_ObjectHideFlags: 0
@@ -23755,6 +23757,7 @@ MonoBehaviour:
   outerHeatRate: 5
   placeOnTerrain: 1
   showWarmLight: 1
+  heatParticleMaterial: {fileID: 2100000, guid: a8d08c58654441c3b2de4f3180832d35, type: 2}
 --- !u!1 &890000000000000300
 GameObject:
   m_ObjectHideFlags: 0
@@ -23952,6 +23955,7 @@ MonoBehaviour:
   outerHeatRate: 5
   placeOnTerrain: 1
   showWarmLight: 1
+  heatParticleMaterial: {fileID: 2100000, guid: a8d08c58654441c3b2de4f3180832d35, type: 2}
 --- !u!1 &890000000000000400
 GameObject:
   m_ObjectHideFlags: 0
@@ -24149,6 +24153,7 @@ MonoBehaviour:
   outerHeatRate: 5
   placeOnTerrain: 1
   showWarmLight: 1
+  heatParticleMaterial: {fileID: 2100000, guid: a8d08c58654441c3b2de4f3180832d35, type: 2}
 --- !u!114 &890000000000001000
 MonoBehaviour:
   m_ObjectHideFlags: 0
