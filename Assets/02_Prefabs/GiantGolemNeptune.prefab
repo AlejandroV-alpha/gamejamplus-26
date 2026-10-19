@@ -1657,6 +1657,8 @@ MonoBehaviour:
   rockImpactClip: {fileID: 8300000, guid: 6fe679beee827d0448f5dfab198e19d0, type: 3}
   walkSpeed: 2.4
   chaseSpeed: 3.6
+  patrolWholeTerrain: 1
+  maximumPatrolSlope: 35
   patrolRadius: 22
   restDuration: 4
   arriveDistance: 2

@@ -5,7 +5,7 @@ using GameJam.Multiplayer;
 using UnityEngine;
 
 // La autoridad de Fusion decide reposo, patrulla y persecucion. El resto de clientes reproduce la pose replicada.
-public sealed class GiantGolemEnemy : NetworkBehaviour, ITakeDamage
+public sealed class GiantGolemEnemy : NetworkBehaviour, ITakeDamage, IStateAuthorityChanged
 {
     public enum Mode { Idle, Walk, Chase, Attack, Throw, Super, Death }
 
@@ -35,6 +35,14 @@ public sealed class GiantGolemEnemy : NetworkBehaviour, ITakeDamage
     [SerializeField] float walkSpeed = 2.4f;
     [SerializeField] float chaseSpeed = 3.6f;
     [SerializeField] float patrolRadius = 22f;
+    [SerializeField] bool patrolWholeTerrain = true;
+    [SerializeField, Range(5f, 45f)] float maximumPatrolSlope = 35f;
+    Terrain patrolTerrain;
+    ExplorationZone patrolZone;
+    int patrolSector;
+    float progressCheckAt;
+    Vector3 progressPosition;
+    readonly RaycastHit[] obstacleHits = new RaycastHit[16];
     [SerializeField] float restDuration = 4f;
     [SerializeField] float arriveDistance = 2f;
     [SerializeField] float turnSpeed = 70f;
@@ -94,7 +102,17 @@ public sealed class GiantGolemEnemy : NetworkBehaviour, ITakeDamage
         hand = throwHand != null ? throwHand : FindDeepChild(transform, "B-hand.R");
         if (effectPoint == null)
             effectPoint = FindDeepChild(transform, "B-root");
+        patrolZone = ExplorationZone.ForPlayer(this);
+        patrolTerrain = patrolZone != null ? patrolZone.terrain : null;
+        if (patrolTerrain == null)
+            patrolTerrain = Terrain.activeTerrains.FirstOrDefault(t => t.gameObject.scene == gameObject.scene);
+        Vector3 grounded = transform.position;
+        SnapToTerrain(ref grounded);
+        transform.position = grounded;
         home = transform.position;
+        progressPosition = home;
+        progressCheckAt = CurrentTime + 4f;
+        patrolSector = Random.Range(0, 9);
         nextRoarAt = Time.time + roarGap;
         EnsureDetectionSphere();
         EnsureSwipeSphere();
@@ -487,8 +505,41 @@ public sealed class GiantGolemEnemy : NetworkBehaviour, ITakeDamage
         Gizmos.DrawWireSphere(transform.position, throwRange);
     }
 
+    public void StateAuthorityChanged()
+    {
+        if (!HasStateAuthority) return;
+        // Route selection is local to the authority; start a fresh route after migration.
+        progressPosition = transform.position;
+        progressCheckAt = CurrentTime + 4f;
+        if (CurrentMode == Mode.Walk) SetMode(Mode.Idle);
+    }
+
     Vector3 PickPatrolPoint()
     {
+        progressPosition = transform.position;
+        progressCheckAt = CurrentTime + 4f;
+        if (patrolWholeTerrain && patrolTerrain != null && patrolTerrain.terrainData != null)
+        {
+            var origin = patrolTerrain.transform.position;
+            var size = patrolTerrain.terrainData.size;
+            float margin = Mathf.Max(12f, bodyRadius * 3f);
+            // Step four is coprime with nine: every sector is visited before repeating.
+            for (int sectorTry = 0; sectorTry < 9; sectorTry++)
+            {
+                patrolSector = (patrolSector + 4) % 9;
+                for (int attempt = 0; attempt < 8; attempt++)
+                {
+                    float u = (patrolSector % 3 + Random.Range(.12f, .88f)) / 3f;
+                    float v = (patrolSector / 3 + Random.Range(.12f, .88f)) / 3f;
+                    var candidate = origin + new Vector3(Mathf.Lerp(margin, size.x - margin, u), 0,
+                        Mathf.Lerp(margin, size.z - margin, v));
+                    if (!IsWalkableTerrain(candidate)) continue;
+                    SnapToTerrain(ref candidate);
+                    return candidate;
+                }
+            }
+            return transform.position;
+        }
         Vector2 circle = Random.insideUnitCircle * patrolRadius;
         var point = home + new Vector3(circle.x, 0f, circle.y);
         SnapToTerrain(ref point);
@@ -504,15 +555,42 @@ public sealed class GiantGolemEnemy : NetworkBehaviour, ITakeDamage
         transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRotation, turnSpeed * Runner.DeltaTime);
     }
 
+    bool IsWalkableTerrain(Vector3 point)
+    {
+        if (patrolZone != null && !patrolZone.Contains(point)) return false;
+        if (patrolTerrain == null || patrolTerrain.terrainData == null) return true;
+        Vector3 p = point - patrolTerrain.transform.position;
+        var size = patrolTerrain.terrainData.size;
+        float margin = Mathf.Max(3f, bodyRadius);
+        return p.x >= margin && p.z >= margin && p.x <= size.x - margin && p.z <= size.z - margin
+            && patrolTerrain.terrainData.GetSteepness(p.x / size.x, p.z / size.z) <= maximumPatrolSlope;
+    }
+
     void MoveTowards(Vector3 point, float moveSpeed)
     {
+        if (CurrentMode == Mode.Walk && CurrentTime >= progressCheckAt)
+        {
+            if ((transform.position - progressPosition).sqrMagnitude < .25f)
+            { patrolPoint = PickPatrolPoint(); return; }
+            progressPosition = transform.position;
+            progressCheckAt = CurrentTime + 4f;
+        }
         var direction = point - transform.position;
         direction.y = 0f;
         if (direction.sqrMagnitude < 0.1f) return;
         direction.Normalize();
 
-        var hits = Physics.SphereCastAll(transform.position + Vector3.up * bodyRadius, bodyRadius, direction, 2f, ~0, QueryTriggerInteraction.Ignore);
-        var obstacle = hits.FirstOrDefault(hit => !(hit.collider is TerrainCollider) && !hit.collider.transform.IsChildOf(transform) && (target == null || !hit.collider.transform.IsChildOf(target.transform)));
+        int hitCount = Physics.SphereCastNonAlloc(transform.position + Vector3.up * bodyRadius, bodyRadius,
+            direction, obstacleHits, 2f, ~0, QueryTriggerInteraction.Ignore);
+        RaycastHit obstacle = default;
+        float closest = float.PositiveInfinity;
+        for (int i = 0; i < hitCount; i++)
+        {
+            var hit = obstacleHits[i];
+            if (hit.collider is TerrainCollider || hit.collider.transform.IsChildOf(transform)
+                || (target != null && hit.collider.transform.IsChildOf(target.transform)) || hit.distance >= closest) continue;
+            obstacle = hit; closest = hit.distance;
+        }
         if (obstacle.collider != null)
         {
             direction = Vector3.ProjectOnPlane(direction, obstacle.normal);
@@ -524,6 +602,11 @@ public sealed class GiantGolemEnemy : NetworkBehaviour, ITakeDamage
         Face(transform.position + direction);
         var step = Mathf.Min(moveSpeed * Runner.DeltaTime, Vector3.ProjectOnPlane(point - transform.position, Vector3.up).magnitude);
         var next = transform.position + direction * step;
+        if (!IsWalkableTerrain(next))
+        {
+            if (CurrentMode == Mode.Walk) patrolPoint = PickPatrolPoint();
+            return;
+        }
         SnapToTerrain(ref next);
         transform.position = next;
     }
