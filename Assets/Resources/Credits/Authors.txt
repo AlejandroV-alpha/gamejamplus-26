@@ -1,0 +1,33 @@
+<b>Alejandro Vidal</b>
+Programador
+va0035314@est.univalle.edu
+
+<b>Bonny Alberto Crespo Romero</b>
+UI, UX y ambientación
+crb0035210@est.univalle.edu
+
+<b>Luis Eduardo Pantoja Fernandez</b>
+Modelos y animaciones
+pfl0034824@est.univalle.edu
+
+<b>Ronald Joel Saavedra Vargas</b>
+Integración y merge
+Integración de voz y multiplayer
+svr0035567@est.univalle.edu
+
+<b>Samir Limachi Lopez</b>
+Director cinematográfico
+Creación de modelos y animaciones
+lls5001850@est.univalle.edu
+
+<size=58><b>AGRADECIMIENTOS</b></size>
+
+Gracias a Claudio, a Gimena,
+a Cursor y a Panchito.
+
+Al Ing. Erick Cespedes Gamarra.
+
+Al café, por mantenernos despiertos.
+
+Y a Discord, donde estuvimos
+conectados por más de 24 horas.
