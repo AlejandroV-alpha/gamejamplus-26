@@ -13,6 +13,12 @@ namespace GameJam.Collectibles
         [SerializeField, Min(1)] private int healAmount = 30;
         [SerializeField, Min(0.1f)] private float collectionDistance = 2.5f;
         [SerializeField, Min(0.5f)] private float confirmationTimeout = 3f;
+        [Header("Medical station")]
+        [SerializeField] private bool persistentStation;
+        [SerializeField, Min(1)] private int healingSlots = 3;
+        [Networked] private int usedSlots { get; set; }
+        public int RemainingSlots => Mathf.Max(0, healingSlots - (IsReady() ? usedSlots : 0));
+        public int TotalSlots => healingSlots;
 
         private const byte Available = 0;
         private const byte Reserved = 1;
@@ -31,7 +37,7 @@ namespace GameJam.Collectibles
         /// </summary>
         public bool CanCollect(NetworkObject player)
         {
-            if (!IsReady() || phase != Available || !IsValidPlayer(player))
+            if (!IsReady() || phase != Available || (persistentStation && RemainingSlots == 0) || !IsValidPlayer(player))
             {
                 return false;
             }
@@ -117,9 +123,7 @@ namespace GameJam.Collectibles
             {
                 if (healed)
                 {
-                    phase = Consumed;
-                    Debug.Log("[HealthPickup] Curacion confirmada; consumible retirado.", this);
-                    Runner.Despawn(Object);
+                    ConsumeSlot();
                 }
                 else
                 {
@@ -135,8 +139,7 @@ namespace GameJam.Collectibles
                 || registered != claimant || GetOwner(claimant) != claimantOwner)
             {
                 // Sin confirmacion no es seguro reasignar una recompensa posiblemente aplicada.
-                phase = Consumed;
-                Runner.Despawn(Object);
+                ConsumeSlot();
                 return;
             }
             if (deadline.ExpiredOrNotRunning(Runner))
@@ -148,9 +151,8 @@ namespace GameJam.Collectibles
                 }
                 else
                 {
-                    phase = Consumed;
                     Debug.LogWarning("[HealthPickup] Reserva sin confirmacion; retirado para evitar duplicados.", this);
-                    Runner.Despawn(Object);
+                    ConsumeSlot();
                 }
             }
         }
@@ -158,6 +160,22 @@ namespace GameJam.Collectibles
         /// <summary>
         /// Entrega la reserva al propietario local sin depender de simular proxies.
         /// </summary>
+        private void ConsumeSlot()
+        {
+            if (!persistentStation)
+            {
+                phase = Consumed;
+                Runner.Despawn(Object);
+                return;
+            }
+            usedSlots++;
+            phase = Available;
+            claimant = null;
+            claimantOwner = PlayerRef.None;
+            deadline = TickTimer.None;
+            Debug.Log("[MedicalStation] Curaciones restantes: " + RemainingSlots, this);
+        }
+
         public override void Render()
         {
             if (!IsReady() || (phase != Reserved && phase != Cancelling) || claimant == null || !claimant.IsValid)
@@ -261,6 +279,7 @@ namespace GameJam.Collectibles
             healAmount = Mathf.Max(1, healAmount);
             collectionDistance = Mathf.Max(0.1f, collectionDistance);
             confirmationTimeout = Mathf.Max(0.5f, confirmationTimeout);
+            healingSlots = Mathf.Max(1, healingSlots);
         }
     }
 }
