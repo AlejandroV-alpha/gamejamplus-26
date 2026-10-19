@@ -44,6 +44,8 @@ namespace GameJam.UI
         private int lastScreenWidth, lastScreenHeight;
         private CanvasGroup startMenuGroup;
         private CanvasGroup pauseMenuGroup;
+        private AudioSource menuMusic;
+        private float menuMusicTargetVolume;
 
         // Componentes de Inicio
         private TMP_InputField playerNameInput;
@@ -226,6 +228,12 @@ namespace GameJam.UI
         private void Update()
         {
             if (!isInitialized) return;
+            if (menuMusic != null)
+            {
+                menuMusic.volume = Mathf.MoveTowards(menuMusic.volume, menuMusicTargetVolume, Time.unscaledDeltaTime * 0.35f);
+                if (menuMusicTargetVolume == 0f && menuMusic.volume == 0f && menuMusic.isPlaying)
+                    menuMusic.Stop();
+            }
             if (session == null) session = FindFirstObjectByType<MarsFusionSession>();
             bool running = session != null && session.Runner != null && session.Runner.IsRunning;
             if (running != runnerWasRunning)
@@ -822,6 +830,37 @@ namespace GameJam.UI
             if(rootCanvas!=null)rootCanvas.enabled=visible;
             var raycaster=GetComponent<GraphicRaycaster>();if(raycaster!=null)raycaster.enabled=visible;
             if(backdropObject!=null)backdropObject.SetActive(visible);
+            SyncMenuMusic();
+        }
+
+        private void SyncMenuMusic()
+        {
+            bool shouldPlay = IsLobbyScene && startMenuGroup != null && startMenuGroup.gameObject.activeSelf;
+            menuMusicTargetVolume = shouldPlay ? 0.35f : 0f;
+            if (shouldPlay && menuMusic == null)
+            {
+                var clip = Resources.Load<AudioClip>("Music/MainMenu/MusicFondoMain");
+                if (clip == null) return;
+                var musicObject = new GameObject("MainMenuMusic");
+                musicObject.transform.SetParent(transform, false);
+                menuMusic = musicObject.AddComponent<AudioSource>();
+                menuMusic.playOnAwake = false;
+                menuMusic.loop = true;
+                menuMusic.spatialBlend = 0f;
+                menuMusic.volume = 0f;
+                menuMusic.clip = clip;
+            }
+            if (shouldPlay && menuMusic != null && !menuMusic.isPlaying)
+                menuMusic.Play();
+        }
+
+        private void OnDisable()
+        {
+            if (menuMusic != null)
+            {
+                menuMusic.Stop();
+                menuMusic.volume = 0f;
+            }
         }
         public void ApplySessionMenuState(bool visible,bool connected)
         {

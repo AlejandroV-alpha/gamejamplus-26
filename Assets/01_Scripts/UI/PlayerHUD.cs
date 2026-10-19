@@ -101,6 +101,8 @@ namespace GameJam.UI
             UpdateSafeArea();
             PollInventory();
             RefreshLanguage();
+            if (SciFiGameMenuManager.IsLobbyScene)
+                gameObject.AddComponent<LobbyGameplayTutorial>().Build(avatar, safeRoot, font);
         }
 
         private void BuildHUD()
