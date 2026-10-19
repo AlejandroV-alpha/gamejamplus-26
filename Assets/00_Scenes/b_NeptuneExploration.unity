@@ -22612,18 +22612,6 @@ PrefabInstance:
     m_TransformParent: {fileID: 0}
     m_Modifications:
     - target: {fileID: 1944384792634709290, guid: d5e9c961573f2844d9a03ed7db682f91, type: 3}
-      propertyPath: m_LocalScale.x
-      value: 2
-      objectReference: {fileID: 0}
-    - target: {fileID: 1944384792634709290, guid: d5e9c961573f2844d9a03ed7db682f91, type: 3}
-      propertyPath: m_LocalScale.y
-      value: 2
-      objectReference: {fileID: 0}
-    - target: {fileID: 1944384792634709290, guid: d5e9c961573f2844d9a03ed7db682f91, type: 3}
-      propertyPath: m_LocalScale.z
-      value: 2
-      objectReference: {fileID: 0}
-    - target: {fileID: 1944384792634709290, guid: d5e9c961573f2844d9a03ed7db682f91, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
       objectReference: {fileID: 0}
@@ -22663,29 +22651,13 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 1944384792634709290, guid: d5e9c961573f2844d9a03ed7db682f91, type: 3}
-      propertyPath: m_ConstrainProportionsScale
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 4898815321441128491, guid: d5e9c961573f2844d9a03ed7db682f91, type: 3}
-      propertyPath: m_ConstrainProportionsScale
-      value: 1
-      objectReference: {fileID: 0}
     - target: {fileID: 5210494648262956797, guid: d5e9c961573f2844d9a03ed7db682f91, type: 3}
       propertyPath: m_Name
       value: GiantGolemNeptune
       objectReference: {fileID: 0}
-    - target: {fileID: 5918237461029384801, guid: d5e9c961573f2844d9a03ed7db682f91, type: 3}
-      propertyPath: m_Height
-      value: 3
-      objectReference: {fileID: 0}
-    - target: {fileID: 5918237461029384801, guid: d5e9c961573f2844d9a03ed7db682f91, type: 3}
-      propertyPath: m_Radius
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 5918237461029384801, guid: d5e9c961573f2844d9a03ed7db682f91, type: 3}
-      propertyPath: m_Center.y
-      value: 1.5
+    - target: {fileID: 5918237461029384802, guid: d5e9c961573f2844d9a03ed7db682f91, type: 3}
+      propertyPath: groundEffectLifetime
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 5918237461029384803, guid: d5e9c961573f2844d9a03ed7db682f91, type: 3}
       propertyPath: SortKey

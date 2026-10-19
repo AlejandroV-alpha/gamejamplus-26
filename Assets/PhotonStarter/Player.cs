@@ -1,3 +1,4 @@
+using FirstGearGames.SmoothCameraShaker;
 using UnityEngine;
 using UnityEngine.Animations.Rigging;
 using UnityEngine.InputSystem;
@@ -150,6 +151,8 @@ namespace Starter.ThirdPersonCharacter
             _brain = main.GetComponent<CinemachineBrain>();
             if (_brain == null)
                 _brain = main.gameObject.AddComponent<CinemachineBrain>();
+            if (main.GetComponent<CameraShaker>() == null)
+                main.gameObject.AddComponent<CameraShaker>();
             if (!_blendOverridden)
             {
                 _previousBlend = _brain.DefaultBlend;
