@@ -23,3 +23,7 @@ Los App IDs quedan incluidos en los datos distribuidos del juego y son extraíbl
 Abre la misma build en dos PC Windows, idealmente una sin configuración local de Photon. Entra con ambos jugadores al mismo nombre de sala y región, comprueba movimiento y mantén V para hablar. Windows debe permitir el uso del micrófono para aplicaciones de escritorio y ambos equipos deben tener conexión a Internet. La capacidad de conexiones depende del plan de Photon.
 
 La comprobación de compilación de scripts no sustituye esta prueba de conexión y audio en el ejecutable final.
+
+## Pantalla completa
+
+La distribución Windows usa pantalla completa sin bordes por defecto. F11 alterna entre ventana y pantalla completa desde el juego y los menús. En modo ventana se permite redimensionar. Estos cambios requieren generar de nuevo la build; el ejecutable anterior no se actualiza.

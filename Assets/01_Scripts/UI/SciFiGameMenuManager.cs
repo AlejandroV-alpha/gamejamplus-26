@@ -1119,10 +1119,26 @@ namespace GameJam.UI
         {
             if (crewListContainer == null) return;
 
-            var allAvatars = FindObjectsByType<MarsFusionAvatar>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
             var localAvatar = GetLocalAvatar();
+            var runner = localAvatar != null ? localAvatar.Runner : session != null ? session.Runner : null;
+            var allAvatars = new List<MarsFusionAvatar>();
+            // Only canonical player objects in this session belong to the crew.
+            // Scene prototypes, stale avatars and other local runners must not create rows.
+            if (runner != null && runner.IsRunning)
+            {
+                var players = new List<Fusion.PlayerRef>(runner.ActivePlayers);
+                players.Sort((a, b) => a.PlayerId.CompareTo(b.PlayerId));
+                foreach (var player in players)
+                {
+                    var playerObject = runner.GetPlayerObject(player);
+                    if (playerObject == null || !playerObject.IsValid) continue;
+                    var avatar = playerObject.GetComponent<MarsFusionAvatar>();
+                    if (avatar == null || !avatar.IsNetworkReady || avatar.Runner != runner || allAvatars.Contains(avatar)) continue;
+                    allAvatars.Add(avatar);
+                }
+            }
 
-            int neededRows = allAvatars.Length;
+            int neededRows = allAvatars.Count;
             while (activeCrewRows.Count < neededRows)
             {
                 activeCrewRows.Add(CreateCrewRowWidget());
