@@ -1,4 +1,5 @@
 using System.Linq;
+using FirstGearGames.SmoothCameraShaker;
 using Fusion;
 using GameJam.Multiplayer;
 using UnityEngine;
@@ -11,13 +12,15 @@ public sealed class GiantGolemEnemy : NetworkBehaviour, ITakeDamage
     [SerializeField] int maxHealth = 200;
     [SerializeField] float deathDuration = 4.4f;
     [SerializeField] SphereCollider detectionSphere;
+    [SerializeField] SphereCollider swipeSphere;
     [SerializeField] float detectionRange = 28f;
     [SerializeField] float attackRange = 6f;
+    [SerializeField] float swipeRange = 3.5f;
     [SerializeField] float throwRange = 16f;
     [SerializeField] int attackDamage = 20;
     [SerializeField] int superDamage = 40;
-    [SerializeField, Range(0f, 1f)] float superChance = 0.35f;
-    [SerializeField] float superCooldown = 8f;
+    [SerializeField, Range(0f, 1f)] float superChance = 0.65f;
+    [SerializeField] float superCooldown = 5f;
     [SerializeField] int throwDamage = 14;
     [SerializeField] float throwInterval = 10f;
     [SerializeField] float attackDuration = 2.67f;
@@ -27,6 +30,8 @@ public sealed class GiantGolemEnemy : NetworkBehaviour, ITakeDamage
     [SerializeField] Transform throwHand;
     [SerializeField] Vector3 rockLocalOffset = new Vector3(0.05f, 0.12f, 0.2f);
     [SerializeField] float rockSpeed = 45f;
+    [SerializeField] AudioClip rockGroundClip;
+    [SerializeField] AudioClip rockImpactClip;
     [SerializeField] float walkSpeed = 2.4f;
     [SerializeField] float chaseSpeed = 3.6f;
     [SerializeField] float patrolRadius = 22f;
@@ -34,6 +39,18 @@ public sealed class GiantGolemEnemy : NetworkBehaviour, ITakeDamage
     [SerializeField] float arriveDistance = 2f;
     [SerializeField] float turnSpeed = 70f;
     [SerializeField] float bodyRadius = 1.2f;
+    [SerializeField] ShakeData stepShake;
+    [SerializeField] AudioClip[] stepClips;
+    [SerializeField] AudioClip jumpClip;
+    [SerializeField] AudioClip landClip;
+    [SerializeField] AudioClip swipeClip;
+    [SerializeField] AudioClip[] roarClips;
+    [SerializeField] float roarGap = 8f;
+    [SerializeField] GameObject groundBurstEffect;
+    [SerializeField] Transform effectPoint;
+    [SerializeField] float groundEffectLifetime = 3.5f;
+    [SerializeField] float stepVolume = 1f;
+    [SerializeField] float stepRange = 40f;
 
     [Networked] private int ModeState { get; set; }
     [Networked] private float StateStarted { get; set; }
@@ -56,10 +73,15 @@ public sealed class GiantGolemEnemy : NetworkBehaviour, ITakeDamage
     float scanAt;
     float nextThrowAt;
     float nextSuperAt;
+    float nextRoarAt;
+    int roarIndex;
     bool animatorReady;
     bool hitApplied;
     bool throwPoseStarted;
+    bool superPoseStarted;
+    bool attackPoseStarted;
     bool deathPoseStarted;
+    AudioSource stepAudio;
 
     public Mode CurrentMode => (Mode)ModeState;
     float CurrentTime => Runner != null ? Runner.SimulationTime : Time.time;
@@ -70,8 +92,12 @@ public sealed class GiantGolemEnemy : NetworkBehaviour, ITakeDamage
         animator = GetComponentInChildren<Animator>();
         bodyCollider = GetComponent<Collider>();
         hand = throwHand != null ? throwHand : FindDeepChild(transform, "B-hand.R");
+        if (effectPoint == null)
+            effectPoint = FindDeepChild(transform, "B-root");
         home = transform.position;
+        nextRoarAt = Time.time + roarGap;
         EnsureDetectionSphere();
+        EnsureSwipeSphere();
         if (HasStateAuthority)
         {
             Health = maxHealth;
@@ -101,6 +127,7 @@ public sealed class GiantGolemEnemy : NetworkBehaviour, ITakeDamage
             transform.rotation = Quaternion.Slerp(transform.rotation, SyncedRotation, 1f - Mathf.Exp(-15f * Time.deltaTime));
         }
         ApplyAnimator();
+        UpdateRoar();
     }
 
     void SetMode(Mode value)
@@ -226,7 +253,10 @@ public sealed class GiantGolemEnemy : NetworkBehaviour, ITakeDamage
         if (!throwing && !hitApplied && Elapsed >= duration * (super ? 0.55f : 0.45f))
         {
             hitApplied = true;
-            Strike(super ? superDamage : attackDamage, attackRange + (super ? 3f : 1.5f));
+            if (super)
+                Strike(superDamage, attackRange + 3f);
+            else if (IsInsideSwipeSphere(target))
+                ((ITakeDamage)target).TakeDamage(attackDamage);
         }
 
         if (Elapsed >= duration)
@@ -240,6 +270,108 @@ public sealed class GiantGolemEnemy : NetworkBehaviour, ITakeDamage
         delta.y = 0f;
         if (delta.magnitude > range || Vector3.Angle(transform.forward, delta) > 70f) return;
         ((ITakeDamage)target).TakeDamage(amount);
+    }
+
+    public void FirstStep()
+    {
+        PlayStep();
+    }
+
+    public void SecondStep()
+    {
+        PlayStep();
+    }
+
+    public void StartJump()
+    {
+        PlayGolemClip(jumpClip, 1f);
+    }
+
+    public void SwipSound()
+    {
+        PlayGolemClip(swipeClip, 1f);
+    }
+
+    void UpdateRoar()
+    {
+        bool calm = CurrentMode == Mode.Idle || CurrentMode == Mode.Walk || CurrentMode == Mode.Chase;
+        if (!calm || roarClips == null || roarClips.Length == 0)
+            return;
+        if (Time.time < nextRoarAt)
+            return;
+        var clip = roarClips[roarIndex % roarClips.Length];
+        roarIndex++;
+        if (clip == null)
+        {
+            nextRoarAt = Time.time + roarGap;
+            return;
+        }
+        PlayGolemClip(clip, 1f);
+        nextRoarAt = Time.time + clip.length + roarGap;
+    }
+
+    public void GroundHit()
+    {
+        PlayGolemClip(landClip, 1f);
+        ShakeView(0.8f);
+        SpawnGroundEffects();
+    }
+
+    void SpawnGroundEffects()
+    {
+        var origin = effectPoint != null ? effectPoint : transform;
+        SpawnEffect(groundBurstEffect, origin.position, transform.rotation);
+    }
+
+    void SpawnEffect(GameObject prefab, Vector3 point, Quaternion rotation)
+    {
+        if (prefab == null)
+            return;
+        var effect = Instantiate(prefab, point, rotation);
+        Destroy(effect, groundEffectLifetime);
+    }
+
+    void PlayStep()
+    {
+        if (stepClips != null && stepClips.Length > 0)
+            PlayGolemClip(stepClips[Random.Range(0, stepClips.Length)], Random.Range(0.62f, 0.78f));
+        ShakeView(0.35f);
+    }
+
+    void PlayGolemClip(AudioClip clip, float pitch)
+    {
+        if (clip == null)
+            return;
+        if (stepAudio == null)
+        {
+            stepAudio = gameObject.AddComponent<AudioSource>();
+            stepAudio.spatialBlend = 1f;
+            stepAudio.rolloffMode = AudioRolloffMode.Linear;
+            stepAudio.minDistance = 5f;
+            stepAudio.maxDistance = stepRange;
+            stepAudio.playOnAwake = false;
+            stepAudio.dopplerLevel = 0f;
+        }
+        stepAudio.pitch = pitch;
+        stepAudio.PlayOneShot(clip, stepVolume);
+    }
+
+    void ShakeView(float amount)
+    {
+        if (stepShake == null)
+            return;
+        var view = Camera.main;
+        if (view == null)
+            return;
+        float distance = Vector3.Distance(view.transform.position, transform.position);
+        float strength = (1f - Mathf.Clamp01(distance / stepRange)) * amount;
+        if (strength <= 0.05f)
+            return;
+        if (view.GetComponent<CameraShaker>() == null)
+            view.gameObject.AddComponent<CameraShaker>();
+        var instance = CameraShakerHandler.Shake(stepShake);
+        if (instance != null)
+            instance.MultiplyMagnitude(strength, 0f, false);
     }
 
     public void TakeDamage(int damage)
@@ -280,6 +412,30 @@ public sealed class GiantGolemEnemy : NetworkBehaviour, ITakeDamage
         detectionSphere.radius = detectionRange;
     }
 
+    void EnsureSwipeSphere()
+    {
+        if (swipeSphere == null)
+        {
+            var volume = new GameObject("SwipeDetectionSphere");
+            volume.transform.SetParent(transform, false);
+            volume.transform.localPosition = new Vector3(0f, 2.2f, 0f);
+            swipeSphere = volume.AddComponent<SphereCollider>();
+        }
+
+        swipeSphere.isTrigger = true;
+        swipeSphere.center = Vector3.zero;
+        swipeSphere.radius = swipeRange;
+    }
+
+    bool IsInsideSwipeSphere(MarsFusionAvatar avatar)
+    {
+        if (avatar == null || !avatar.IsAlive || swipeSphere == null)
+            return false;
+        var scale = swipeSphere.transform.lossyScale;
+        float radius = swipeSphere.radius * Mathf.Max(scale.x, Mathf.Max(scale.y, scale.z));
+        return (avatar.transform.position - swipeSphere.transform.position).sqrMagnitude <= radius * radius;
+    }
+
     Vector3 DetectionCenter => detectionSphere != null ? detectionSphere.transform.position : transform.position;
 
     float DetectionRadius
@@ -316,6 +472,15 @@ public sealed class GiantGolemEnemy : NetworkBehaviour, ITakeDamage
         var center = detectionSphere != null ? detectionSphere.transform.position : transform.position;
         float radius = detectionSphere != null ? detectionSphere.radius * Mathf.Max(detectionSphere.transform.lossyScale.x, detectionSphere.transform.lossyScale.y, detectionSphere.transform.lossyScale.z) : detectionRange;
         Gizmos.DrawWireSphere(center, radius);
+        Gizmos.color = new Color(0.2f, 0.85f, 1f, 0.9f);
+        if (swipeSphere != null)
+        {
+            var swipeScale = swipeSphere.transform.lossyScale;
+            float swipeRadius = swipeSphere.radius * Mathf.Max(swipeScale.x, Mathf.Max(swipeScale.y, swipeScale.z));
+            Gizmos.DrawWireSphere(swipeSphere.transform.position, swipeRadius);
+        }
+        else
+            Gizmos.DrawWireSphere(transform.position + Vector3.up * 2.2f, swipeRange);
         Gizmos.color = new Color(1f, 0.15f, 0.15f, 0.8f);
         Gizmos.DrawWireSphere(transform.position, attackRange);
         Gizmos.color = new Color(1f, 0.85f, 0.2f, 0.8f);
@@ -397,6 +562,20 @@ public sealed class GiantGolemEnemy : NetworkBehaviour, ITakeDamage
         }
         if (CurrentMode != Mode.Throw)
             throwPoseStarted = false;
+        if (CurrentMode == Mode.Super && !superPoseStarted)
+        {
+            superPoseStarted = true;
+            animator.Play("Mutant Jump Attack", 0, 0f);
+        }
+        if (CurrentMode != Mode.Super)
+            superPoseStarted = false;
+        if (CurrentMode == Mode.Attack && !attackPoseStarted)
+        {
+            attackPoseStarted = true;
+            animator.Play("Attack", 0, 0f);
+        }
+        if (CurrentMode != Mode.Attack)
+            attackPoseStarted = false;
         UpdateThrowRock();
     }
 
@@ -448,7 +627,7 @@ public sealed class GiantGolemEnemy : NetworkBehaviour, ITakeDamage
         velocity.y += 3f;
 
         var projectile = rock.AddComponent<GiantGolemRock>();
-        projectile.Launch(velocity, throwDamage, HasStateAuthority, GetComponentsInChildren<Collider>());
+        projectile.Launch(velocity, throwDamage, HasStateAuthority, GetComponentsInChildren<Collider>(), rockGroundClip, rockImpactClip);
     }
 
     static Transform FindDeepChild(Transform root, string childName)
@@ -480,11 +659,16 @@ public sealed class GiantGolemRock : MonoBehaviour
 {
     int damage;
     bool canDamage;
+    bool groundSoundPlayed;
+    AudioClip groundClip;
+    AudioClip impactClip;
 
-    public void Launch(Vector3 velocity, int amount, bool dealsDamage, Collider[] ignored)
+    public void Launch(Vector3 velocity, int amount, bool dealsDamage, Collider[] ignored, AudioClip ground, AudioClip impact)
     {
         damage = amount;
         canDamage = dealsDamage;
+        groundClip = ground;
+        impactClip = impact;
         var collider = gameObject.GetComponent<Collider>();
         if (collider == null)
             collider = gameObject.AddComponent<SphereCollider>();
@@ -511,6 +695,51 @@ public sealed class GiantGolemRock : MonoBehaviour
                 canDamage = false;
             }
         }
+
+        if (!groundSoundPlayed && IsGround(collision))
+        {
+            groundSoundPlayed = true;
+            var point = collision.contactCount > 0 ? collision.GetContact(0).point : transform.position;
+            RockGroundAudio.PlayAt(point, groundClip, impactClip);
+        }
         Destroy(gameObject, 1.5f);
+    }
+
+    static bool IsGround(Collision collision)
+    {
+        if (collision.collider.GetComponentInParent<MarsFusionAvatar>() != null)
+            return false;
+        if (collision.collider is TerrainCollider)
+            return true;
+        return collision.contactCount > 0 && collision.GetContact(0).normal.y > 0.45f;
+    }
+}
+
+public sealed class RockGroundAudio : MonoBehaviour
+{
+    public static void PlayAt(Vector3 point, AudioClip rolling, AudioClip impact)
+    {
+        if (rolling == null && impact == null)
+            return;
+        var host = new GameObject("RockGroundAudio");
+        host.transform.position = point;
+        var source = host.AddComponent<AudioSource>();
+        source.spatialBlend = 1f;
+        source.rolloffMode = AudioRolloffMode.Linear;
+        source.minDistance = 4f;
+        source.maxDistance = 40f;
+        source.playOnAwake = false;
+        float duration = 0.1f;
+        if (rolling != null)
+        {
+            source.PlayOneShot(rolling);
+            duration = Mathf.Max(duration, rolling.length);
+        }
+        if (impact != null)
+        {
+            source.PlayOneShot(impact);
+            duration = Mathf.Max(duration, impact.length);
+        }
+        Destroy(host, duration + 0.1f);
     }
 }
