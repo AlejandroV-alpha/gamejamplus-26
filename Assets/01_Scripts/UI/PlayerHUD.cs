@@ -131,7 +131,11 @@ namespace GameJam.UI
             LocalLabel(open, "hud.inventory", Vector2.zero, new Vector2(190, 34), 18, "I  ·  ");
             Button(open, ToggleInventory);
             actionBar = CreateBar(hud.transform, Vector2.zero, "hud.collecting", Accent);
-            actionBar.Root.anchorMin = actionBar.Root.anchorMax = new Vector2(.5f, .22f);
+            actionBar.Root.sizeDelta = new Vector2(390, 82);
+            var actionBackground = actionBar.Root.gameObject.AddComponent<Image>();
+            actionBackground.color = Ink;
+            actionBackground.raycastTarget = false;
+            actionBar.Root.anchorMin = actionBar.Root.anchorMax = new Vector2(.5f, .32f);
             actionBar.Root.gameObject.SetActive(false);
             for (int i = 0; i < 3; i++)
             {
@@ -371,13 +375,16 @@ namespace GameJam.UI
         private Bar CreateBar(Transform parent, Vector2 position, string key, Color color)
         {
             var root = Rect("Status bar", parent, new Vector2(.5f, .5f), new Vector2(.5f, .5f), position, new Vector2(344, 42));
-            var track = Panel("Track", root, new Vector2(.5f, .5f), new Vector2(24, -8), new Vector2(148, 12));
+            var track = Panel("Track", root, new Vector2(.5f, .5f), new Vector2(0, -13), new Vector2(320, 10));
             var fill = Rect("Fill", track, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero).gameObject.AddComponent<Image>();
             fill.raycastTarget = false;
             fill.color = color;
-            return new Bar { Root = root, Fill = fill,
-                Label = LocalLabel(root, key, new Vector2(-109, 0), new Vector2(118, 38), 17),
-                Value = Label(root, "", new Vector2(128, 0), new Vector2(82, 38), 17) };
+            var label = LocalLabel(root, key, new Vector2(-68, 10), new Vector2(184, 24), 17);
+            label.alignment = TextAlignmentOptions.Left;
+            var value = Label(root, "", new Vector2(114, 10), new Vector2(92, 24), 18);
+            value.alignment = TextAlignmentOptions.Right;
+            value.fontStyle = FontStyles.Bold;
+            return new Bar { Root = root, Fill = fill, Label = label, Value = value };
         }
 
         private static void SetBar(Bar bar, float fraction, string value)
