@@ -1,3 +1,4 @@
+using GameJam.Multiplayer;
 using UnityEngine;
 using UnityEngine.Animations;
 using UnityEngine.Playables;
@@ -23,6 +24,13 @@ namespace GameJam.Mars
         private readonly AnimationClipPlayable[] clips = new AnimationClipPlayable[4];
         private readonly AnimationClip[] sources = new AnimationClip[4];
         private Material skin;
+
+        [SerializeField] private float playerAvoidanceRadius = 2f;
+        [SerializeField] private float playerAvoidanceStrength = 2.5f;
+
+        private readonly Collider[] nearbyColliders = new Collider[32];
+        private Transform avoidedPlayer;
+        private float avoidanceSide = 1f;
 
 #if UNITY_EDITOR
         private void OnValidate()
@@ -122,9 +130,21 @@ namespace GameJam.Mars
                 else
                 {
                     action=point==3 && running!=null ? 1 : 0;
-                    transform.rotation=Quaternion.RotateTowards(transform.rotation,Quaternion.LookRotation(direction)*Quaternion.Euler(0,headingOffset,0),90f*Time.deltaTime);
+                    Vector3 movementDirection = GetPlayerAvoidanceDirection(
+                        direction.normalized
+                    );
+
+                    transform.rotation = Quaternion.RotateTowards(
+                        transform.rotation,
+                        Quaternion.LookRotation(movementDirection) *
+                            Quaternion.Euler(0, headingOffset, 0),
+                        90f * Time.deltaTime
+                    );
+
                     float travelSpeed = action == 1 ? speed * 1.7f : speed;
-                    transform.position+=direction.normalized*Mathf.Min(travelSpeed*Time.deltaTime,direction.magnitude);
+
+                    transform.position += movementDirection *
+                        Mathf.Min(travelSpeed * Time.deltaTime, direction.magnitude);
                 }
             }
             // Sample colliders instead of assuming the terrain is flat.
@@ -132,8 +152,21 @@ namespace GameJam.Mars
             Vector3 ground=transform.position;
             foreach(var hit in Physics.RaycastAll(transform.position+Vector3.up*10f,Vector3.down,30f,~0,QueryTriggerInteraction.Ignore))
             {
-                if(hit.collider.transform.IsChildOf(transform)||hit.normal.y<0.55f||hit.distance>=nearest)continue;
-                nearest=hit.distance; ground.y=hit.point.y+bottomOffset;
+                if (hit.collider.transform.IsChildOf(transform))
+                {
+                    continue;
+                }
+
+                if (hit.collider.GetComponentInParent<MarsFusionAvatar>() != null)
+                {
+                    continue;
+                }
+
+                if (hit.normal.y < 0.55f || hit.distance >= nearest)
+                {
+                    continue;
+                }
+                nearest =hit.distance; ground.y=hit.point.y+bottomOffset;
             }
             if(nearest<float.PositiveInfinity)transform.position=ground;
             if(action!=previousAction) { clips[action].SetTime(0); previousAction=action; }
@@ -162,5 +195,88 @@ namespace GameJam.Mars
                 Gizmos.DrawLine(center+routeOffsets[i],center+routeOffsets[(i+1)%routeOffsets.Length]);
             }
         }
+
+
+        /// <summary>
+        /// Desvia el movimiento para rodear a los jugadores cercanos.
+        /// </summary>
+        private Vector3 GetPlayerAvoidanceDirection(Vector3 desiredDirection)
+        {
+            int count = Physics.OverlapSphereNonAlloc(
+                transform.position + Vector3.up,
+                playerAvoidanceRadius,
+                nearbyColliders,
+                ~0,
+                QueryTriggerInteraction.Ignore
+            );
+
+            MarsFusionAvatar nearestPlayer = null;
+            float nearestDistance = float.MaxValue;
+
+            for (int i = 0; i < count; i++)
+            {
+                MarsFusionAvatar player =
+                    nearbyColliders[i].GetComponentInParent<MarsFusionAvatar>();
+
+                if (player == null)
+                {
+                    continue;
+                }
+
+                Vector3 offset = player.transform.position - transform.position;
+                offset.y = 0f;
+
+                float distance = offset.magnitude;
+
+                if (distance < nearestDistance)
+                {
+                    nearestDistance = distance;
+                    nearestPlayer = player;
+                }
+            }
+
+            if (nearestPlayer == null)
+            {
+                avoidedPlayer = null;
+                return desiredDirection;
+            }
+
+            Vector3 toPlayer = nearestPlayer.transform.position - transform.position;
+            toPlayer.y = 0f;
+
+            if (toPlayer.sqrMagnitude < 0.001f)
+            {
+                return desiredDirection;
+            }
+
+            Vector3 right = Vector3.Cross(Vector3.up, desiredDirection).normalized;
+
+            if (avoidedPlayer != nearestPlayer.transform)
+            {
+                avoidedPlayer = nearestPlayer.transform;
+
+                if (Vector3.Dot(toPlayer, right) >= 0f)
+                {
+                    avoidanceSide = -1f;
+                }
+                else
+                {
+                    avoidanceSide = 1f;
+                }
+            }
+
+            Vector3 away = -toPlayer.normalized;
+            Vector3 sideways = right * avoidanceSide;
+
+            float proximity = Mathf.Clamp01(
+                (playerAvoidanceRadius - nearestDistance) / playerAvoidanceRadius
+            );
+
+            Vector3 steering = desiredDirection +
+                (sideways * 2f + away) * proximity * playerAvoidanceStrength;
+
+            return steering.normalized;
+        }
+
     }
 }
