@@ -788,8 +788,8 @@ MonoBehaviour:
   Animator: {fileID: 1861680653700957010}
   CameraPivot: {fileID: 6608314389182396887}
   CameraHandle: {fileID: 5864237138245083233}
-  WalkSpeed: 4
-  SprintSpeed: 8
+  WalkSpeed: 5
+  SprintSpeed: 15
   JumpImpulse: 8
   UpGravity: -25
   DownGravity: -40
