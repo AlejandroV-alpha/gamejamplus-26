@@ -274,7 +274,7 @@ public sealed class GiantGolemEnemy : NetworkBehaviour, ITakeDamage, IStateAutho
             if (super)
                 Strike(superDamage, attackRange + 3f);
             else if (IsInsideSwipeSphere(target))
-                ((ITakeDamage)target).TakeDamage(attackDamage);
+                target.TakeMonsterDamage(attackDamage);
         }
 
         if (Elapsed >= duration)
@@ -287,7 +287,7 @@ public sealed class GiantGolemEnemy : NetworkBehaviour, ITakeDamage, IStateAutho
         var delta = target.transform.position - transform.position;
         delta.y = 0f;
         if (delta.magnitude > range || Vector3.Angle(transform.forward, delta) > 70f) return;
-        ((ITakeDamage)target).TakeDamage(amount);
+        target.TakeMonsterDamage(amount);
     }
 
     public void FirstStep()
@@ -774,7 +774,7 @@ public sealed class GiantGolemRock : MonoBehaviour
             var avatar = collision.collider.GetComponentInParent<MarsFusionAvatar>();
             if (avatar != null && avatar.IsAlive)
             {
-                ((ITakeDamage)avatar).TakeDamage(damage);
+                avatar.TakeMonsterDamage(damage);
                 canDamage = false;
             }
         }

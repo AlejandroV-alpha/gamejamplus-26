@@ -254,9 +254,13 @@ namespace GameJam.Combat
             closestHit = default;
             bool found = false;
             float closestDistance = distance;
-            RaycastHit[] hits = Physics.RaycastAll(origin, direction, distance, hitLayers, QueryTriggerInteraction.Ignore);
+            RaycastHit[] hits = Physics.RaycastAll(origin, direction, distance, hitLayers, QueryTriggerInteraction.Collide);
             foreach (RaycastHit hit in hits)
             {
+                // Worm grab hitboxes are triggers so they cannot push the held astronaut.
+                // All other gameplay triggers remain transparent to weapon raycasts.
+                if (hit.collider.isTrigger && hit.collider.GetComponentInParent<GusanoExcavadorFusion>() == null)
+                    continue;
                 if (IsOwnCollider(hit.collider))
                 {
                     continue;
@@ -411,8 +415,30 @@ namespace GameJam.Combat
         /// <summary>
         /// Crea un impacto visual local y lo elimina tras su duracion.
         /// </summary>
+        private AudioClip impactSound;
+
         private void ShowImpactEffect(Vector3 position, Vector3 normal)
         {
+            if (impactSound == null)
+                impactSound = Resources.Load<AudioClip>("Audio/Weapons/SonidoDeBalaInpactada");
+            if (impactSound != null)
+            {
+                // A short-lived source stays at the impact, independently of the firing player.
+                var soundObject = new GameObject("BulletImpactSound");
+                soundObject.transform.position = position;
+                var source = soundObject.AddComponent<AudioSource>();
+                source.playOnAwake = false;
+                source.clip = impactSound;
+                source.volume = .55f;
+                source.spatialBlend = 1f;
+                source.rolloffMode = AudioRolloffMode.Linear;
+                source.minDistance = 2f;
+                source.maxDistance = 30f;
+                source.dopplerLevel = 0f;
+                source.priority = 140;
+                source.Play();
+                Destroy(soundObject, impactSound.length + .1f);
+            }
             EnemyBloodFx.TryBleedAt(position, normal);
             if (impactEffect == null)
             {

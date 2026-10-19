@@ -345,7 +345,7 @@ public sealed class ReksaiEnemy : HitProcessor, ITakeDamage
 
         if (targetFusion != null)
         {
-            ((ITakeDamage)targetFusion).TakeDamage(Mathf.CeilToInt(amount));
+            targetFusion.TakeMonsterDamage(Mathf.CeilToInt(amount));
         }
         else if (targetStats != null && targetStats.IsSpawned)
         {

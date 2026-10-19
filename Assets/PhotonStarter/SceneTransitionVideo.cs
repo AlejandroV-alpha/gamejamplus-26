@@ -24,6 +24,9 @@ namespace GameJam.Multiplayer
         private TMPro.TMP_MeshInfo[] creditsMesh;
         private float creditsStarted, creditsHeight;
         private bool crawlEnded;
+        private AudioSource creditsMusic;
+        private float creditsFinishedAt = -1f;
+        private bool returningToMenu;
         private Texture2D spaceTexture, particleTexture;
         private Sprite particleSprite;
         private CanvasGroup creditsIntro;
@@ -59,6 +62,18 @@ namespace GameJam.Multiplayer
             if (current == null || current.showingCredits) return;
             current.showingCredits = true;
             current.ReleaseVideo();
+            var endMusic = Resources.Load<AudioClip>("Music/Credits/musicadeFinalDelJuego");
+            if (endMusic != null)
+            {
+                current.creditsMusic = current.gameObject.AddComponent<AudioSource>();
+                current.creditsMusic.playOnAwake = false;
+                current.creditsMusic.loop = true;
+                current.creditsMusic.spatialBlend = 0f;
+                current.creditsMusic.volume = 0f;
+                current.creditsMusic.priority = 128;
+                current.creditsMusic.clip = endMusic;
+                current.creditsMusic.Play();
+            }
             var credits = Resources.Load<TextAsset>("Credits/Authors");
             current.ShowMessage("<size=86><b>CRÉDITOS</b></size>\n"
                 + "<size=32><cspace=8>EQUIPO CREADOR</cspace></size>\n\n\n"
@@ -84,7 +99,7 @@ namespace GameJam.Multiplayer
             var label = new GameObject("Texto").AddComponent<TMPro.TextMeshProUGUI>();
             label.transform.SetParent(button.transform, false);
             Stretch(label.rectTransform);
-            label.text = "Volver al lobby";
+            label.text = "Volver al menú";
             label.fontSize = 24;
             label.alignment = TMPro.TextAlignmentOptions.Center;
             label.color = new Color(1f, .85f, .48f);
@@ -218,6 +233,12 @@ namespace GameJam.Multiplayer
         private void UpdateCreditsCrawl()
         {
             float elapsed = Time.realtimeSinceStartup - creditsStarted;
+            if (creditsMusic != null)
+                creditsMusic.volume = Mathf.MoveTowards(creditsMusic.volume,
+                    crawlEnded ? 0f : .35f, Time.unscaledDeltaTime * .25f);
+            if (crawlEnded && creditsFinishedAt >= 0f
+                && Time.realtimeSinceStartup - creditsFinishedAt >= 3f && !returningToMenu)
+                ReturnToLobby();
             if (creditParticles != null)
                 for (int i = 0; i < creditParticles.Length; i++)
                 {
@@ -266,6 +287,7 @@ namespace GameJam.Multiplayer
             }
             if (travel <= creditsHeight + 3400f) return;
             crawlEnded = true;
+            creditsFinishedAt = Time.realtimeSinceStartup;
             creditsMesh = null;
             message.alignment = TMPro.TextAlignmentOptions.Center;
             message.rectTransform.anchorMin = Vector2.zero;
@@ -279,11 +301,26 @@ namespace GameJam.Multiplayer
 
         private async void ReturnToLobby()
         {
+            if (returningToMenu) return;
             var session = FindFirstObjectByType<MarsFusionSession>();
-            if (session == null || session.Busy) return;
-            try { await session.Disconnect(); }
-            catch (System.Exception exception) { Debug.LogException(exception); }
-            if (this != null) Destroy(gameObject);
+            if (session != null && session.Busy) return;
+            returningToMenu = true;
+            try
+            {
+                if (session != null) await session.Disconnect();
+                else
+                {
+                    int menuIndex = SceneUtility.GetBuildIndexByScenePath("Assets/00_Scenes/j_LobyDeEspera.unity");
+                    if (menuIndex >= 0) SceneManager.LoadScene(menuIndex);
+                    else throw new System.InvalidOperationException("Falta el lobby inicial en Build Settings.");
+                }
+                if (this != null) Destroy(gameObject);
+            }
+            catch (System.Exception exception)
+            {
+                Debug.LogException(exception);
+                if (this != null) returningToMenu = false;
+            }
         }
 
         private void ShowMessage(string text)
@@ -532,6 +569,7 @@ namespace GameJam.Multiplayer
         {
             if (current == this) current = null;
             ReleaseVideo();
+            if (creditsMusic != null) creditsMusic.Stop();
             if (spaceTexture != null) Destroy(spaceTexture);
             if (particleSprite != null) Destroy(particleSprite);
             if (particleTexture != null) Destroy(particleTexture);
