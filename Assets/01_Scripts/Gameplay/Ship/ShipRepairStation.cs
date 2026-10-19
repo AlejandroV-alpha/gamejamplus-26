@@ -244,17 +244,10 @@ namespace GameJam.Ship
 
             float remaining = ReturnToLobbyTimer.RemainingTime(Runner) ?? 0f;
 
-            GUIStyle style = new GUIStyle(GUI.skin.box);
-            style.fontSize = 17;
-            style.fontStyle = FontStyle.Bold;
-            style.normal.textColor = new Color(0.2f, 1f, 0.45f);
-            style.alignment = TextAnchor.MiddleCenter;
-
-            GUI.Box(
-                new Rect(Screen.width * 0.5f - 280, 40, 560, 54),
-                $"¡MISIÓN COMPLETADA · NAVE REPARADA!\nDespegue en {Mathf.CeilToInt(remaining)}s...",
-                style
-            );
+            GameJam.UI.GameplayFeedbackPanel.Draw(
+                "MISI\u00d3N COMPLETADA - NAVE REPARADA",
+                $"Despegue en {Mathf.CeilToInt(remaining)} s...",
+                new Color(.25f, 1f, .75f), top: true);
         }
 
 

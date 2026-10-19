@@ -12,7 +12,6 @@ namespace GameJam.Survival
         private string notice;
         private float noticeUntil;
         private bool completed, wasRescuing;
-        private GUIStyle titleStyle, hintStyle;
 
         private void Awake()
         {
@@ -49,13 +48,13 @@ namespace GameJam.Survival
             if (target != null)
             {
                 progress = target.ReviveProgress;
-                title = "Reanimando compañero… " + Mathf.FloorToInt(progress * 100f) + "%";
+                title = "Reanimando compañero";
                 hint = "Mantén F · Suelta para cancelar";
             }
             else if (!avatar.IsAlive && revive.Rescuer != null && revive.ActiveAttempt != 0)
             {
                 progress = revive.ReviveProgress;
-                title = "Te están reanimando… " + Mathf.FloorToInt(progress * 100f) + "%";
+                title = "Te están reanimando";
                 hint = "Tu compañero está ayudándote";
             }
             else if (revive.IsRecovering)
@@ -73,27 +72,7 @@ namespace GameJam.Survival
             }
             else return;
 
-            DrawFeedback(title, hint, progress, color, new Rect(0f, 0f, Screen.width, Screen.height));
-        }
-
-        private void DrawFeedback(string title, string hint, float progress, Color color, Rect viewport)
-        {
-            if (titleStyle == null)
-            {
-                titleStyle = new GUIStyle(GUI.skin.label) { alignment = TextAnchor.MiddleCenter, fontSize = 14 };
-                hintStyle = new GUIStyle(GUI.skin.label) { alignment = TextAnchor.MiddleCenter, fontSize = 12 };
-            }
-            float width = Mathf.Min(380f, viewport.width * .8f);
-            float x = viewport.x + (viewport.width - width) * .5f, y = viewport.y + viewport.height * .76f;
-            GUI.Box(new Rect(x, y, width, 72f), GUIContent.none);
-            GUI.Label(new Rect(x + 8f, y + 5f, width - 16f, 24f), title, titleStyle);
-            var previous = GUI.color;
-            GUI.color = new Color(.15f, .2f, .2f);
-            GUI.DrawTexture(new Rect(x + 8f, y + 34f, width - 16f, 5f), Texture2D.whiteTexture);
-            GUI.color = color;
-            GUI.DrawTexture(new Rect(x + 8f, y + 34f, (width - 16f) * Mathf.Clamp01(progress), 5f), Texture2D.whiteTexture);
-            GUI.color = previous;
-            GUI.Label(new Rect(x + 8f, y + 44f, width - 16f, 22f), hint, hintStyle);
+            GameJam.UI.GameplayFeedbackPanel.Draw(title, hint, color, progress);
         }
 
         private void OnDisable()

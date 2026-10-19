@@ -66,7 +66,10 @@ namespace GameJam.Ship
             if (GetComponent<GameJam.Survival.SurvivalShipRepair>()?.enabled ?? false) return;
             if (promptStation==null || player==null || !player.CanCraftLocally()) return;
             if(promptStation.Object==null || !promptStation.Object.IsValid || promptStation.IsRepaired())return;
-            GUI.Box(new Rect(Screen.width*.5f-240,Screen.height*.84f,480,48),"Q  |  " + GameJam.Localization.GameLocalization.Get("hud.repair_ship") + " · " + promptStation.ProgressLabel);
+
+            GameJam.UI.GameplayFeedbackPanel.Draw(
+                GameJam.Localization.GameLocalization.Get("hud.repair_ship"),
+                "[Q]  |  " + promptStation.ProgressLabel, new Color(1f, .65f, .35f));
         }
 
         /// <summary>
