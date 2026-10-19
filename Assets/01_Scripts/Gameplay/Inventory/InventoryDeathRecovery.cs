@@ -35,8 +35,9 @@ namespace GameJam.Inventory
                 if(prefab==null) continue;
                 float angle=i++*2.4f;
                 Vector3 position=lastSafePosition+new Vector3(Mathf.Cos(angle),0,Mathf.Sin(angle))*.6f;
-                var item=Runner.Spawn(prefab,position,Quaternion.identity);
-                item.GetComponent<MaterialPickup>().DroppedAmount=entry.Value;
+                int quantity = entry.Value;
+                Runner.Spawn(prefab, position, Quaternion.identity, onBeforeSpawned: (_, item) =>
+                    item.GetComponent<MaterialPickup>().DroppedAmount = quantity);
                 inventory.RemoveMaterial(entry.Key,entry.Value);
             }
         }

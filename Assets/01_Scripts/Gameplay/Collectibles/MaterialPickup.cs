@@ -20,6 +20,11 @@ namespace GameJam.Collectibles
 
         [Networked] private TickTimer despawnAfter { get; set; }
         [Networked] public int DroppedAmount { get; set; }
+        // These pickups do not move after placement. Replicate their world pose once,
+        // rather than relying on Runner.Spawn's local Transform arguments.
+        [Networked] private Vector3 PlacedPosition { get; set; }
+        [Networked] private Quaternion PlacedRotation { get; set; }
+        [Networked] private NetworkBool HasPlacedPose { get; set; }
         private int Quantity => DroppedAmount > 0 ? DroppedAmount : amount;
 
         [Networked] private NetworkBool IsClaimed { get; set; }
@@ -36,6 +41,23 @@ namespace GameJam.Collectibles
         private void Awake()
         {
             pickupCollider = GetComponent<Collider>();
+        }
+
+        public override void Spawned()
+        {
+            if (HasStateAuthority)
+            {
+                PlacedPosition = transform.position;
+                PlacedRotation = transform.rotation;
+                HasPlacedPose = true;
+            }
+            ApplyPlacedPose();
+        }
+
+        private void ApplyPlacedPose()
+        {
+            if (IsReady() && HasPlacedPose && !HasStateAuthority)
+                transform.SetPositionAndRotation(PlacedPosition, PlacedRotation);
         }
 
         /// <summary>
@@ -227,6 +249,7 @@ namespace GameJam.Collectibles
         /// </summary>
         public override void Render()
         {
+            ApplyPlacedPose();
             bool available = IsAvailable();
             if (visual != null)
             {
