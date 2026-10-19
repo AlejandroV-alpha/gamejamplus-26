@@ -9,7 +9,7 @@ using UnityEngine;
 /// </summary>
 public sealed class GusanoExcavadorFusion : NetworkBehaviour, ITakeDamage
 {
-    public enum State { Hidden, Emerge, EmergeJump, Crawl, Attack, Burrow, Hold }
+    public enum State { Hidden, Emerge, EmergeJump, Crawl, Attack, Burrow, Hold, Death }
 
     [SerializeField, Min(5f)] float territoryRadius = 45f;
     [SerializeField, Min(1f)] float emergeDistanceFromPlayer = 9f;
@@ -29,6 +29,8 @@ public sealed class GusanoExcavadorFusion : NetworkBehaviour, ITakeDamage
 
     [Networked] PlayerRef GrabbedPlayer { get; set; }
     [Networked] int FreeHits { get; set; }
+    [SerializeField, Min(1)] int maxHealth = 180;
+    [Networked] public int Health { get; private set; }
     float nextHoldDamage;
 
     /// <summary>
@@ -82,12 +84,24 @@ public sealed class GusanoExcavadorFusion : NetworkBehaviour, ITakeDamage
         mouth = GetComponentsInChildren<Transform>(true).FirstOrDefault(t => t.name.StartsWith("Mandibula_0"))
             ?? GetComponentsInChildren<Transform>(true).FirstOrDefault(t => t.name.StartsWith("Colmillo_"))
             ?? transform;
-        if (HasStateAuthority) Enter(State.Hidden, Random.Range(hiddenSeconds.x, hiddenSeconds.y));
+        if (HasStateAuthority)
+        {
+            Health = maxHealth;
+            Enter(State.Hidden, Random.Range(hiddenSeconds.x, hiddenSeconds.y));
+        }
+        GameJam.Combat.EnemyCombatUI.Attach(gameObject, "GUSANO EXCAVADOR", () => Health, maxHealth,
+            () => Object != null && Object.IsValid && StateBufferIsValid
+                && Current != State.Hidden && Current != State.Burrow && Current != State.Death);
     }
 
     public override void FixedUpdateNetwork()
     {
         if (!HasStateAuthority) return;
+        if (Current == State.Death)
+        {
+            if (Elapsed >= StateLength) Runner.Despawn(Object);
+            return;
+        }
         MarsFusionAvatar target = NearestPlayer();
 
         switch (Current)
@@ -174,7 +188,7 @@ public sealed class GusanoExcavadorFusion : NetworkBehaviour, ITakeDamage
         shown = Current;
         if (wormVoice != null)
         {
-            if (Current == State.Hidden || Current == State.Burrow) wormVoice.Stop();
+            if (Current == State.Hidden || Current == State.Burrow || Current == State.Death) wormVoice.Stop();
             else if ((Current == State.Emerge || Current == State.EmergeJump || Current == State.Attack || Current == State.Hold)
                 && !wormVoice.isPlaying && !SceneTransitionVideo.IsPresent) wormVoice.Play();
         }
@@ -204,7 +218,8 @@ public sealed class GusanoExcavadorFusion : NetworkBehaviour, ITakeDamage
             case State.Crawl: return "Mover";
             case State.Attack: return "Atacar";
             case State.Hold: return "Atacar";
-            case State.Burrow: return "Enterrarse";
+            case State.Burrow:
+            case State.Death: return "Enterrarse";
             default: return null;
         }
     }
@@ -274,13 +289,28 @@ public sealed class GusanoExcavadorFusion : NetworkBehaviour, ITakeDamage
     public void TakeDamage(int amount)
     {
         if (Object == null || !Object.IsValid || amount <= 0) return;
-        RPC_Shot();
+        RPC_Shot(amount);
     }
 
     [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
-    void RPC_Shot()
+    void RPC_Shot(int amount)
     {
+        if (amount <= 0 || Health <= 0 || Current == State.Hidden || Current == State.Burrow || Current == State.Death) return;
+        int previousHealth = Health;
+        Health = Mathf.Max(0, Health - amount);
+        RPC_CombatDamage(previousHealth - Health);
         if (Current == State.Hold) FreeHits++;
+        if (Health <= 0)
+        {
+            GrabbedPlayer = PlayerRef.None;
+            Enter(State.Death, Mathf.Max(1f, Clip("Enterrarse")));
+        }
+    }
+
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    void RPC_CombatDamage(int actualDamage)
+    {
+        GetComponent<GameJam.Combat.EnemyCombatUI>()?.Damage(actualDamage);
     }
 
     /// <summary>

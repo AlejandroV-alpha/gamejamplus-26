@@ -132,6 +132,9 @@ public sealed class GiantGolemEnemy : NetworkBehaviour, ITakeDamage, IStateAutho
             SyncedRotation = transform.rotation;
         }
         ApplyAnimator();
+        GameJam.Combat.EnemyCombatUI.Attach(gameObject, "GÓLEM", () => Health,
+            Mathf.Max(1, Mathf.RoundToInt(maxHealth * healthMultiplier)),
+            () => Object != null && Object.IsValid && StateBufferIsValid && CurrentMode != Mode.Death);
     }
 
     public override void FixedUpdateNetwork()
@@ -414,9 +417,17 @@ public sealed class GiantGolemEnemy : NetworkBehaviour, ITakeDamage, IStateAutho
     {
         if (damage <= 0 || CurrentMode == Mode.Death)
             return;
+        int previousHealth = Health;
         Health = Mathf.Max(0, Health - damage);
+        RPC_CombatDamage(previousHealth - Health);
         if (Health <= 0)
             SetMode(Mode.Death);
+    }
+
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    void RPC_CombatDamage(int actualDamage)
+    {
+        GetComponent<GameJam.Combat.EnemyCombatUI>()?.Damage(actualDamage);
     }
 
     float FlatDistance(Vector3 point)

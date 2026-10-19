@@ -82,6 +82,9 @@ public sealed class ReksaiEnemy : HitProcessor, ITakeDamage
         home = transform.position;
         isStandalone = (NetworkManager.Singleton == null || !IsSpawned);
         localHealth = maxHealth;
+        GameJam.Combat.EnemyCombatUI.Attach(gameObject, "REK’SAI", () => Health, maxHealth,
+            () => (isStandalone || IsSpawned) && CurrentMode != Mode.Death
+                && CurrentMode != Mode.Hidden && CurrentMode != Mode.Burrow);
         localMode = Mode.Idle;
         localStateStarted = Time.timeAsDouble;
         burrowAt = Time.time + burrowCooldown;
@@ -373,6 +376,7 @@ public sealed class ReksaiEnemy : HitProcessor, ITakeDamage
     {
         if (CurrentMode == Mode.Death || CurrentMode == Mode.Hidden || CurrentMode == Mode.Burrow) return;
         if (float.IsNaN(amount) || float.IsInfinity(amount) || amount <= 0) return;
+        float previousHealth = Health;
         if (isStandalone)
         {
             localHealth = Mathf.Max(0, localHealth - Mathf.Min(amount, maxHealth));
@@ -383,6 +387,18 @@ public sealed class ReksaiEnemy : HitProcessor, ITakeDamage
             health.Value = Mathf.Max(0, health.Value - Mathf.Min(amount, maxHealth));
             if (health.Value <= 0) Die();
         }
+        float actualDamage = previousHealth - Health;
+        if (actualDamage > 0)
+        {
+            if (isStandalone) GetComponent<GameJam.Combat.EnemyCombatUI>()?.Damage(actualDamage);
+            else DamageNumberRpc(actualDamage);
+        }
+    }
+
+    [Rpc(SendTo.Everyone)]
+    void DamageNumberRpc(float actualDamage)
+    {
+        GetComponent<GameJam.Combat.EnemyCombatUI>()?.Damage(actualDamage);
     }
 
     void Die()

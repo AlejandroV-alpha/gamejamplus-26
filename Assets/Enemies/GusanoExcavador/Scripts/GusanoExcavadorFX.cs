@@ -44,7 +44,7 @@ public sealed class GusanoExcavadorFX : MonoBehaviour
     {
         if (worm == null) return;
         State state = worm.CurrentState;
-        bool visible = state != State.Hidden;
+        bool visible = state != State.Hidden && state != State.Death;
         // During a grab every hitbox remains shootable, without physically pushing the victim.
         foreach (var box in hitBoxes)
         {

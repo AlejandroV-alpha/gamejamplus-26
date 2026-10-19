@@ -79,6 +79,8 @@ public sealed class JungleNightmareFusionEnemy : NetworkBehaviour, ITakeDamage
         }
         shownAttacks = AttackCount;
         shownHits = HitCount;
+        GameJam.Combat.EnemyCombatUI.Attach(gameObject, "JUNGLE NIGHTMARE", () => Health, maxHealth,
+            () => Object != null && Object.IsValid && StateBufferIsValid && !Dead);
     }
 
     public override void FixedUpdateNetwork()
@@ -346,8 +348,9 @@ public sealed class JungleNightmareFusionEnemy : NetworkBehaviour, ITakeDamage
     private void RPC_TakeDamage(int amount)
     {
         if (amount <= 0 || Dead) return;
+        float previousHealth = Health;
         Health = Mathf.Max(0, Health - Mathf.Min(amount, maxHealth));
-        RPC_DamageFeedback(Health <= 0);
+        RPC_DamageFeedback(Health <= 0, previousHealth - Health);
         if (Health <= 0)
         {
             Dead = true;
@@ -362,8 +365,9 @@ public sealed class JungleNightmareFusionEnemy : NetworkBehaviour, ITakeDamage
     }
 
     [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
-    private void RPC_DamageFeedback(bool lethal)
+    private void RPC_DamageFeedback(bool lethal, float actualDamage)
     {
+        GetComponent<GameJam.Combat.EnemyCombatUI>()?.Damage(actualDamage);
         var blood = GetComponent<GameJam.Combat.EnemyBloodFx>();
         if (blood == null) return;
         var chest = transform.position + Vector3.up * 1f;

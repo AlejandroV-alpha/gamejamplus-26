@@ -80,6 +80,9 @@ public sealed class ReksaiFusionEnemy : NetworkBehaviour, ITakeDamage
             burrowAt = CurrentTime + burrowCooldown;
         }
         RenderState();
+        GameJam.Combat.EnemyCombatUI.Attach(gameObject, "REK’SAI", () => Health, maxHealth,
+            () => Object != null && Object.IsValid && StateBufferIsValid
+                && CurrentMode != Mode.Hidden && CurrentMode != Mode.Burrow && CurrentMode != Mode.Death);
     }
 
     public override void FixedUpdateNetwork()
@@ -307,15 +310,17 @@ public sealed class ReksaiFusionEnemy : NetworkBehaviour, ITakeDamage
     private void RPC_TakeDamage(int amount)
     {
         if (amount <= 0 || CurrentMode == Mode.Death || CurrentMode == Mode.Hidden || CurrentMode == Mode.Burrow) return;
+        float previousHealth = Health;
         Health = Mathf.Max(0, Health-Mathf.Min(amount,maxHealth));
-        RPC_DamageFeedback(Health<=0);
+        RPC_DamageFeedback(Health<=0, previousHealth - Health);
         Debug.Log("[Reksai Fusion] Health="+Health, this);
         if (Health <= 0) SetMode(Mode.Death);
     }
 
     [Rpc(RpcSources.StateAuthority,RpcTargets.All)]
-    private void RPC_DamageFeedback(bool lethal)
+    private void RPC_DamageFeedback(bool lethal, float actualDamage)
     {
+        GetComponent<GameJam.Combat.EnemyCombatUI>()?.Damage(actualDamage);
         var blood=GetComponent<GameJam.Combat.EnemyBloodFx>();
         if(blood==null)return;
         blood.Bleed(transform.position+Vector3.up*1.2f,transform.forward);
