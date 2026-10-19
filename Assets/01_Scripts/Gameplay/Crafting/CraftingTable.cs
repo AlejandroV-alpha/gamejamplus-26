@@ -105,6 +105,12 @@ namespace GameJam.Crafting
         /// </summary>
         public bool RequestCraft(int recipeIndex)
         {
+            return RequestCraft(recipeIndex, out _);
+        }
+
+        public bool RequestCraft(int recipeIndex, out string reason)
+        {
+            reason = "La mesa todavia no esta lista. Espera un momento.";
             if (!IsReady() || !IsValidIndex(recipeIndex))
             {
                 return false;
@@ -112,29 +118,34 @@ namespace GameJam.Crafting
 
             if (IsComponentCompleted(recipeIndex))
             {
+                reason = "Este componente ya esta fabricado.";
                 Debug.Log("[Crafting] Componente ya fabricado: " + recipes[recipeIndex].recipeName, this);
                 return false;
             }
 
             if (ApprovedPlayers.Get(recipeIndex) != PlayerRef.None)
             {
+                reason = "Otro intento de fabricacion esta pendiente de confirmacion.";
                 Debug.Log("[Crafting] Componente pendiente de confirmacion.", this);
                 return false;
             }
 
             PlayerCrafter crafter = GetValidCrafter(Runner.LocalPlayer);
-            if (crafter == null || !crafter.CanCraftLocally())
+            if (crafter == null || !crafter.CanCraftAtTable(this))
             {
+                reason = "Acercate a la caja y cierra otros menus para fabricar.";
                 return false;
             }
 
             if (!crafter.GetInventory().HasMaterials(recipeCosts[recipeIndex]))
             {
+                reason = "Faltan materiales en tu inventario para esta receta.";
                 Debug.Log("[Crafting] Materiales insuficientes: " + recipes[recipeIndex].recipeName, this);
                 return false;
             }
 
             RpcRequestCraft(recipeIndex);
+            reason = string.Empty;
             return true;
         }
 
@@ -194,7 +205,7 @@ namespace GameJam.Crafting
             }
 
             PlayerCrafter crafter = GetValidCrafter(Runner.LocalPlayer);
-            if (crafter == null || !crafter.CanCraftLocally())
+            if (crafter == null || !crafter.CanCraftAtTable(this))
             {
                 RpcConfirmCraft(recipeIndex, false);
                 return;

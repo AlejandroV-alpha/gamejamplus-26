@@ -94,6 +94,29 @@ namespace GameJam.Crafting
             return characterInput.ControlsEnabled;
         }
 
+        /// <summary>The open crafting box blocks movement, but permits its own recipe requests.</summary>
+        public bool CanCraftAtTable(CraftingTable table)
+        {
+            if (!CanCraft() || !HasStateAuthority || characterInput == null) return false;
+            if (characterInput.ControlsEnabled) return true;
+
+            var box = table != null ? table.GetComponent<CraftingBox>() : null;
+            if (box == null || !box.IsOpenFor(gameObject)) return false;
+            var avatar = GetComponent<GameJam.Multiplayer.MarsFusionAvatar>();
+            var session = FindAnyObjectByType<GameJam.Multiplayer.MarsFusionSession>();
+            return avatar != null && (session == null || !session.MenuOpen)
+                && (avatar.LocalUI == null || !avatar.LocalUI.IsVisible)
+                && (avatar.LocalHud == null || !avatar.LocalHud.IsInventoryOpen)
+                && !(GetComponent<GameJam.Survival.SurvivalRevive>()?.IsRecovering ?? false)
+                && !(GetComponent<GameJam.Environment.Mars.PlayerSandstorm>()?.IsDowned ?? false)
+                && !(GetComponent<GameJam.Multiplayer.PlayerInteractionAction>()?.IsBusy ?? false)
+                && !(GetComponent<GameJam.Combat.PlayerHurtReaction>()?.IsReacting ?? false)
+                && !GameJam.Multiplayer.SceneTransitionVideo.IsBlockingInput
+                && !GameJam.Multiplayer.LobbyDepartureEffects.IsBlockingInput
+                && !GameJam.Multiplayer.PortalWhiteTransition.IsBlockingInput
+                && !GusanoExcavadorFusion.LocalPlayerHeld;
+        }
+
         /// <summary>
         /// Devuelve el inventario individual del astronauta.
         /// </summary>

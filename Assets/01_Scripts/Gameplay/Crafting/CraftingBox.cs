@@ -33,6 +33,12 @@ namespace GameJam.Crafting
         private float nextPlayerSearch;
         private float openedAt;
         private bool open;
+
+        public bool IsOpenFor(GameObject player)
+        {
+            return isActiveAndEnabled && open && localPlayer != null && localPlayer.gameObject == player
+                && (player.transform.position - transform.position).sqrMagnitude <= interactionDistance * interactionDistance;
+        }
         private Transform lidHinge;
         private Quaternion closedLidRotation;
         private Quaternion openedLidRotation;
@@ -220,13 +226,13 @@ namespace GameJam.Crafting
         /// </summary>
         private void Craft(int recipeIndex)
         {
-            if (table.RequestCraft(recipeIndex))
+            if (table.RequestCraft(recipeIndex, out string reason))
             {
                 ui.Flash("Fabricando...");
             }
             else
             {
-                ui.Flash("No se puede fabricar todavia");
+                ui.Flash(reason);
             }
         }
 
