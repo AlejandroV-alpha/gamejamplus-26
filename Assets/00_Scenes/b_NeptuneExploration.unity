@@ -22655,10 +22655,6 @@ PrefabInstance:
       propertyPath: m_Name
       value: GiantGolemNeptune
       objectReference: {fileID: 0}
-    - target: {fileID: 5918237461029384802, guid: d5e9c961573f2844d9a03ed7db682f91, type: 3}
-      propertyPath: groundEffectLifetime
-      value: 2
-      objectReference: {fileID: 0}
     - target: {fileID: 5918237461029384803, guid: d5e9c961573f2844d9a03ed7db682f91, type: 3}
       propertyPath: SortKey
       value: 578381346
