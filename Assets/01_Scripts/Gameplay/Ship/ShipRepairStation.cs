@@ -1,4 +1,8 @@
 using Fusion;
+using System.Collections.Generic;
+using System.Linq;
+using GameJam.Multiplayer;
+using UnityEngine.SceneManagement;
 using GameJam.Crafting;
 using UnityEngine;
 
@@ -22,6 +26,13 @@ namespace GameJam.Ship
         private ShipRepairPresentation ship;
         private Collider[] hullColliders;
         private bool repairAnnounced;
+        // 0: mission, 1: departure videos, 2: loading next planet, 3: final credits.
+        [Networked] private int TravelPhase { get; set; }
+        private readonly HashSet<PlayerRef> travelFinished = new();
+        private bool localTravelStarted, localTravelFinished;
+        private float nextTravelAck;
+        private bool IsNeptune => gameObject.scene.name == "b_NeptuneExploration";
+        private int NextPlanetIndex => SceneUtility.GetBuildIndexByScenePath("Assets/00_Scenes/b_NeptuneExploration.unity");
 
         public GameJam.Crafting.RecipeData GetComponentRecipe(int index) => craftingTable != null ? craftingTable.GetRecipe(index) : null;
         public bool IsComponentInstalled(int index) => IsReady() && index >= 0 && index < 3 && (installedComponents & (1 << index)) != 0;
@@ -163,18 +174,57 @@ namespace GameJam.Ship
 
         public override void FixedUpdateNetwork()
         {
-            if (HasStateAuthority && Repaired && ReturnToLobbyTimer.Expired(Runner))
+            if (!HasStateAuthority || !Repaired) return;
+            if (TravelPhase == 0 && ReturnToLobbyTimer.Expired(Runner))
             {
-                ReturnToLobbyTimer = TickTimer.None;
-                int lobbyIndex = UnityEngine.SceneManagement.SceneUtility.GetBuildIndexByScenePath("Assets/00_Scenes/j_LobyDeEspera.unity");
-                if (lobbyIndex >= 0)
+                if (!IsNeptune && NextPlanetIndex < 0)
                 {
-                    Debug.Log("[ShipRepair] Misión completada. Regresando a la nave nodriza...");
-                    Runner.LoadScene(SceneRef.FromIndex(lobbyIndex));
+                    Debug.LogError("[Campaign] Falta b_NeptuneExploration en Build Settings.", this);
+                    ReturnToLobbyTimer = TickTimer.CreateFromSeconds(Runner, 8f);
+                    return;
                 }
+                ReturnToLobbyTimer = TickTimer.None;
+                TravelPhase = 1;
+            }
+            if (TravelPhase != 1 || !Runner.ActivePlayers.Any()
+                || !Runner.ActivePlayers.All(p => travelFinished.Contains(p))) return;
+            if (IsNeptune)
+            {
+                TravelPhase = 3;
+            }
+            else if (Runner.IsSceneAuthority)
+            {
+                TravelPhase = 2;
+                Runner.LoadScene(SceneRef.FromIndex(NextPlanetIndex));
             }
         }
 
+        private void Update()
+        {
+            if (!IsReady()) return;
+            if (TravelPhase == 1)
+            {
+                if (!localTravelStarted)
+                    localTravelStarted = SceneTransitionVideo.PlaySequence(
+                        IsNeptune ? new[] { "EscapandoDeNeptuno1" }
+                            : new[] { "NAVE_Despegandon_Marte (1)", "LLEGANDO_Neptuno" },
+                        IsNeptune ? -1 : NextPlanetIndex, () => localTravelFinished = true);
+                if (localTravelFinished && Time.realtimeSinceStartup >= nextTravelAck)
+                {
+                    nextTravelAck = Time.realtimeSinceStartup + 1f;
+                    RpcTravelFinished();
+                }
+            }
+            else if (TravelPhase == 3) SceneTransitionVideo.ShowCredits();
+        }
+
+        [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
+        private void RpcTravelFinished(RpcInfo info = default)
+        {
+            if (TravelPhase != 1) return;
+            var source = info.IsInvokeLocal ? Runner.LocalPlayer : info.Source;
+            if (Runner.ActivePlayers.Contains(source)) travelFinished.Add(source);
+        }
 
         /// <summary>
         /// Muestra el mensaje de reparacion cuando el estado de red esta disponible.
@@ -201,7 +251,7 @@ namespace GameJam.Ship
 
             GUI.Box(
                 new Rect(Screen.width * 0.5f - 280, 40, 560, 54),
-                $"¡MISIÓN COMPLETADA · NAVE REPARADA!\nRegresando a la nave nodriza en {Mathf.CeilToInt(remaining)}s...",
+                $"¡MISIÓN COMPLETADA · NAVE REPARADA!\nDespegue en {Mathf.CeilToInt(remaining)}s...",
                 style
             );
         }

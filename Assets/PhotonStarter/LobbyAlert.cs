@@ -42,6 +42,9 @@ namespace GameJam.Multiplayer
         private readonly HashSet<PlayerRef> portalEntered = new();
         private bool localVideoStarted, localVideoFinished;
         private int shownPhase;
+        private readonly HashSet<PlayerRef> arrivalFinished = new();
+        private bool arrivalStarted, localArrivalFinished;
+        private float nextArrivalAck;
         private LobbyDepartureEffects effects;
         public bool DepartureActive => Object != null && Object.IsValid && DeparturePhase > 0;
         public float PhaseRemaining => Object != null && Object.IsValid ? PhaseTimer.RemainingTime(Runner) ?? 0 : 0;
@@ -119,9 +122,25 @@ namespace GameJam.Multiplayer
                 {
                     DeparturePhase = 5;
                     Debug.Log("[Lobby departure] stage=travel");
-                    Runner.LoadScene(SceneRef.FromIndex(MissionSceneIndex));
+                    // Phase 5 plays the arrival video before any scene is loaded.
                 }
             }
+            else if (DeparturePhase == 5 && Runner.IsSceneAuthority && ArrivalCompleteForEveryone())
+            {
+                DeparturePhase = 6;
+                Runner.LoadScene(SceneRef.FromIndex(MissionSceneIndex));
+            }
+        }
+
+        private bool ArrivalCompleteForEveryone() => Runner.ActivePlayers.Any()
+            && Runner.ActivePlayers.All(p => arrivalFinished.Contains(p));
+
+        [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
+        private void RPC_ArrivalFinished(RpcInfo info = default)
+        {
+            if (DeparturePhase != 5) return;
+            var source = info.IsInvokeLocal ? Runner.LocalPlayer : info.Source;
+            if (Runner.ActivePlayers.Contains(source)) arrivalFinished.Add(source);
         }
 
         [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
@@ -151,7 +170,7 @@ namespace GameJam.Multiplayer
                 shownPhase = DeparturePhase;
                 foreach (var w in warnings) w.gameObject.SetActive(DeparturePhase < 4);
                 foreach (var (light, _) in ceilingLights) light.color = alertColor;
-                if (DeparturePhase >= 3) SceneTransitionVideo.CancelCurrent();
+                if (DeparturePhase == 3 || DeparturePhase == 4) SceneTransitionVideo.CancelCurrent();
             }
             if (DeparturePhase == 2)
             {
@@ -164,6 +183,18 @@ namespace GameJam.Multiplayer
                 {
                     localVideoFinished = true;
                     RPC_CinematicFinished();
+                }
+            }
+            if (DeparturePhase == 5)
+            {
+                if (!arrivalStarted)
+                    arrivalStarted = SceneTransitionVideo.PlaySequence(
+                        new[] { "LlegandoAMarte_Con_Impactos" }, MissionSceneIndex,
+                        () => localArrivalFinished = true);
+                if (localArrivalFinished && Time.realtimeSinceStartup >= nextArrivalAck)
+                {
+                    nextArrivalAck = Time.realtimeSinceStartup + 1f;
+                    RPC_ArrivalFinished();
                 }
             }
             float t = Time.time;

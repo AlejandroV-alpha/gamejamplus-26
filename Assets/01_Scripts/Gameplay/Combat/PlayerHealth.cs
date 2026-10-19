@@ -101,7 +101,7 @@ namespace GameJam.Combat
                 return;
             }
 
-            if (damage <= 0 || !IsAlive)
+            if (damage <= 0 || !IsAlive || GameJam.Multiplayer.SceneTransitionVideo.IsCampaignTransition)
             {
                 return;
             }
