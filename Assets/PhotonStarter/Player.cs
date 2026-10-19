@@ -24,8 +24,8 @@ namespace Starter.ThirdPersonCharacter
         public GameObject CrosshairPrefab;
 
         [Header("Movement Setup")]
-        public float WalkSpeed = 2f;
-        public float SprintSpeed = 5f;
+        public float WalkSpeed = 3.6f;
+        public float SprintSpeed = 7.2f;
         public float JumpImpulse = 10f;
         public float UpGravity = -25f;
         public float DownGravity = -40f;

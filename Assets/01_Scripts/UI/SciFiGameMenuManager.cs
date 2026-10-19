@@ -51,7 +51,6 @@ namespace GameJam.UI
         private TMP_InputField playerNameInput;
         private TMP_InputField roomCodeInput;
         private Button btnOnlineStart;
-        private Button btnSoloStart;
         private TextMeshProUGUI statusLabel;
         private TabletRoundedPanel statusDot;
 
@@ -366,9 +365,9 @@ namespace GameJam.UI
                 var orbit=CreateRoundedPanel(side,"OrbitRing",new Vector2(194,194),97,ChassisRim);
                 orbit.anchoredPosition=new Vector2(0,22);
                 CreateRoundedPanel(orbit,"OrbitInset",new Vector2(190,190),95,CardBg);
-                CreateRoundedPanel(orbit,"PlanetDisc",new Vector2(124,124),62,new Color(.55f,.26f,.15f));
-                var moon=CreateRoundedPanel(orbit,"Moon",new Vector2(22,22),11,AmberAccent);moon.anchoredPosition=new Vector2(77,59);
-                var path=CreateRoundedPanel(orbit,"FlightPath",new Vector2(242,2),1,MutedCyan);path.localRotation=Quaternion.Euler(0,0,22);
+                var planetView = CreateRect("Planet3D", orbit, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
+                planetView.gameObject.AddComponent<MenuPlanetPreview>();
+                CreateLabel(side,"M A R S  /  O R B I T A L",12,new Vector2(0,-96),new Vector2(260,24),AmberAccent);
                 CreateLabel(side,"menu.subtitle",18,new Vector2(0,-136),new Vector2(246,64),InkWhite,true);
                 CreateLabel(side,"menu.connection_hint",17,new Vector2(0,-225),new Vector2(246,84),MutedCyan,true);
             }
@@ -403,9 +402,8 @@ namespace GameJam.UI
             btnOnlineStart=CreateDatapadButton(form,"BtnOnline","menu.btn_join_online",new Vector2(0,portraitLayout?-128:-170),new Vector2(600,58),OnClickStartOnline,out var onlineBg,true);
             onlineBg.color=new Color(.96f,.56f,.27f);
             var onlineText=btnOnlineStart.GetComponentInChildren<TextMeshProUGUI>();onlineText.fontSize=22;onlineText.color=ChassisBezel;onlineText.fontStyle=FontStyles.Bold;
-            btnSoloStart=CreateDatapadButton(form,"BtnSolo","menu.btn_solo",new Vector2(0,portraitLayout?-202:-236),new Vector2(600,50),OnClickStartSolo,out var soloBg,true);
-            soloBg.color=SlotBg;btnSoloStart.GetComponentInChildren<TextMeshProUGUI>().fontSize=20;
-            var status=CreateRoundedPanel(form,"StatusBox",new Vector2(600,44),10,InsetBg);status.anchoredPosition=new Vector2(0,portraitLayout?-276:-296);
+
+            var status=CreateRoundedPanel(form,"StatusBox",new Vector2(600,44),10,InsetBg);status.anchoredPosition=new Vector2(0,portraitLayout?-212:-246);
             var dot=CreateRoundedPanel(status,"StatusDot",new Vector2(10,10),5,AmberAccent);dot.anchoredPosition=new Vector2(-276,0);statusDot=dot.GetComponent<TabletRoundedPanel>();
             statusLabel=CreateLabel(status,"menu.status_ready",17,new Vector2(12,0),new Vector2(540,32),InkWhite,true);statusLabel.alignment=TextAlignmentOptions.Left;
             if(portraitLayout)CreateLabel(form,"menu.connection_hint",17,new Vector2(0,-350),new Vector2(580,64),MutedCyan,true);
@@ -945,13 +943,6 @@ namespace GameJam.UI
             _ = session.StartSession(false);
         }
 
-        private void OnClickStartSolo()
-        {
-            if (session == null || session.Busy) return;
-            PlayerPrefs.Save();
-            _ = session.StartSession(true);
-        }
-
         private void OnClickReturnToLobby()
         {
             int lobbyIndex = SceneUtility.GetBuildIndexByScenePath("Assets/00_Scenes/j_LobyDeEspera.unity");
@@ -998,7 +989,6 @@ namespace GameJam.UI
             if (btnStartLangEn != null) btnStartLangEn.interactable = !busy;
             if (btnStartLangPt != null) btnStartLangPt.interactable = !busy;
             if (btnOnlineStart != null) btnOnlineStart.interactable = !busy;
-            if (btnSoloStart != null) btnSoloStart.interactable = !busy;
 
             if (statusLabel != null)
             {

@@ -37,8 +37,34 @@ public sealed class ReksaiFusionEnemy : NetworkBehaviour, ITakeDamage
     float CurrentTime => Runner.SimulationTime;
     float Elapsed => Mathf.Max(0, CurrentTime - StateStarted);
 
+    AudioSource monsterVoice;
+
+    void SetupMonsterVoice()
+    {
+        var clip = Resources.Load<AudioClip>("Audio/Monsters/Reksai");
+        if (clip == null) return;
+        monsterVoice = gameObject.AddComponent<AudioSource>();
+        monsterVoice.playOnAwake = false;
+        monsterVoice.loop = false;
+        monsterVoice.clip = clip;
+        monsterVoice.volume = .6f;
+        monsterVoice.spatialBlend = 1f;
+        monsterVoice.rolloffMode = AudioRolloffMode.Linear;
+        monsterVoice.minDistance = 3f;
+        monsterVoice.maxDistance = 35f;
+        monsterVoice.dopplerLevel = 0f;
+        monsterVoice.priority = 128;
+    }
+
+    void PlayMonsterVoice()
+    {
+        if (monsterVoice != null && !monsterVoice.isPlaying
+            && !SceneTransitionVideo.IsPresent) monsterVoice.Play();
+    }
+
     public override void Spawned()
     {
+        SetupMonsterVoice();
         animator = GetComponentInChildren<Animator>();
         visual = animator != null ? animator.transform : transform;
         visualRest = visual.localPosition;
@@ -54,6 +80,9 @@ public sealed class ReksaiFusionEnemy : NetworkBehaviour, ITakeDamage
             burrowAt = CurrentTime + burrowCooldown;
         }
         RenderState();
+        GameJam.Combat.EnemyCombatUI.Attach(gameObject, "REK’SAI", () => Health, maxHealth,
+            () => Object != null && Object.IsValid && StateBufferIsValid
+                && CurrentMode != Mode.Hidden && CurrentMode != Mode.Burrow && CurrentMode != Mode.Death);
     }
 
     public override void FixedUpdateNetwork()
@@ -267,7 +296,7 @@ public sealed class ReksaiFusionEnemy : NetworkBehaviour, ITakeDamage
 
         if (targetFusion != null)
         {
-            ((ITakeDamage)targetFusion).TakeDamage(Mathf.CeilToInt(amount));
+            targetFusion.TakeMonsterDamage(Mathf.CeilToInt(amount));
         }
     }
 
@@ -281,15 +310,17 @@ public sealed class ReksaiFusionEnemy : NetworkBehaviour, ITakeDamage
     private void RPC_TakeDamage(int amount)
     {
         if (amount <= 0 || CurrentMode == Mode.Death || CurrentMode == Mode.Hidden || CurrentMode == Mode.Burrow) return;
+        float previousHealth = Health;
         Health = Mathf.Max(0, Health-Mathf.Min(amount,maxHealth));
-        RPC_DamageFeedback(Health<=0);
+        RPC_DamageFeedback(Health<=0, previousHealth - Health);
         Debug.Log("[Reksai Fusion] Health="+Health, this);
         if (Health <= 0) SetMode(Mode.Death);
     }
 
     [Rpc(RpcSources.StateAuthority,RpcTargets.All)]
-    private void RPC_DamageFeedback(bool lethal)
+    private void RPC_DamageFeedback(bool lethal, float actualDamage)
     {
+        GetComponent<GameJam.Combat.EnemyCombatUI>()?.Damage(actualDamage);
         var blood=GetComponent<GameJam.Combat.EnemyBloodFx>();
         if(blood==null)return;
         blood.Bleed(transform.position+Vector3.up*1.2f,transform.forward);
@@ -326,7 +357,10 @@ public sealed class ReksaiFusionEnemy : NetworkBehaviour, ITakeDamage
         int currentModeVal = ModeState;
         if (shown != currentModeVal)
         {
-            shown = currentModeVal; var suffix = Suffix(state);
+            shown = currentModeVal;
+            if (state == Mode.Attack1 || state == Mode.Attack2 || state == Mode.Emerge) PlayMonsterVoice();
+            else if ((state == Mode.Death || state == Mode.Hidden || state == Mode.Burrow) && monsterVoice != null) monsterVoice.Stop();
+            var suffix = Suffix(state);
             var clip = animator.runtimeAnimatorController.animationClips.FirstOrDefault(a => a.name.EndsWith(suffix, StringComparison.Ordinal));
             if (clip != null) animator.CrossFadeInFixedTime(Animator.StringToHash("Base Layer." + clip.name.Split('|').Last()), .10f, 0, Mathf.Min(elapsed * PlaybackSpeed(state), Mathf.Max(0, clip.length - .01f)));
         }

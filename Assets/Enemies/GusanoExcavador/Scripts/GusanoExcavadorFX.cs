@@ -44,11 +44,13 @@ public sealed class GusanoExcavadorFX : MonoBehaviour
     {
         if (worm == null) return;
         State state = worm.CurrentState;
-        bool visible = state != State.Hidden;
-        // Atrapando: se apagan las colisiones de la boca para que no empujen fuera al jugador; el cuerpo sigue recibiendo balas.
-        Vector3 mouthCenter = worm.MouthCenter;
+        bool visible = state != State.Hidden && state != State.Death;
+        // During a grab every hitbox remains shootable, without physically pushing the victim.
         foreach (var box in hitBoxes)
-            box.enabled = visible && !(state == State.Hold && (box.transform.position - mouthCenter).sqrMagnitude < 16f);
+        {
+            box.isTrigger = state == State.Hold;
+            box.enabled = visible;
+        }
 
         if (state != last)
         {

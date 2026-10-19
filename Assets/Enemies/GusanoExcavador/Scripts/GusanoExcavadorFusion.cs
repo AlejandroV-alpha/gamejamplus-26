@@ -9,7 +9,7 @@ using UnityEngine;
 /// </summary>
 public sealed class GusanoExcavadorFusion : NetworkBehaviour, ITakeDamage
 {
-    public enum State { Hidden, Emerge, EmergeJump, Crawl, Attack, Burrow, Hold }
+    public enum State { Hidden, Emerge, EmergeJump, Crawl, Attack, Burrow, Hold, Death }
 
     [SerializeField, Min(5f)] float territoryRadius = 45f;
     [SerializeField, Min(1f)] float emergeDistanceFromPlayer = 9f;
@@ -29,6 +29,8 @@ public sealed class GusanoExcavadorFusion : NetworkBehaviour, ITakeDamage
 
     [Networked] PlayerRef GrabbedPlayer { get; set; }
     [Networked] int FreeHits { get; set; }
+    [SerializeField, Min(1)] int maxHealth = 180;
+    [Networked] public int Health { get; private set; }
     float nextHoldDamage;
 
     /// <summary>
@@ -47,6 +49,7 @@ public sealed class GusanoExcavadorFusion : NetworkBehaviour, ITakeDamage
     [Networked] Vector3 SyncedPosition { get; set; }
     [Networked] Quaternion SyncedRotation { get; set; }
 
+    AudioSource wormVoice;
     Animator animator;
     Renderer[] renderers;
     Vector3 home;
@@ -57,6 +60,21 @@ public sealed class GusanoExcavadorFusion : NetworkBehaviour, ITakeDamage
 
     public override void Spawned()
     {
+        var voiceClip = Resources.Load<AudioClip>("Audio/Monsters/GusanoExcavador");
+        if (voiceClip != null)
+        {
+            wormVoice = gameObject.AddComponent<AudioSource>();
+            wormVoice.playOnAwake = false;
+            wormVoice.loop = false;
+            wormVoice.clip = voiceClip;
+            wormVoice.volume = .6f;
+            wormVoice.spatialBlend = 1f;
+            wormVoice.rolloffMode = AudioRolloffMode.Linear;
+            wormVoice.minDistance = 3f;
+            wormVoice.maxDistance = 35f;
+            wormVoice.dopplerLevel = 0f;
+            wormVoice.priority = 128;
+        }
         animator = GetComponentInChildren<Animator>();
         if (animator != null) animator.applyRootMotion = false;
         renderers = GetComponentsInChildren<Renderer>();
@@ -66,12 +84,24 @@ public sealed class GusanoExcavadorFusion : NetworkBehaviour, ITakeDamage
         mouth = GetComponentsInChildren<Transform>(true).FirstOrDefault(t => t.name.StartsWith("Mandibula_0"))
             ?? GetComponentsInChildren<Transform>(true).FirstOrDefault(t => t.name.StartsWith("Colmillo_"))
             ?? transform;
-        if (HasStateAuthority) Enter(State.Hidden, Random.Range(hiddenSeconds.x, hiddenSeconds.y));
+        if (HasStateAuthority)
+        {
+            Health = maxHealth;
+            Enter(State.Hidden, Random.Range(hiddenSeconds.x, hiddenSeconds.y));
+        }
+        GameJam.Combat.EnemyCombatUI.Attach(gameObject, "GUSANO EXCAVADOR", () => Health, maxHealth,
+            () => Object != null && Object.IsValid && StateBufferIsValid
+                && Current != State.Hidden && Current != State.Burrow && Current != State.Death);
     }
 
     public override void FixedUpdateNetwork()
     {
         if (!HasStateAuthority) return;
+        if (Current == State.Death)
+        {
+            if (Elapsed >= StateLength) Runner.Despawn(Object);
+            return;
+        }
         MarsFusionAvatar target = NearestPlayer();
 
         switch (Current)
@@ -129,7 +159,7 @@ public sealed class GusanoExcavadorFusion : NetworkBehaviour, ITakeDamage
                 if (Runner.SimulationTime >= nextHoldDamage)
                 {
                     nextHoldDamage = Runner.SimulationTime + holdDamageInterval;
-                    ((ITakeDamage)victim).TakeDamage(holdDamage);
+                    victim.TakeMonsterDamage(holdDamage);
                 }
                 break;
         }
@@ -156,6 +186,12 @@ public sealed class GusanoExcavadorFusion : NetworkBehaviour, ITakeDamage
         foreach (var r in renderers) if (r.enabled != visible) r.enabled = visible;
         if (shown == Current) return;
         shown = Current;
+        if (wormVoice != null)
+        {
+            if (Current == State.Hidden || Current == State.Burrow || Current == State.Death) wormVoice.Stop();
+            else if ((Current == State.Emerge || Current == State.EmergeJump || Current == State.Attack || Current == State.Hold)
+                && !wormVoice.isPlaying && !SceneTransitionVideo.IsPresent) wormVoice.Play();
+        }
         string clip = ClipFor(Current);
         if (clip != null)
         {
@@ -182,7 +218,8 @@ public sealed class GusanoExcavadorFusion : NetworkBehaviour, ITakeDamage
             case State.Crawl: return "Mover";
             case State.Attack: return "Atacar";
             case State.Hold: return "Atacar";
-            case State.Burrow: return "Enterrarse";
+            case State.Burrow:
+            case State.Death: return "Enterrarse";
             default: return null;
         }
     }
@@ -230,7 +267,7 @@ public sealed class GusanoExcavadorFusion : NetworkBehaviour, ITakeDamage
         if (target == null || damage <= 0) return;
         Vector3 delta = Flat(target.transform.position - transform.position);
         if (delta.magnitude > attackRange + 1f || Vector3.Angle(transform.forward, delta) > 70f) return;
-        ((ITakeDamage)target).TakeDamage(damage);
+        target.TakeMonsterDamage(damage);
         if (target.IsAlive && target.Object != null)
         {
             // Lo atrapa entre los dientes hasta que lo liberen a balazos.
@@ -252,13 +289,28 @@ public sealed class GusanoExcavadorFusion : NetworkBehaviour, ITakeDamage
     public void TakeDamage(int amount)
     {
         if (Object == null || !Object.IsValid || amount <= 0) return;
-        RPC_Shot();
+        RPC_Shot(amount);
     }
 
     [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
-    void RPC_Shot()
+    void RPC_Shot(int amount)
     {
+        if (amount <= 0 || Health <= 0 || Current == State.Hidden || Current == State.Burrow || Current == State.Death) return;
+        int previousHealth = Health;
+        Health = Mathf.Max(0, Health - amount);
+        RPC_CombatDamage(previousHealth - Health);
         if (Current == State.Hold) FreeHits++;
+        if (Health <= 0)
+        {
+            GrabbedPlayer = PlayerRef.None;
+            Enter(State.Death, Mathf.Max(1f, Clip("Enterrarse")));
+        }
+    }
+
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    void RPC_CombatDamage(int actualDamage)
+    {
+        GetComponent<GameJam.Combat.EnemyCombatUI>()?.Damage(actualDamage);
     }
 
     /// <summary>

@@ -10,6 +10,8 @@ public sealed class GiantGolemEnemy : NetworkBehaviour, ITakeDamage, IStateAutho
     public enum Mode { Idle, Walk, Chase, Attack, Throw, Super, Death }
 
     [SerializeField] int maxHealth = 200;
+    [SerializeField, Min(1f), Tooltip("Multiplica la vida base de las instancias existentes.")]
+    float healthMultiplier = 3f;
     [SerializeField] float deathDuration = 4.4f;
     [SerializeField] SphereCollider detectionSphere;
     [SerializeField] SphereCollider swipeSphere;
@@ -17,6 +19,10 @@ public sealed class GiantGolemEnemy : NetworkBehaviour, ITakeDamage, IStateAutho
     [SerializeField] float attackRange = 6f;
     [SerializeField] float swipeRange = 3.5f;
     [SerializeField] float throwRange = 16f;
+    [SerializeField, Min(0f)] float minimumThrowDistance = 10f;
+    [SerializeField, Min(1f)] float throwRangeMultiplier = 2f;
+    float MaximumThrowDistance => Mathf.Max(minimumThrowDistance + 1f, throwRange * throwRangeMultiplier);
+    [Networked] private Vector3 ThrowAimPoint { get; set; }
     [SerializeField] int attackDamage = 20;
     [SerializeField] int superDamage = 40;
     [SerializeField, Range(0f, 1f)] float superChance = 0.65f;
@@ -118,7 +124,7 @@ public sealed class GiantGolemEnemy : NetworkBehaviour, ITakeDamage, IStateAutho
         EnsureSwipeSphere();
         if (HasStateAuthority)
         {
-            Health = maxHealth;
+            Health = Mathf.Max(1, Mathf.RoundToInt(maxHealth * healthMultiplier));
             StateStarted = CurrentTime;
             ModeState = (int)Mode.Idle;
             Walking = false;
@@ -126,6 +132,9 @@ public sealed class GiantGolemEnemy : NetworkBehaviour, ITakeDamage, IStateAutho
             SyncedRotation = transform.rotation;
         }
         ApplyAnimator();
+        GameJam.Combat.EnemyCombatUI.Attach(gameObject, "GÓLEM", () => Health,
+            Mathf.Max(1, Mathf.RoundToInt(maxHealth * healthMultiplier)),
+            () => Object != null && Object.IsValid && StateBufferIsValid && CurrentMode != Mode.Death);
     }
 
     public override void FixedUpdateNetwork()
@@ -197,10 +206,12 @@ public sealed class GiantGolemEnemy : NetworkBehaviour, ITakeDamage, IStateAutho
                 return;
             }
 
-            if (distance <= throwRange && CurrentTime >= nextThrowAt)
+            if (distance >= Mathf.Max(minimumThrowDistance, attackRange + 1f)
+                && distance <= MaximumThrowDistance && CurrentTime >= nextThrowAt)
             {
                 nextThrowAt = CurrentTime + throwInterval;
                 Walking = false;
+                ThrowAimPoint = target.transform.position + Vector3.up * 1.4f;
                 SetMode(Mode.Throw);
                 return;
             }
@@ -266,6 +277,8 @@ public sealed class GiantGolemEnemy : NetworkBehaviour, ITakeDamage, IStateAutho
             Face(target.transform.position);
 
         bool throwing = CurrentMode == Mode.Throw;
+        if (throwing && target != null && target.IsAlive)
+            ThrowAimPoint = target.transform.position + Vector3.up * 1.4f;
         bool super = CurrentMode == Mode.Super;
         float duration = throwing ? throwDuration : super ? superDuration : attackDuration;
         if (!throwing && !hitApplied && Elapsed >= duration * (super ? 0.55f : 0.45f))
@@ -274,7 +287,7 @@ public sealed class GiantGolemEnemy : NetworkBehaviour, ITakeDamage, IStateAutho
             if (super)
                 Strike(superDamage, attackRange + 3f);
             else if (IsInsideSwipeSphere(target))
-                ((ITakeDamage)target).TakeDamage(attackDamage);
+                target.TakeMonsterDamage(attackDamage);
         }
 
         if (Elapsed >= duration)
@@ -287,7 +300,7 @@ public sealed class GiantGolemEnemy : NetworkBehaviour, ITakeDamage, IStateAutho
         var delta = target.transform.position - transform.position;
         delta.y = 0f;
         if (delta.magnitude > range || Vector3.Angle(transform.forward, delta) > 70f) return;
-        ((ITakeDamage)target).TakeDamage(amount);
+        target.TakeMonsterDamage(amount);
     }
 
     public void FirstStep()
@@ -404,9 +417,17 @@ public sealed class GiantGolemEnemy : NetworkBehaviour, ITakeDamage, IStateAutho
     {
         if (damage <= 0 || CurrentMode == Mode.Death)
             return;
+        int previousHealth = Health;
         Health = Mathf.Max(0, Health - damage);
+        RPC_CombatDamage(previousHealth - Health);
         if (Health <= 0)
             SetMode(Mode.Death);
+    }
+
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    void RPC_CombatDamage(int actualDamage)
+    {
+        GetComponent<GameJam.Combat.EnemyCombatUI>()?.Damage(actualDamage);
     }
 
     float FlatDistance(Vector3 point)
@@ -427,7 +448,10 @@ public sealed class GiantGolemEnemy : NetworkBehaviour, ITakeDamage, IStateAutho
 
         detectionSphere.isTrigger = true;
         detectionSphere.center = Vector3.zero;
-        detectionSphere.radius = detectionRange;
+        // Detection and attacks use world metres, independently of the model's scale.
+        float scale = Mathf.Max(.001f, Mathf.Max(detectionSphere.transform.lossyScale.x,
+            Mathf.Max(detectionSphere.transform.lossyScale.y, detectionSphere.transform.lossyScale.z)));
+        detectionSphere.radius = Mathf.Max(detectionRange, MaximumThrowDistance + 4f) / scale;
     }
 
     void EnsureSwipeSphere()
@@ -502,7 +526,7 @@ public sealed class GiantGolemEnemy : NetworkBehaviour, ITakeDamage, IStateAutho
         Gizmos.color = new Color(1f, 0.15f, 0.15f, 0.8f);
         Gizmos.DrawWireSphere(transform.position, attackRange);
         Gizmos.color = new Color(1f, 0.85f, 0.2f, 0.8f);
-        Gizmos.DrawWireSphere(transform.position, throwRange);
+        Gizmos.DrawWireSphere(transform.position, MaximumThrowDistance);
     }
 
     public void StateAuthorityChanged()
@@ -700,14 +724,11 @@ public sealed class GiantGolemEnemy : NetworkBehaviour, ITakeDamage, IStateAutho
         heldRock = null;
         rock.transform.SetParent(null, true);
 
-        Vector3 aim = transform.position + transform.forward * throwRange + Vector3.up * 1.5f;
-        if (target != null)
-            aim = target.transform.position + Vector3.up * 1.4f;
-        Vector3 velocity = (aim - rock.transform.position);
-        if (velocity.sqrMagnitude < 0.01f)
-            velocity = transform.forward;
-        velocity = velocity.normalized * rockSpeed;
-        velocity.y += 3f;
+        Vector3 aim = ThrowAimPoint;
+        Vector3 displacement = aim - rock.transform.position;
+        float flightTime = Mathf.Max(.15f, displacement.magnitude / Mathf.Max(1f, rockSpeed));
+        // Compensate gravity so long-distance throws reach the selected point.
+        Vector3 velocity = displacement / flightTime - Physics.gravity * (.5f * flightTime);
 
         var projectile = rock.AddComponent<GiantGolemRock>();
         projectile.Launch(velocity, throwDamage, HasStateAuthority, GetComponentsInChildren<Collider>(), rockGroundClip, rockImpactClip);
@@ -774,7 +795,7 @@ public sealed class GiantGolemRock : MonoBehaviour
             var avatar = collision.collider.GetComponentInParent<MarsFusionAvatar>();
             if (avatar != null && avatar.IsAlive)
             {
-                ((ITakeDamage)avatar).TakeDamage(damage);
+                avatar.TakeMonsterDamage(damage);
                 canDamage = false;
             }
         }

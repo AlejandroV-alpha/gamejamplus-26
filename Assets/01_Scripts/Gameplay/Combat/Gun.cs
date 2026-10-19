@@ -511,6 +511,8 @@ namespace GameJam.Combat
         /// <summary>
         /// Crea un impacto visual local y lo elimina tras su duracion.
         /// </summary>
+        private AudioClip impactSound;
+
         private void ShowImpactEffect(Vector3 position, Vector3 normal, Vector3 shotDirection)
         {
             Vector3 incomingDirection = shotDirection.sqrMagnitude > 0.0001f
@@ -533,6 +535,26 @@ namespace GameJam.Combat
                 normal = -normal;
             }
 
+            if (impactSound == null)
+                impactSound = Resources.Load<AudioClip>("Audio/Weapons/SonidoDeBalaInpactada");
+            if (impactSound != null)
+            {
+                // A short-lived source stays at the impact, independently of the firing player.
+                var soundObject = new GameObject("BulletImpactSound");
+                soundObject.transform.position = position;
+                var source = soundObject.AddComponent<AudioSource>();
+                source.playOnAwake = false;
+                source.clip = impactSound;
+                source.volume = .55f;
+                source.spatialBlend = 1f;
+                source.rolloffMode = AudioRolloffMode.Linear;
+                source.minDistance = 2f;
+                source.maxDistance = 30f;
+                source.dopplerLevel = 0f;
+                source.priority = 140;
+                source.Play();
+                Destroy(soundObject, impactSound.length + .1f);
+            }
             EnemyBloodFx.TryBleedAt(position, normal);
             if (impactEffect == null)
             {
