@@ -1073,6 +1073,7 @@ MonoBehaviour:
   _CurrentHealth: 0
   _MaxHealth: 0
   _IsAlive: 0
+  _DeathSequence: 0
 --- !u!114 &4348549720388758286
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1231,6 +1232,7 @@ MonoBehaviour:
   groundLayers:
     serializedVersion: 2
     m_Bits: 4294967295
+  burstScale: 1
 --- !u!114 &8380796869892238813
 MonoBehaviour:
   m_ObjectHideFlags: 0

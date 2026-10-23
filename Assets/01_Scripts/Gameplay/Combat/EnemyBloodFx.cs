@@ -29,7 +29,7 @@ namespace GameJam.Combat
             foreach (Collider candidate in nearby)
             {
                 EnemyBloodFx blood = candidate.GetComponentInParent<EnemyBloodFx>();
-                if (blood != null && blood.GetComponent<ReksaiFusionEnemy>()==null && blood.GetComponent<JungleNightmareFusionEnemy>()==null && blood.GetComponent<GameJam.Multiplayer.MarsFusionAvatar>()==null)
+                if (blood != null && blood.GetComponent<ReksaiFusionEnemy>()==null && blood.GetComponent<JungleNightmareFusionEnemy>()==null && blood.GetComponent<ElCuernudoFusionEnemy>()==null && blood.GetComponent<VenomwingFusionEnemy>()==null && blood.GetComponent<GusanoMarteFusion>()==null && blood.GetComponent<GameJam.Multiplayer.MarsFusionAvatar>()==null)
                 {
                     blood.Bleed(point, normal);
                     return;

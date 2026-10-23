@@ -24,7 +24,9 @@ namespace GameJam.Combat
         [SerializeField] private LineRenderer tracer;
         [SerializeField] private GameObject muzzleFlashEffect;
         [SerializeField] private EnergyBolt boltEffect;
-        [SerializeField] private GameObject impactEffect;
+        [SerializeField, Tooltip("Impacto en metal/objetos duros (y respaldo si faltan los otros).")] private GameObject impactEffect;
+        [SerializeField, Tooltip("Impacto en arena/terreno.")] private GameObject impactEffectSand;
+        [SerializeField, Tooltip("Impacto en enemigos u otros cuerpos que reciben daño.")] private GameObject impactEffectEnemy;
         [SerializeField, Min(1)] private int damage = 1;
         [SerializeField, Min(1f)] private float range = 100f;
         [SerializeField, Min(1)] private int magazineSize = 10;
@@ -354,6 +356,7 @@ namespace GameJam.Combat
         {
             if (target.GetComponentInParent<ReksaiFusionEnemy>() != null
                 || target.GetComponentInParent<GusanoExcavadorFusion>() != null
+                || target.GetComponentInParent<GusanoMarteFusion>() != null
                 || target.GetComponentInParent<JungleNightmareFusionEnemy>() != null
                 || target.GetComponentInParent<MarsFusionAvatar>() != null
                 || target.GetComponentInParent<GiantGolemEnemy>() != null)
@@ -437,6 +440,15 @@ namespace GameJam.Combat
                     && golem.Object != null
                     && golem.Object.IsValid
                     && golem.Runner == Runner)
+                {
+                    damageReceiver.TakeDamage(damage);
+                    return;
+                }
+                // Enemigos de Fusion que reciben daño por RPC hacia su autoridad (El Cuernudo, Venomwing...).
+                if (component is NetworkBehaviour networked
+                    && networked.Object != null
+                    && networked.Object.IsValid
+                    && networked.Runner == Runner)
                 {
                     damageReceiver.TakeDamage(damage);
                     return;
@@ -556,7 +568,8 @@ namespace GameJam.Combat
                 Destroy(soundObject, impactSound.length + .1f);
             }
             EnemyBloodFx.TryBleedAt(position, normal);
-            if (impactEffect == null)
+            GameObject chosenEffect = ChooseImpactEffect(position, incomingDirection);
+            if (chosenEffect == null)
             {
                 return;
             }
@@ -574,8 +587,41 @@ namespace GameJam.Combat
             }
 
             Quaternion effectRotation = Quaternion.LookRotation(normal, effectUp.normalized);
-            GameObject effect = Instantiate(impactEffect, position + normal * 0.05f, effectRotation);
+            GameObject effect = Instantiate(chosenEffect, position + normal * 0.05f, effectRotation);
             Destroy(effect, impactEffectDuration);
+        }
+
+        /// <summary>
+        /// Elige el impacto según lo que tocó la bala: cuerpo que recibe daño, arena/terreno u objeto duro.
+        /// Se resuelve en cada cliente con un rayo corto sobre el punto de impacto (sin datos extra por red).
+        /// </summary>
+        private GameObject ChooseImpactEffect(Vector3 position, Vector3 incomingDirection)
+        {
+            Vector3 dir = incomingDirection.sqrMagnitude > 0.0001f ? incomingDirection.normalized : Vector3.down;
+            Collider hitCollider = null;
+            float best = float.MaxValue;
+            foreach (RaycastHit hit in Physics.RaycastAll(position - dir * 0.3f, dir, 0.7f, hitLayers, QueryTriggerInteraction.Ignore))
+            {
+                if (hit.distance < best && !hit.collider.transform.IsChildOf(transform.root))
+                {
+                    best = hit.distance;
+                    hitCollider = hit.collider;
+                }
+            }
+
+            if (hitCollider != null)
+            {
+                if (impactEffectEnemy != null && hitCollider.GetComponentInParent<ITakeDamage>() != null)
+                {
+                    return impactEffectEnemy;
+                }
+                if (impactEffectSand != null && (hitCollider is TerrainCollider
+                    || hitCollider.GetComponent<GameJam.Mars.MarsFootstepSurface>() != null))
+                {
+                    return impactEffectSand;
+                }
+            }
+            return impactEffect != null ? impactEffect : impactEffectSand;
         }
 
         /// <summary>

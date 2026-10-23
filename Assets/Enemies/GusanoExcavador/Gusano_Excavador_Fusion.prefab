@@ -81,6 +81,8 @@ MonoBehaviour:
   hitsToFree: 5
   holdDamage: 5
   holdDamageInterval: 1
+  maxHealth: 180
+  _Health: 0
 --- !u!114 &1064727948075510023
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -113,9 +115,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: deb7169215e70214586c7d3e13e1f9f4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameJam.Combat.EnemyBloodFx
-  bloodBurst: {fileID: 5405293530715071691, guid: 7acc13bd7b590124a89e1d01591fdc9b, type: 3}
+  bloodBurst: {fileID: 4553287630450876385, guid: 15483e51212e3d74886ea57291f4639a, type: 3}
   groundSplat: {fileID: 2748677000427019257, guid: c5979c83f8cea184aa476a6e318ef598, type: 3}
-  burstDuration: 2
+  burstDuration: 2.5
   splatsPerHit: 5
   splatSpread: 3
   splatSize: {x: 1.5, y: 3.5}

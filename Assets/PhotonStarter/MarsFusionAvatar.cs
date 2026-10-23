@@ -302,7 +302,7 @@ namespace GameJam.Multiplayer
             }
             bool tabletVisible = TabletOpen || (ui != null && ui.IsVisible);
             bool inventoryVisible = LocalHud != null && LocalHud.IsInventoryOpen;
-            input.ControlsEnabled = !(GetComponent<GameJam.Survival.SurvivalRevive>()?.IsRecovering ?? false) && !menu && !tabletVisible && !inventoryVisible && IsAlive && !(GetComponent<GameJam.Environment.Mars.PlayerSandstorm>()?.IsDowned ?? false) && !SceneTransitionVideo.IsBlockingInput && !LobbyDepartureEffects.IsBlockingInput && !PortalWhiteTransition.IsBlockingInput && !(GetComponent<PlayerInteractionAction>()?.IsBusy ?? false) && !(GetComponent<GameJam.Combat.PlayerHurtReaction>()?.IsReacting ?? false) && !GusanoExcavadorFusion.LocalPlayerHeld;
+            input.ControlsEnabled = !(GetComponent<GameJam.Survival.SurvivalRevive>()?.IsRecovering ?? false) && !menu && !tabletVisible && !inventoryVisible && IsAlive && !(GetComponent<GameJam.Environment.Mars.PlayerSandstorm>()?.IsDowned ?? false) && !SceneTransitionVideo.IsBlockingInput && !LobbyDepartureEffects.IsBlockingInput && !PortalWhiteTransition.IsBlockingInput && !(GetComponent<PlayerInteractionAction>()?.IsBusy ?? false) && !(GetComponent<GameJam.Combat.PlayerHurtReaction>()?.IsReacting ?? false) && !GusanoExcavadorFusion.LocalPlayerHeld && !GusanoMarteFusion.LocalPlayerHeld;
             bool cursor = menu || tabletVisible || inventoryVisible || !IsAlive;
             Cursor.lockState = cursor ? CursorLockMode.None : CursorLockMode.Locked;
             Cursor.visible = cursor;

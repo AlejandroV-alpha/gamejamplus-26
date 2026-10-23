@@ -240,7 +240,7 @@ LineRenderer:
     colorGradient:
       serializedVersion: 2
       key0: {r: 1, g: 1, b: 1, a: 1}
-      key1: {r: 1, g: 1, b: 1, a: 1}
+      key1: {r: 1, g: 0.78, b: 0.18, a: 0.6}
       key2: {r: 0, g: 0, b: 0, a: 0}
       key3: {r: 0, g: 0, b: 0, a: 0}
       key4: {r: 0, g: 0, b: 0, a: 0}
@@ -1556,16 +1556,18 @@ MonoBehaviour:
   gunshot: {fileID: 8300000, guid: 3dabb95e8210ef145b2410cb7b1e4c0c, type: 3}
   gunreload: {fileID: 8300000, guid: 5d79b240fba3a1c4ab9043d2e008277b, type: 3}
   tracer: {fileID: 9218075841056528477}
-  muzzleFlashEffect: {fileID: 2492542608560254606, guid: a49bb6cfe36f6c642a9f175cc566d892, type: 3}
-  boltEffect: {fileID: 8717399688694277520, guid: 9050e613070c522479d823ef316f22bd, type: 3}
-  impactEffect: {fileID: 1352570772340302020, guid: d058e1f250b185f4c85dc6b252c2d6bf, type: 3}
+  muzzleFlashEffect: {fileID: 5016720053017004477, guid: 48b253ce66107a6438a0e90bd3aa1e87, type: 3}
+  boltEffect: {fileID: 7454774644293217065, guid: c700b49f69bf6d841bac90ee2627c5ba, type: 3}
+  impactEffect: {fileID: 6689130376762193688, guid: 082db56ed87a20f46b11f9f73941b0e0, type: 3}
+  impactEffectSand: {fileID: 6862626393471083427, guid: a05cb5a27bfa70e4488cacb8a988080b, type: 3}
+  impactEffectEnemy: {fileID: 4160439927516327798, guid: 79ca17e47566748498c56e431e2aacce, type: 3}
   damage: 20
   range: 100
   magazineSize: 10
   fireInterval: 0.25
   tracerDuration: 0.12
   muzzleFlashDuration: 1.2
-  impactEffectDuration: 2.5
+  impactEffectDuration: 6.5
   recoilDistance: 0.08
   recoilAngle: 5
   recoilDuration: 0.12
