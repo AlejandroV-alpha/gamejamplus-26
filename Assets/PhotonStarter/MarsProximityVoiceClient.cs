@@ -12,8 +12,8 @@ namespace GameJam.Multiplayer
             Settings = new Photon.Realtime.AppSettings
             {
                 AppIdVoice = PhotonLocalSettings.ReadVoiceAppId(),
-                AppVersion = "MarsCoop-v1",
-                FixedRegion = string.Empty
+                AppVersion = MultiplayerConfiguration.ProtocolVersion,
+                FixedRegion = MultiplayerConfiguration.FixedRegion
             };
             AutoConnectAndJoin = !string.IsNullOrEmpty(Settings.AppIdVoice);
             Debug.Log("[Proximity voice] " + PhotonLocalSettings.LastVoiceDiagnostic, this);

@@ -49,6 +49,7 @@ namespace GameJam.Multiplayer
             {
                 if (runner == null || !runner.IsRunning) continue;
                 Runner = runner;
+                if (runner.GameMode == GameMode.Shared && runner.IsSharedModeMasterClient && GameJam.UI.SciFiGameMenuManager.IsLobbyScene) runner.SessionInfo.IsOpen = true;
                 FusionLoadDiagnostics.Attach(runner);
                 runner.GetComponent<NetworkEvents>()?.OnShutdown.AddListener(OnShutdown);
                 Status = "Conectado — " + runner.SessionInfo.Name;
@@ -64,6 +65,12 @@ namespace GameJam.Multiplayer
             if (Busy || Runner != null || playerPrefab == null || runnerPrefab == null)
             {
                 LogStage("start-rejected", "busy=" + Busy + " runnerExists=" + (Runner != null) + " playerPrefab=" + (playerPrefab != null) + " runnerPrefab=" + (runnerPrefab != null));
+                return false;
+            }
+            roomName = roomName.Trim();
+            if (roomName.Length == 0 || roomName.Length > 48)
+            {
+                Status = "Usa un nombre de sala de 1 a 48 caracteres.";
                 return false;
             }
             connectionAttempt++;
@@ -91,6 +98,7 @@ namespace GameJam.Multiplayer
             try
             {
                 var events = runner.GetComponent<NetworkEvents>();
+                if (events == null) events = runner.gameObject.AddComponent<NetworkEvents>();
                 events.OnShutdown.AddListener(OnShutdown);
                 var scenes = runner.GetComponent<NetworkSceneManagerDefault>();
                 if (scenes == null) scenes = runner.gameObject.AddComponent<NetworkSceneManagerDefault>();
@@ -103,14 +111,19 @@ namespace GameJam.Multiplayer
                     GameMode = offline ? GameMode.Single : GameMode.Shared,
                     SessionName = roomName.Trim(), PlayerCount = Mathf.Clamp(maxPlayers, 1, MarsPlayerIdentityView.Palette.Length),
                     Scene = info, SceneManager = scenes, CustomPhotonAppSettings = settings,
-                    SessionProperties = new Dictionary<string, SessionProperty> { ["GameMode"] = "MarsCoop-v1" }
+                    AuthValues = offline ? null : new Photon.Realtime.AuthenticationValues(MultiplayerConfiguration.ClientIdentity),
+                    SessionProperties = new Dictionary<string, SessionProperty> { ["GameMode"] = MultiplayerConfiguration.ProtocolVersion }
                 });
                 LogStage("start-result", "ok=" + result.Ok + " reason=" + result.ShutdownReason);
                 if (!result.Ok) throw new InvalidOperationException(result.ShutdownReason.ToString());
                 // StartGame can finish while the default scene manager is still taking over the scene.
                 // Wait before spawning, otherwise scene cleanup can remove the new player.
+                float loadDeadline = Time.realtimeSinceStartup + 90f;
                 while (scenes != null && scenes.IsBusy && runner != null && runner.IsRunning)
+                {
+                    if (Time.realtimeSinceStartup > loadDeadline) throw new TimeoutException("Scene initialization timed out.");
                     await Task.Delay(10);
+                }
                 if (this == null || Runner != runner) return false;
                 await Task.Delay(50);
                 if (this == null || Runner != runner || !runner.IsRunning) return false;
@@ -244,7 +257,7 @@ namespace GameJam.Multiplayer
             Status = "Sesión cerrada: " + reason;
             shutdownMessage = Status;
             SetMenu(true);
-            if (Application.isPlaying)
+            if (Application.isPlaying && !Busy)
             {
                 string curScene = SceneManager.GetActiveScene().name;
                 if (!curScene.Contains("Loby") && !curScene.Contains("Lobby"))
@@ -323,3 +336,4 @@ namespace GameJam.Multiplayer
         }
     }
 }
+

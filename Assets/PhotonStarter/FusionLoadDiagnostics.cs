@@ -16,6 +16,7 @@ namespace GameJam.Multiplayer
         private double previous;
         public static void Attach(NetworkRunner target)
         {
+            if (target != null) MultiplayerDiagnostics.Ensure(target);
             if (target != null && target.GetComponent<FusionLoadDiagnostics>() == null)
                 target.gameObject.AddComponent<FusionLoadDiagnostics>();
         }
@@ -23,15 +24,8 @@ namespace GameJam.Multiplayer
         {
             runner = GetComponent<NetworkRunner>();
             previous = Time.realtimeSinceStartupAsDouble;
-            string schema = string.Join(";", typeof(MarsFusionAvatar).Assembly.GetTypes()
-                .Where(t => typeof(NetworkBehaviour).IsAssignableFrom(t))
-                .OrderBy(t => t.FullName)
-                .SelectMany(t => t.GetProperties(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly)
-                    .Where(p => p.IsDefined(typeof(NetworkedAttribute), true)).OrderBy(p => p.Name)
-                    .Select(p => t.FullName + "." + p.Name + ":" + p.PropertyType.FullName)));
-            using (var hash = SHA256.Create())
-                Debug.Log("[Fusion load] schema=" + BitConverter.ToString(hash.ComputeHash(Encoding.UTF8.GetBytes(schema))).Replace("-", "").Substring(0, 16)
-                    + " sdk=" + typeof(NetworkRunner).Assembly.GetName().Version + " unity=" + Application.unityVersion);
+            Debug.Log("[Fusion load] protocol=" + MultiplayerConfiguration.ProtocolVersion
+                + " sdk=" + typeof(NetworkRunner).Assembly.GetName().Version + " unity=" + Application.unityVersion);
         }
         private void Update()
         {

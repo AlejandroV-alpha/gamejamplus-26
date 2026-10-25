@@ -62,7 +62,7 @@ namespace GameJam.Multiplayer
                 return null;
             }
             LastDiagnostic = "Configuración de distribución cargada.";
-            return new FusionAppSettings { AppIdFusion = bundledId, AppVersion = "MarsCoop-v1", FixedRegion = string.Empty, ClientLogging = Photon.Client.LogLevel.Error };
+            return new FusionAppSettings { AppIdFusion = bundledId, AppVersion = MultiplayerConfiguration.ProtocolVersion, FixedRegion = MultiplayerConfiguration.FixedRegion, ClientLogging = Photon.Client.LogLevel.Error };
 #else
             if (UnityEngine.Application.platform != UnityEngine.RuntimePlatform.WindowsEditor &&
                 UnityEngine.Application.platform != UnityEngine.RuntimePlatform.WindowsPlayer)
@@ -94,10 +94,10 @@ namespace GameJam.Multiplayer
                     var result = new FusionAppSettings();
                     // Use independent defaults: reading a global Editor asset can initialize Editor windows in a clone.
                     result.AppIdFusion = System.Text.Encoding.UTF8.GetString(bytes);
-                    result.AppVersion = "MarsCoop-v1";
+                    result.AppVersion = MultiplayerConfiguration.ProtocolVersion;
                     // Fusion 2.1.1 SetupAppSettings calls FixedRegion.ToLower() without a null check.
                     // Empty means automatic region selection; a freshly constructed settings object leaves it null.
-                    result.FixedRegion = string.Empty;
+                    result.FixedRegion = MultiplayerConfiguration.FixedRegion;
                     result.ClientLogging = Photon.Client.LogLevel.Error;
                     if (!System.Guid.TryParse(result.AppIdFusion, out _))
                     {
