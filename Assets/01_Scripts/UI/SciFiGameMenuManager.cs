@@ -97,6 +97,7 @@ namespace GameJam.UI
         private RectTransform crewListContainer;
         private TextMeshProUGUI crewEmptyLabel;
         private readonly List<CrewRowWidget> activeCrewRows = new();
+        private TextMeshProUGUI connectionRegionLabel;
         private float nextCrewCheckTime;
         private bool isInitialized;
 
@@ -130,6 +131,8 @@ namespace GameJam.UI
             public TabletRoundedPanel SpeakingDot;
             public TextMeshProUGUI SpeakingLabel;
             public Slider VolumeSlider;
+            public Button MuteButton;
+            public TextMeshProUGUI MuteLabel;
             public TextMeshProUGUI VolumePercentLabel;
         }
 
@@ -220,6 +223,7 @@ namespace GameJam.UI
 
         private void OnDestroy()
         {
+            ExpeditionSettingsPanel.CloseIfOpen();
             if (Instance == this) Instance = null;
             GameLocalization.OnLanguageChanged -= RefreshAllLocalizedTexts;
         }
@@ -243,11 +247,13 @@ namespace GameJam.UI
             // A successful connection must never leave the initial terminal over gameplay.
             if (running && startMenuGroup != null && startMenuGroup.gameObject.activeSelf)
                 SetStartMenuVisible(false);
+            if (connectionRegionLabel != null) connectionRegionLabel.text = "REGION: " + MultiplayerConfiguration.SelectedRegion.ToUpperInvariant();
             UpdateResponsiveLayout();
 
             // Manejo de tecla Escape para pausar / reanudar
             if (Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame)
             {
+                if (ExpeditionSettingsPanel.ConsumeEscape()) return;
                 if (MarsFusionAvatar.Local != null && MarsFusionAvatar.Local.LocalHud != null && MarsFusionAvatar.Local.LocalHud.ConsumeEscape()) return;
                 if (session != null && session.Runner != null && session.Runner.IsRunning)
                 {
@@ -407,6 +413,11 @@ namespace GameJam.UI
             var dot=CreateRoundedPanel(status,"StatusDot",new Vector2(10,10),5,AmberAccent);dot.anchoredPosition=new Vector2(-276,0);statusDot=dot.GetComponent<TabletRoundedPanel>();
             statusLabel=CreateLabel(status,"menu.status_ready",17,new Vector2(12,0),new Vector2(540,32),InkWhite,true);statusLabel.alignment=TextAlignmentOptions.Left;
             if(portraitLayout)CreateLabel(form,"menu.connection_hint",17,new Vector2(0,-350),new Vector2(580,64),MutedCyan,true);
+            CreateDatapadButton(form,"BtnSystemSettings","SYSTEMS / AJUSTES",new Vector2(0,portraitLayout?-280:-302),new Vector2(600,40),()=>ExpeditionSettingsPanel.Open(fontAsset),out var systemsBg);
+            connectionRegionLabel = CreateLabel(status,"Region",14,new Vector2(205,0),new Vector2(160,32),MutedCyan);
+            connectionRegionLabel.alignment = TextAlignmentOptions.Right;
+            ((RectTransform)statusLabel.transform).sizeDelta = new Vector2(350,32);
+            ((RectTransform)statusLabel.transform).anchoredPosition = new Vector2(-85,0);
             UpdateLanguageButtonsHighlight();
         }
 
@@ -549,6 +560,7 @@ namespace GameJam.UI
 
             var rangeLabel = CreateLabel(voiceCard, "voice.distance", 11, new Vector2(0, -70), new Vector2(660, 16), DimCyan, true);
             rangeLabel.alignment = TextAlignmentOptions.Center;
+            CreateDatapadButton(parent,"BtnAdvancedSystems","SYSTEMS / AJUSTES",new Vector2(0,-202),new Vector2(700,36),()=>ExpeditionSettingsPanel.Open(fontAsset),out var advancedBg);
         }
 
         private void BuildCrewTab(Transform parent)
@@ -862,6 +874,7 @@ namespace GameJam.UI
         }
         public void ApplySessionMenuState(bool visible,bool connected)
         {
+            if (!visible) ExpeditionSettingsPanel.CloseIfOpen();
             SetGroup(startMenuGroup,visible && !connected && IsLobbyScene);
             SetGroup(pauseMenuGroup,visible && connected);
             SyncCanvasVisibility();
@@ -884,7 +897,7 @@ namespace GameJam.UI
             else { SetGroup(pauseMenuGroup,false); SyncCanvasVisibility(); }
         }
         public void OpenPauseMenu(){if(session!=null)session.SetMenu(true);}
-        public void ResumeGame(){if(session!=null)session.SetMenu(false);else ApplySessionMenuState(false,false);}
+        public void ResumeGame(){ExpeditionSettingsPanel.CloseIfOpen();if(session!=null)session.SetMenu(false);else ApplySessionMenuState(false,false);}
         private void FitDatapads()
         {
             if(rootCanvas==null)return;
@@ -1187,6 +1200,12 @@ namespace GameJam.UI
             widget.SpeakingLabel = CreateLabel(speakPill, "crew.muted", 10, new Vector2(10, 0), new Vector2(80, 20), DimCyan, true);
             widget.SpeakingLabel.alignment = TextAlignmentOptions.Left;
 
+            widget.MuteButton = CreateDatapadButton(rowCard, "MutePeer", "MUTE", new Vector2(118, 0), new Vector2(64, 30), () =>
+            {
+                if (widget.Avatar != null && widget.Avatar.TryGetComponent<MarsProximityVoice>(out var peer)) peer.SetMuted(!peer.IndividuallyMuted);
+            }, out var muteBg);
+            widget.MuteLabel = widget.MuteButton.GetComponentInChildren<TextMeshProUGUI>();
+            widget.MuteLabel.fontSize = 10;
             // Slider de volumen individual
             var sliderRoot = CreateRect("VolumeGroup", rowCard, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(230, 0), new Vector2(170, 40));
 
@@ -1233,6 +1252,12 @@ namespace GameJam.UI
                 widget.SpeakingLabel.color = isSpeaking ? SpeakingGreen : DimCyan;
             }
 
+            if (widget.MuteButton != null)
+            {
+                widget.MuteButton.gameObject.SetActive(!isSelf);
+                bool muted = avatar != null && avatar.TryGetComponent<MarsProximityVoice>(out var mutedPeer) && mutedPeer.IndividuallyMuted;
+                widget.MuteLabel.text = muted ? "UNMUTE" : "MUTE";
+            }
             if (widget.VolumeSlider != null)
             {
                 widget.VolumeSlider.gameObject.SetActive(!isSelf);
@@ -1242,15 +1267,14 @@ namespace GameJam.UI
                 if (!isSelf && avatar != null)
                 {
                     widget.VolumeSlider.onValueChanged.RemoveAllListeners();
-                    string prefKey = "GameJam.PlayerVol_" + (!string.IsNullOrWhiteSpace(rawName) ? rawName : "Astronauta");
-                    float savedVol = PlayerPrefs.GetFloat(prefKey, 1f);
-                    widget.VolumeSlider.value = savedVol;
+                    var peerVoice = avatar.GetComponent<MarsProximityVoice>();
+                    float savedVol = peerVoice != null ? peerVoice.IndividualVolume : 1f;
+                    widget.VolumeSlider.SetValueWithoutNotify(savedVol);
                     if (widget.VolumePercentLabel != null)
                         widget.VolumePercentLabel.text = Mathf.RoundToInt(savedVol * 100f) + "%";
 
                     widget.VolumeSlider.onValueChanged.AddListener(val =>
                     {
-                        PlayerPrefs.SetFloat(prefKey, val);
                         if (widget.VolumePercentLabel != null)
                             widget.VolumePercentLabel.text = Mathf.RoundToInt(val * 100f) + "%";
 

@@ -23,6 +23,7 @@ namespace Starter.ThirdPersonCharacter
         private GameplayInput _input;
         private InputActions _inputActions;
         public GameplayInput CurrentInput => _input;
+        public InputActionAsset BindingAsset => _inputActions?.asset;
         public bool ControlsEnabled { get; set; } = true;
         private Fusion.NetworkObject _networkObject;
 
@@ -43,7 +44,7 @@ namespace Starter.ThirdPersonCharacter
             // called multiple times before next FixedUpdateNetwork is called - common if rendering speed is faster than Fusion simulation.
 
             var lookValue = _inputActions.Player.Look.ReadValue<Vector2>();
-            var lookRotationDelta = new Vector2(-lookValue.y, lookValue.x);
+            var lookRotationDelta = new Vector2(lookValue.y * (GameJam.UI.ExpeditionInputPreferences.InvertY ? 1 : -1), lookValue.x) * GameJam.UI.ExpeditionInputPreferences.Sensitivity;
 
 #if UNITY_WEBGL && !UNITY_EDITOR
             // Following corrections are needed for desktop browsers only. On mobile browsers the look
@@ -74,6 +75,7 @@ namespace Starter.ThirdPersonCharacter
         {
             // InputActions class is auto-generated from the InputSystem_Actions asset.
             _inputActions ??= new InputActions();
+            GameJam.UI.ExpeditionInputPreferences.Load(_inputActions.asset);
             _inputActions.Enable();
         }
 
