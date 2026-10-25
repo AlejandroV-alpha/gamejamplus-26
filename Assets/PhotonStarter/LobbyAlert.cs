@@ -38,11 +38,17 @@ namespace GameJam.Multiplayer
         [Networked] private int MissionSceneIndex { get; set; }
         public int DestinationSceneIndex => MissionSceneIndex;
         [Networked] public int PortalEnteredCount { get; private set; }
-        private readonly HashSet<PlayerRef> cinematicFinished = new();
-        private readonly HashSet<PlayerRef> portalEntered = new();
+        // Acknowledgements must migrate with scene authority, not live only in local HashSets.
+        [Networked, Capacity(16)] private NetworkDictionary<PlayerRef, byte> DepartureAcks => default;
+        private bool HasAck(PlayerRef player, byte mask) => DepartureAcks.TryGet(player, out var flags) && (flags & mask) != 0;
+        private void Ack(PlayerRef player, byte mask)
+        {
+            if (!Runner.ActivePlayers.Contains(player)) return;
+            DepartureAcks.TryGet(player, out var flags);
+            DepartureAcks.Set(player, (byte)(flags | mask));
+        }
         private bool localVideoStarted, localVideoFinished;
         private int shownPhase;
-        private readonly HashSet<PlayerRef> arrivalFinished = new();
         private bool arrivalStarted, localArrivalFinished;
         private float nextArrivalAck;
         private LobbyDepartureEffects effects;
@@ -81,6 +87,8 @@ namespace GameJam.Multiplayer
         public void Begin(int missionSceneIndex)
         {
             if (DepartureActive || Runner == null || !HasStateAuthority || !LobbyConsoleButton.AllPlayersReady(Runner) || missionSceneIndex < 0) return;
+            // Join-in-progress remains lobby-only until world-state rejoin has been validated.
+            if (Runner.GameMode == GameMode.Shared && Runner.IsSharedModeMasterClient) Runner.SessionInfo.IsOpen = false;
             MissionSceneIndex = missionSceneIndex;
             DeparturePhase = 1;
             PhaseTimer = TickTimer.CreateFromSeconds(Runner, countdown);
@@ -94,7 +102,11 @@ namespace GameJam.Multiplayer
             {
                 int missionIndex = UnityEngine.SceneManagement.SceneUtility.GetBuildIndexByScenePath("Assets/00_Scenes/Mars.unity");
                 if (missionIndex < 0) missionIndex = UnityEngine.SceneManagement.SceneUtility.GetBuildIndexByScenePath("Assets/00_Scenes/j_MarsFusion.unity");
-                if (missionIndex < 0) missionIndex = 9;
+                if (missionIndex < 0)
+                {
+                    Debug.LogError("[Lobby departure] Mars scene is missing from the active build profile.", this);
+                    return;
+                }
                 Begin(missionIndex);
             }
             else if (DeparturePhase == 1 && PhaseTimer.Expired(Runner))
@@ -103,7 +115,7 @@ namespace GameJam.Multiplayer
                 PhaseTimer = TickTimer.CreateFromSeconds(Runner, 40);
                 Debug.Log("[Lobby departure] stage=cinematic");
             }
-            else if (DeparturePhase == 2 && (Runner.ActivePlayers.All(p => cinematicFinished.Contains(p)) || PhaseTimer.Expired(Runner)))
+            else if (DeparturePhase == 2 && (Runner.ActivePlayers.All(p => HasAck(p, 1)) || PhaseTimer.Expired(Runner)))
             {
                 DeparturePhase = 3;
                 PhaseTimer = TickTimer.CreateFromSeconds(Runner, landingImpactSeconds);
@@ -117,8 +129,8 @@ namespace GameJam.Multiplayer
             }
             else if (DeparturePhase == 4)
             {
-                PortalEnteredCount = Runner.ActivePlayers.Count(p => portalEntered.Contains(p));
-                if (Runner.ActivePlayers.Any() && Runner.ActivePlayers.All(p => portalEntered.Contains(p)))
+                PortalEnteredCount = Runner.ActivePlayers.Count(p => HasAck(p, 2));
+                if (Runner.ActivePlayers.Any() && Runner.ActivePlayers.All(p => HasAck(p, 2)))
                 {
                     DeparturePhase = 5;
                     Debug.Log("[Lobby departure] stage=travel");
@@ -133,22 +145,22 @@ namespace GameJam.Multiplayer
         }
 
         private bool ArrivalCompleteForEveryone() => Runner.ActivePlayers.Any()
-            && Runner.ActivePlayers.All(p => arrivalFinished.Contains(p));
+            && Runner.ActivePlayers.All(p => HasAck(p, 4));
 
         [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
         private void RPC_ArrivalFinished(RpcInfo info = default)
         {
             if (DeparturePhase != 5) return;
             var source = info.IsInvokeLocal ? Runner.LocalPlayer : info.Source;
-            if (Runner.ActivePlayers.Contains(source)) arrivalFinished.Add(source);
+            Ack(source, 4);
         }
 
         [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
         private void RPC_CinematicFinished(RpcInfo info = default)
         {
             if (DeparturePhase != 2) return;
-            var source = Runner.GameMode == GameMode.Single ? Runner.LocalPlayer : info.Source;
-            if (Runner.ActivePlayers.Contains(source)) cinematicFinished.Add(source);
+            var source = info.IsInvokeLocal ? Runner.LocalPlayer : info.Source;
+            Ack(source, 1);
         }
 
         public void EnterPortal() => RPC_EnterPortal();
@@ -157,9 +169,9 @@ namespace GameJam.Multiplayer
         private void RPC_EnterPortal(RpcInfo info = default)
         {
             if (DeparturePhase != 4 || effects == null) return;
-            var source = Runner.GameMode == GameMode.Single ? Runner.LocalPlayer : info.Source;
+            var source = info.IsInvokeLocal ? Runner.LocalPlayer : info.Source;
             var player = Runner.GetPlayerObject(source);
-            if (player != null && effects.ContainsPortal(player.transform.position)) portalEntered.Add(source);
+            if (player != null && effects.ContainsPortal(player.transform.position)) Ack(source, 2);
         }
 
         private void Update()

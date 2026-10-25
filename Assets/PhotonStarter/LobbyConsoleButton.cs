@@ -67,8 +67,12 @@ namespace GameJam.Multiplayer
         private bool IsTouchTarget(NetworkObject player)
         {
             var camera = Camera.main;
-            if (player == null || camera == null
-                || (touchSurface.ClosestPoint(player.transform.position) - player.transform.position).sqrMagnitude > interactRange * interactRange) return false;
+            if (player == null || camera == null || touchSurface == null) return false;
+            // MeshCollider.ClosestPoint rejects non-convex screen meshes and logs every frame.
+            Vector3 closest = touchSurface is MeshCollider mesh && !mesh.convex
+                ? touchSurface.bounds.ClosestPoint(player.transform.position)
+                : touchSurface.ClosestPoint(player.transform.position);
+            if ((closest - player.transform.position).sqrMagnitude > interactRange * interactRange) return false;
             Vector2 point = Cursor.lockState == CursorLockMode.Locked || Mouse.current == null
                 ? new Vector2(Screen.width * .5f, Screen.height * .5f) : Mouse.current.position.ReadValue();
             var hits = Physics.RaycastAll(camera.ScreenPointToRay(point), 12f, ~0, QueryTriggerInteraction.Ignore);

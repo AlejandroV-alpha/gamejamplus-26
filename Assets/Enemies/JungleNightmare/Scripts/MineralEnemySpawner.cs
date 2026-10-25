@@ -25,10 +25,22 @@ public sealed class MineralEnemySpawner : NetworkBehaviour
     sealed class Zone { public List<Vector3> minerals = new List<Vector3>(); public Vector3 center; public List<Guard> guards = new List<Guard>(); }
 
     readonly List<Zone> zones = new List<Zone>();
+    const int GuardCapacity = 128;
+    [Networked] bool PopulationInitialized { get; set; }
+    [Networked] int GuardCount { get; set; }
+    [Networked, Capacity(GuardCapacity)] NetworkArray<NetworkObject> GuardObjects => default;
+    [Networked, Capacity(GuardCapacity)] NetworkArray<Vector3> GuardAnchors => default;
+    [Networked, Capacity(GuardCapacity)] NetworkArray<NetworkBool> GuardIsLarge => default;
+    [Networked, Capacity(GuardCapacity)] NetworkArray<float> GuardRespawnAt => default;
 
     public override void Spawned()
     {
-        if (!HasStateAuthority) return;
+        if (HasStateAuthority && !PopulationInitialized) InitializePopulation();
+    }
+
+    void InitializePopulation()
+    {
+        zones.Clear();
         // Los minerales se recogen y desaparecen: las zonas se calculan una vez al inicio.
         var points = FindObjectsByType<MaterialPickup>(FindObjectsSortMode.None)
             .Where(p => p.gameObject.scene == gameObject.scene && !p.name.StartsWith("Damaged"))
@@ -50,6 +62,17 @@ public sealed class MineralEnemySpawner : NetworkBehaviour
             for (int i = 0; i < large; i++) zone.guards.Add(new Guard { large = true, respawnAt = now });
             for (int i = 0; i < medium; i++) zone.guards.Add(new Guard { large = false, respawnAt = now });
         }
+        GuardCount = 0;
+        foreach (var zone in zones)
+            foreach (var guard in zone.guards)
+            {
+                if (GuardCount >= GuardCapacity) break;
+                GuardAnchors.Set(GuardCount, zone.minerals[Random.Range(0, zone.minerals.Count)]);
+                GuardIsLarge.Set(GuardCount, guard.large);
+                GuardRespawnAt.Set(GuardCount, now);
+                GuardCount++;
+            }
+        PopulationInitialized = true;
         initialWave = true;
         Debug.Log($"[MineralEnemySpawner] {points.Count} minerales en {zones.Count} zonas.", this);
     }
@@ -83,24 +106,30 @@ public sealed class MineralEnemySpawner : NetworkBehaviour
     {
         if (!HasStateAuthority) return;
         float now = Runner.SimulationTime;
-        foreach (var zone in zones)
+        if (!PopulationInitialized) InitializePopulation();
+        for (int i = 0; i < GuardCount; i++)
         {
-            foreach (var guard in zone.guards)
+            var enemy = GuardObjects.Get(i);
+            if (enemy != null && enemy.IsValid) continue;
+            // Keep the respawn deadline in replicated state so a new master continues the same population.
+            if (GuardRespawnAt.Get(i) < 0)
             {
-                if (guard.enemy != null && guard.enemy.IsValid) continue;
-                if (guard.enemy != null) { guard.enemy = null; guard.respawnAt = now + respawnDelaySeconds; }
-                if (now < guard.respawnAt) continue;
-                var prefab = guard.large ? largePrefab : mediumPrefab;
-                if (prefab == null || !TryPickSpot(zone, out var position)) { guard.respawnAt = now + 5f; continue; }
-                guard.enemy = Runner.Spawn(prefab, position, Quaternion.Euler(0f, Random.Range(0f, 360f), 0f));
+                GuardObjects.Set(i, null);
+                GuardRespawnAt.Set(i, now + respawnDelaySeconds);
+                continue;
             }
+            if (now < GuardRespawnAt.Get(i)) continue;
+            var prefab = GuardIsLarge.Get(i) ? largePrefab : mediumPrefab;
+            if (prefab == null || !TryPickSpot(GuardAnchors.Get(i), out var position)) { GuardRespawnAt.Set(i, now + 5f); continue; }
+            GuardObjects.Set(i, Runner.Spawn(prefab, position, Quaternion.Euler(0f, Random.Range(0f, 360f), 0f)));
+            GuardRespawnAt.Set(i, -1f);
         }
         initialWave = false;
     }
 
     bool initialWave;
 
-    bool TryPickSpot(Zone zone, out Vector3 position)
+    bool TryPickSpot(Vector3 mineral, out Vector3 position)
     {
         var players = FindObjectsByType<MarsFusionAvatar>(FindObjectsSortMode.None)
             .Where(a => a.Object != null && a.Object.IsValid && a.Runner == Runner)
@@ -108,7 +137,6 @@ public sealed class MineralEnemySpawner : NetworkBehaviour
 
         for (int attempt = 0; attempt < 12; attempt++)
         {
-            Vector3 mineral = zone.minerals[Random.Range(0, zone.minerals.Count)];
             Vector2 ring = Random.insideUnitCircle.normalized * Random.Range(spawnRingAroundMineral.x, spawnRingAroundMineral.y);
             Vector3 candidate = Ground(mineral + new Vector3(ring.x, 0f, ring.y));
             if (!initialWave && players.Any(p => (p - candidate).sqrMagnitude < minDistanceFromPlayers * minDistanceFromPlayers)) continue;
