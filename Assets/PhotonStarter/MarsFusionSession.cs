@@ -259,7 +259,13 @@ namespace GameJam.Multiplayer
             LogStage("shutdown", "reason=" + reason);
             if (Runner != runner) return;
             Runner = null;
-            if (Busy) return; // StartSession/Disconnect owns cleanup and its actionable error message.
+            if (Busy)
+            {
+                // Keep a startup failure explanation, but do not leave a loading label after an early disconnect.
+                if (!Status.StartsWith("No se pudo iniciar:", StringComparison.Ordinal)) Status = "Sesión cerrada: " + reason;
+                SetMenu(true);
+                return;
+            }
             Status = "Sesión cerrada: " + reason;
             shutdownMessage = Status;
             SetMenu(true);
