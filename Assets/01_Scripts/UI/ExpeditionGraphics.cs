@@ -15,6 +15,7 @@ namespace GameJam.UI
         FullScreenMode oldMode;
         float confirmBy;
         public bool PendingDisplay => confirmBy > 0;
+        public bool LastDisplayConfirmed { get; private set; }
         public int SecondsRemaining => Mathf.Max(0, Mathf.CeilToInt(confirmBy - Time.realtimeSinceStartup));
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
@@ -51,14 +52,14 @@ namespace GameJam.UI
         public void ConfirmDisplay()
         {
             if (!PendingDisplay) return;
-            confirmBy = 0;
+            confirmBy = 0; LastDisplayConfirmed = true;
             PlayerPrefs.SetInt("GameJam.Graphics.Width", Screen.width); PlayerPrefs.SetInt("GameJam.Graphics.Height", Screen.height);
             PlayerPrefs.SetInt("GameJam.Graphics.Mode", Screen.fullScreen ? 1 : 0); PlayerPrefs.Save();
         }
         public void RevertDisplay()
         {
             if (!PendingDisplay) return;
-            confirmBy = 0; Screen.SetResolution(oldWidth, oldHeight, oldMode);
+            confirmBy = 0; LastDisplayConfirmed = false; Screen.SetResolution(oldWidth, oldHeight, oldMode);
         }
         public void ToggleFullscreen()
         {

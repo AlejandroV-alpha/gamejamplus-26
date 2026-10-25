@@ -23,6 +23,7 @@ namespace GameJam.UI
         readonly List<Vector2Int> resolutions = new();
         int resolutionIndex, tab;
         bool fullscreen;
+        bool wasDisplayPending;
         float nextRefresh;
         Action<Key> captureKey;
         InputActionRebindingExtensions.RebindingOperation rebind;
@@ -222,6 +223,9 @@ namespace GameJam.UI
                 foreach (var key in Keyboard.current.allKeys)
                     if (key.keyCode != Key.Escape && key.wasPressedThisFrame) { var callback = captureKey; captureKey = null; VoicePreferences.CapturingBinding = false; callback(key.keyCode); break; }
             if (Time.unscaledTime < nextRefresh) return; nextRefresh = Time.unscaledTime + .2f;
+            bool displayPending = ExpeditionGraphics.Instance != null && ExpeditionGraphics.Instance.PendingDisplay;
+            if (wasDisplayPending && !displayPending) StartCoroutine(SyncDisplayForm());
+            wasDisplayPending = displayPending;
             foreach (var refresh in refreshers) refresh();
             string text = message;
             if (captureKey != null || rebind != null) text = L("Pulsa una tecla / Esc cancela", "Press a key / Esc cancels", "Pressione uma tecla / Esc cancela");
@@ -229,6 +233,17 @@ namespace GameJam.UI
             else if (tab == 1)
             { var voice = LocalVoice(); text = microphoneTest.IsRunning ? microphoneTest.Status + " | input " + microphoneTest.Level.ToString("F3") : voice != null ? voice.CaptureStatus + " | input " + voice.InputLevel.ToString("F3") + " | PTT " + voice.TalkPressed + " | TX " + voice.IsTransmitting : microphoneTest.Status; }
             status.text = text;
+        }
+        System.Collections.IEnumerator SyncDisplayForm()
+        {
+            yield return new WaitForSecondsRealtime(.15f);
+            fullscreen = Screen.fullScreen;
+            var size = new Vector2Int(Screen.width, Screen.height);
+            if (!resolutions.Contains(size)) resolutions.Add(size);
+            resolutionIndex = resolutions.IndexOf(size);
+            message = ExpeditionGraphics.Instance != null && ExpeditionGraphics.Instance.LastDisplayConfirmed
+                ? L("Pantalla confirmada", "Display confirmed", "Tela confirmada")
+                : L("Se restauró la pantalla anterior", "Previous display restored", "Tela anterior restaurada");
         }
         void Close() { if (ExpeditionGraphics.Instance != null) ExpeditionGraphics.Instance.RevertDisplay(); CancelCapture(); microphoneTest?.StopTest(); Current = null; Destroy(gameObject); }
         void OnDestroy() { CancelCapture(); microphoneTest?.StopTest(); if (Current == this) Current = null; }

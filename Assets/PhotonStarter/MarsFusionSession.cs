@@ -91,12 +91,13 @@ namespace GameJam.Multiplayer
             }
             LogStage("config-ready", "appIdPresent=" + (settings != null && !string.IsNullOrWhiteSpace(settings.AppIdFusion)) + " region=" + (string.IsNullOrEmpty(settings?.FixedRegion) ? "auto" : settings.FixedRegion));
             Busy = true;
-            var runner = Instantiate(runnerPrefab);
-            Runner = runner;
-            FusionLoadDiagnostics.Attach(runner);
-            LogStage("runner-created");
+            NetworkRunner runner = null;
             try
             {
+                runner = Instantiate(runnerPrefab);
+                Runner = runner;
+                FusionLoadDiagnostics.Attach(runner);
+                LogStage("runner-created");
                 var events = runner.GetComponent<NetworkEvents>();
                 if (events == null) events = runner.gameObject.AddComponent<NetworkEvents>();
                 events.OnShutdown.AddListener(OnShutdown);
@@ -139,7 +140,11 @@ namespace GameJam.Multiplayer
                 if (settings != null && !string.IsNullOrEmpty(settings.AppIdFusion)) message = message.Replace(settings.AppIdFusion, "[redacted]");
                 Status = "No se pudo iniciar: " + message;
                 LogStage("start-failed", "type=" + exception.GetType().Name + " detail=" + message);
-                if (runner != null) await runner.Shutdown();
+                if (runner != null)
+                {
+                    try { await runner.Shutdown(); }
+                    catch (Exception) { Debug.LogWarning("[Mars Fusion] Runner cleanup failed after connection failure.", this); }
+                }
                 if (Runner == runner) Runner = null;
                 SetMenu(true);
                 return false;
@@ -254,6 +259,7 @@ namespace GameJam.Multiplayer
             LogStage("shutdown", "reason=" + reason);
             if (Runner != runner) return;
             Runner = null;
+            if (Busy) return; // StartSession/Disconnect owns cleanup and its actionable error message.
             Status = "Sesión cerrada: " + reason;
             shutdownMessage = Status;
             SetMenu(true);
@@ -330,6 +336,7 @@ namespace GameJam.Multiplayer
 
         private void OnDestroy()
         {
+            if (Runner != null) Runner.GetComponent<NetworkEvents>()?.OnShutdown.RemoveListener(OnShutdown);
             Cursor.lockState = previousLock;
             Cursor.visible = previousVisible;
             Application.runInBackground = previousBackground;
