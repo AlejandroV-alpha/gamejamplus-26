@@ -1,331 +1,127 @@
-
 using System.Collections.Generic;
 using Fusion;
 using UnityEngine;
 
 namespace GameJam.Inventory
 {
-    /// <summary>
-    /// Almacena y sincroniza las cantidades de materiales de un jugador.
-    /// </summary>
+    /// <summary>The quickbar is the entire replicated inventory: one unit per slot.</summary>
     [DisallowMultipleComponent]
     public sealed class Inventory : NetworkBehaviour
     {
-        private const int MaterialTypeCount = 8;
-
-        [SerializeField]
-        [Tooltip("Materiales y piezas recuperadas. Conservar el mismo orden en todos los clientes.")]
+        private const int MaterialTypeCount = 10;
+        public const int MaximumSlots = 10;
+        [SerializeField, Range(1, MaximumSlots), Tooltip("Capacidad total. Una unidad por espacio, sin pilas. Se aplica al iniciar la partida.")]
+        private int slotCount = 6;
+        [SerializeField, Tooltip("Mismo orden de materiales en todos los clientes.")]
         private MaterialData[] materials = new MaterialData[MaterialTypeCount];
+        [SerializeField, Tooltip("Objetos que ocupan espacios al aparecer el jugador.")]
+        private MaterialData[] startingItems = System.Array.Empty<MaterialData>();
 
-        // Fusion reemplaza esta propiedad por acceso al estado replicado.
-        [Networked, Capacity(MaterialTypeCount)]
-        private NetworkArray<int> MaterialAmounts { get; }
-
-        /// <summary>
-        /// Muestra las cantidades iniciales del inventario local.
-        /// </summary>
+        // Zero is empty; the remaining values are stable material indices plus one.
+        [Networked, Capacity(MaximumSlots)] private NetworkArray<int> SlotMaterials { get; }
+        [Networked] private int ActiveSlotCount { get; set; }
+        [Networked] public int SelectedSlot { get; private set; }
+        public MaterialData SelectedItem => GetSlotMaterial(SelectedSlot);
+        public bool HasItem(CarriedItemKind kind)
+        {
+            for (int i = 0; i < SlotCount; i++)
+            {
+                var item = GetSlotMaterial(i);
+                if (item != null && item.kind == kind) return true;
+            }
+            return false;
+        }
+        public bool SelectSlot(int slot)
+        {
+            if (!CanModify(1) || slot < 0 || slot >= SlotCount) return false;
+            SelectedSlot = slot;
+            return true;
+        }
+        public int SlotCount => IsReady() && ActiveSlotCount > 0 ? Mathf.Clamp(ActiveSlotCount, 1, MaximumSlots) : Mathf.Clamp(slotCount, 1, MaximumSlots);
+        public int UsedSlots
+        {
+            get { int count=0; if(IsReady()) for(int i=0;i<SlotCount;i++) if(SlotMaterials.Get(i)!=0) count++; return count; }
+        }
+        public int FreeSlots => SlotCount - UsedSlots;
         public override void Spawned()
         {
-            if (!HasStateAuthority)
-            {
-                return;
-            }
-
-            Debug.Log("[Inventory] Inventario inicial:", this);
-
-            foreach (MaterialData material in materials)
-            {
-                if (material == null)
-                {
-                    continue;
-                }
-
-                int amount = GetMaterialAmount(material);
-
-                Debug.Log(
-                    $"[Inventory] {material.materialName}: {amount}",
-                    this
-                );
-            }
+            if (!HasStateAuthority) return;
+            ActiveSlotCount = Mathf.Clamp(slotCount,1,MaximumSlots);
+            SelectedSlot = 0;
+            foreach (var item in startingItems) if (item != null && !AddMaterial(item, 1))
+                Debug.LogWarning("[Loadout] No cabe el objeto inicial: " + item.name, this);
         }
-
-        /// <summary>
-        /// Agrega materiales si la cantidad es valida y esta instancia tiene autoridad.
-        /// </summary>
-        public bool AddMaterial(MaterialData material, int amount)
+        public MaterialData GetSlotMaterial(int slot)
         {
-            if (!CanModify(amount))
-            {
-                return false;
-            }
-
-            int materialIndex = GetMaterialIndex(material);
-            if (materialIndex < 0)
-            {
-                return false;
-            }
-
-            int currentAmount = MaterialAmounts.Get(materialIndex);
-            if (amount > int.MaxValue - currentAmount)
-            {
-                return false;
-            }
-
-            int newAmount = currentAmount + amount;
-
-            MaterialAmounts.Set(materialIndex, newAmount);
-
-            Debug.Log(
-                $"[Inventory] Recogido: {material.materialName} +{amount} | Total: {newAmount}",
-                this
-            );
-
+            if(!IsReady() || slot<0 || slot>=SlotCount) return null;
+            int index=SlotMaterials.Get(slot)-1;
+            return materials!=null && index>=0 && index<materials.Length ? materials[index] : null;
+        }
+        public bool CanAddMaterial(MaterialData material,int amount)
+        {
+            return IsReady() && amount>0 && GetMaterialIndex(material)>=0 && amount<=FreeSlots;
+        }
+        public bool AddMaterial(MaterialData material,int amount)
+        {
+            if(!CanModify(amount) || !CanAddMaterial(material,amount)) return false;
+            int id=GetMaterialIndex(material)+1;
+            for(int i=0;i<SlotCount && amount>0;i++) if(SlotMaterials.Get(i)==0){SlotMaterials.Set(i,id);amount--;}
             return true;
         }
-
-        /// <summary>
-        /// Quita materiales con autoridad solo cuando existe la cantidad solicitada.
-        /// </summary>
-        public bool RemoveMaterial(MaterialData material, int amount)
+        public bool RemoveSlot(int slot)
         {
-            if (!CanModify(amount))
-            {
-                return false;
-            }
-
-            int materialIndex = GetMaterialIndex(material);
-            if (materialIndex < 0)
-            {
-                return false;
-            }
-
-            int currentAmount = MaterialAmounts.Get(materialIndex);
-            if (currentAmount < amount)
-            {
-                return false;
-            }
-
-            int newAmount = currentAmount - amount;
-
-            MaterialAmounts.Set(materialIndex, newAmount);
-
-            Debug.Log(
-                $"[Inventory] Consumido: {material.materialName} -{amount} | Restante: {newAmount}",
-                this
-            );
-
+            if(!CanModify(1) || GetSlotMaterial(slot)==null) return false;
+            SlotMaterials.Set(slot,0);return true;
+        }
+        public bool RemoveMaterial(MaterialData material,int amount)
+        {
+            if(!CanModify(amount) || GetMaterialAmount(material)<amount) return false;
+            int id=GetMaterialIndex(material)+1;
+            for(int i=0;i<SlotCount && amount>0;i++) if(SlotMaterials.Get(i)==id){SlotMaterials.Set(i,0);amount--;}
             return true;
         }
-
-        /// <summary>
-        /// Comprueba todos los costes sin modificar ninguna cantidad.
-        /// </summary>
-        public bool HasMaterials(Dictionary<MaterialData, int> costs)
-        {
-            int[] remainingAmounts;
-            return TryCalculateRemainingAmounts(costs, out remainingAmounts);
-        }
-
-        /// <summary>
-        /// Consume todos los costes juntos o conserva el inventario completo.
-        /// </summary>
-        public bool TryRemoveMaterials(Dictionary<MaterialData, int> costs)
-        {
-            if (!CanModify(1))
-            {
-                return false;
-            }
-
-            int[] remainingAmounts;
-            if (!TryCalculateRemainingAmounts(costs, out remainingAmounts))
-            {
-                return false;
-            }
-
-            // No hay esperas ni callbacks entre la validacion y la escritura.
-            for (int index = 0; index < MaterialTypeCount; index++)
-            {
-                MaterialAmounts.Set(index, remainingAmounts[index]);
-            }
-
-            return true;
-        }
-
-        /// <summary>
-        /// Calcula los saldos finales y agrupa referencias con el mismo ID.
-        /// </summary>
-        private bool TryCalculateRemainingAmounts(Dictionary<MaterialData, int> costs, out int[] remainingAmounts)
-        {
-            remainingAmounts = null;
-            if (!IsReady())
-            {
-                return false;
-            }
-
-            if (costs == null || costs.Count == 0)
-            {
-                return false;
-            }
-
-            remainingAmounts = new int[MaterialTypeCount];
-            for (int index = 0; index < MaterialTypeCount; index++)
-            {
-                remainingAmounts[index] = MaterialAmounts.Get(index);
-            }
-
-            foreach (KeyValuePair<MaterialData, int> cost in costs)
-            {
-                int materialIndex = GetMaterialIndex(cost.Key);
-                if (materialIndex < 0 || cost.Value <= 0)
-                {
-                    return false;
-                }
-
-                if (remainingAmounts[materialIndex] < cost.Value)
-                {
-                    return false;
-                }
-
-                remainingAmounts[materialIndex] -= cost.Value;
-            }
-
-            return true;
-        }
-
-        /// <summary>
-        /// Comprueba si existe una cantidad positiva del material solicitado.
-        /// </summary>
-        public bool HasMaterial(MaterialData material, int amount)
-        {
-            if (amount <= 0)
-            {
-                return false;
-            }
-
-            return GetMaterialAmount(material) >= amount;
-        }
-
-        /// <summary>
-        /// Consulta la cantidad replicada o devuelve cero si no esta disponible.
-        /// </summary>
+        public bool HasMaterial(MaterialData material,int amount) => amount>0 && GetMaterialAmount(material)>=amount;
         public int GetMaterialAmount(MaterialData material)
         {
-            if (!IsReady())
-            {
-                return 0;
-            }
-
-            int materialIndex = GetMaterialIndex(material);
-            if (materialIndex < 0)
-            {
-                return 0;
-            }
-
-            return MaterialAmounts.Get(materialIndex);
+            if(!IsReady()) return 0;
+            int index=GetMaterialIndex(material); if(index<0)return 0;
+            int count=0;for(int i=0;i<SlotCount;i++)if(SlotMaterials.Get(i)==index+1)count++;
+            return count;
         }
-
-        /// <summary>
-        /// Devuelve una copia de los materiales con cantidades mayores que cero.
-        /// </summary>
-        public Dictionary<MaterialData, int> GetContents()
+        public Dictionary<MaterialData,int> GetContents()
         {
-            Dictionary<MaterialData, int> contents = new Dictionary<MaterialData, int>();
-
-            if (materials == null)
-            {
-                return contents;
-            }
-
-            foreach (MaterialData material in materials)
-            {
-                int amount = GetMaterialAmount(material);
-
-                if (amount > 0)
-                {
-                    contents[material] = amount;
-                }
-            }
-
+            var contents=new Dictionary<MaterialData,int>();
+            for(int i=0;i<SlotCount;i++){var material=GetSlotMaterial(i);if(material==null)continue;contents.TryGetValue(material,out int count);contents[material]=count+1;}
             return contents;
         }
-
-        /// <summary>
-        /// Valida la cantidad y la autoridad antes de modificar el estado.
-        /// </summary>
-        private bool CanModify(int amount)
+        public bool HasMaterials(Dictionary<MaterialData,int> costs) => TryCalculateRemainingAmounts(costs,out _);
+        public bool TryRemoveMaterials(Dictionary<MaterialData,int> costs)
         {
-            if (amount <= 0)
-            {
-                return false;
-            }
-
-            if (!IsReady())
-            {
-                return false;
-            }
-
-            return HasStateAuthority;
+            if(!CanModify(1) || !TryCalculateRemainingAmounts(costs,out int[] remaining))return false;
+            // Validate all costs before changing any slot. Keep the other items in place.
+            var remove=new int[MaterialTypeCount];
+            for(int i=0;i<SlotCount;i++){int id=SlotMaterials.Get(i)-1;if(id>=0)remove[id]++;}
+            for(int i=0;i<MaterialTypeCount;i++)remove[i]-=remaining[i];
+            for(int i=0;i<SlotCount;i++){int id=SlotMaterials.Get(i)-1;if(id>=0 && remove[id]>0){SlotMaterials.Set(i,0);remove[id]--;}}
+            return true;
         }
-
-        /// <summary>
-        /// Comprueba que el objeto tenga un estado de red disponible.
-        /// </summary>
-        private bool IsReady()
+        private bool TryCalculateRemainingAmounts(Dictionary<MaterialData,int> costs,out int[] remaining)
         {
-            if (Object == null)
-            {
-                return false;
-            }
-
-            if (!Object.IsValid)
-            {
-                return false;
-            }
-
-            return StateBufferIsValid;
+            remaining=null;
+            if(!IsReady() || costs==null || costs.Count==0)return false;
+            remaining=new int[MaterialTypeCount];
+            for(int i=0;i<SlotCount;i++){int id=SlotMaterials.Get(i)-1;if(id>=0 && id<MaterialTypeCount)remaining[id]++;}
+            foreach(var cost in costs){int id=GetMaterialIndex(cost.Key);if(id<0 || cost.Value<=0 || remaining[id]<cost.Value)return false;remaining[id]-=cost.Value;}
+            return true;
         }
-
-        /// <summary>
-        /// Localiza el contador de un material mediante su identificador estable.
-        /// </summary>
+        private bool CanModify(int amount) => amount>0 && IsReady() && HasStateAuthority;
+        private bool IsReady() => Object!=null && Object.IsValid && StateBufferIsValid;
         private int GetMaterialIndex(MaterialData material)
         {
-            if (material == null)
-            {
-                return -1;
-            }
-
-            if (string.IsNullOrWhiteSpace(material.id))
-            {
-                return -1;
-            }
-
-            if (materials == null)
-            {
-                return -1;
-            }
-
-            if (materials.Length != MaterialTypeCount)
-            {
-                return -1;
-            }
-
-            for (int index = 0; index < materials.Length; index++)
-            {
-                MaterialData registeredMaterial = materials[index];
-
-                if (registeredMaterial == null)
-                {
-                    continue;
-                }
-
-                if (registeredMaterial.id == material.id)
-                {
-                    return index;
-                }
-            }
-
+            if(material==null || string.IsNullOrWhiteSpace(material.id) || materials==null || materials.Length!=MaterialTypeCount)return -1;
+            for(int i=0;i<materials.Length;i++)if(materials[i]!=null && materials[i].id==material.id)return i;
             return -1;
         }
+        private void OnValidate(){slotCount=Mathf.Clamp(slotCount,1,MaximumSlots);}
     }
 }

@@ -31,23 +31,24 @@ namespace GameJam.UI
         private bool marsEnvironment;
         private bool showEnvironment;
         private RectTransform safeRoot;
-        private CanvasGroup hud, modal;
-        private Image eyeImage, mouthImage, detailIcon;
+        private CanvasGroup hud;
+        private Image eyeImage, mouthImage;
         private PlayerHelmetGraphic helmet;
-        private TMP_Text equipped, detailName, detailDescription, detailAmount, emptyText;
-        private RectTransform dropButton;
+        private TMP_Text equipped, quickbarCaption, selectedName, carryFeedback;
+        private RectTransform quickbarRoot;
+        private int selectedSlot;
+        private float carryFeedbackUntil;
         private Bar healthBar, staminaBar, environmentBar, actionBar;
         private TMP_FontAsset font;
         private readonly List<Slot> slots = new List<Slot>();
         private readonly List<Notice> notices = new List<Notice>();
         private readonly Dictionary<MaterialData, int> previous = new Dictionary<MaterialData, int>();
-        private MaterialData selected;
         private bool sampled;
         private float nextInventoryPoll;
         private float nextStatusPoll;
         private Rect lastSafeArea;
         private Vector2Int lastScreen;
-        public bool IsInventoryOpen { get; private set; }
+        public bool IsInventoryOpen => false;
 
         private sealed class Bar
         {
@@ -59,7 +60,8 @@ namespace GameJam.UI
         {
             public MaterialData Material;
             public Image Icon, Background;
-            public TMP_Text Name, Amount;
+            public TMP_Text Name;
+            public GameObject Selection;
         }
         private sealed class Notice
         {
@@ -97,10 +99,8 @@ namespace GameJam.UI
             }
             safeRoot = Rect("Safe area", transform, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
             hud = Group("HUD", safeRoot);
-            modal = Group("Inventory overlay", safeRoot);
             BuildHUD();
-            BuildInventory();
-            Show(modal, false);
+            BuildQuickbar();
             GameLocalization.OnLanguageChanged += RefreshLanguage;
             UpdateSafeArea();
             PollInventory();
@@ -129,12 +129,9 @@ namespace GameJam.UI
             environmentBar = CreateBar(status, new Vector2(65, 48), "hud.environment", new Color32(89, 185, 255, 255));
             environmentBar.Root.gameObject.SetActive(showEnvironment);
 
-            var equipment = Panel("Equipment", hud.transform, new Vector2(1, .5f), new Vector2(-135, 0), new Vector2(220, 164));
-            LocalLabel(equipment, "hud.equipped", new Vector2(0, 48), new Vector2(198, 30), 17);
-            equipped = Label(equipment, "", Vector2.zero, new Vector2(194, 50), 23);
-            var open = Panel("Open inventory", equipment, new Vector2(.5f, .5f), new Vector2(0, -51), new Vector2(200, 38));
-            LocalLabel(open, "hud.inventory", Vector2.zero, new Vector2(190, 34), 18, "I  ·  ");
-            Button(open, ToggleInventory);
+            var equipment = Panel("Equipment", hud.transform, new Vector2(1, .5f), new Vector2(-135, 0), new Vector2(220, 112));
+            LocalLabel(equipment, "hud.equipped", new Vector2(0, 33), new Vector2(198, 30), 17);
+            equipped = Label(equipment, "", new Vector2(0,-14), new Vector2(194, 50), 23);
             actionBar = CreateBar(hud.transform, Vector2.zero, "hud.collecting", Accent);
             actionBar.Root.sizeDelta = new Vector2(390, 82);
             var actionBackground = actionBar.Root.gameObject.AddComponent<Image>();
@@ -151,45 +148,28 @@ namespace GameJam.UI
             }
         }
 
-        private void BuildInventory()
+        private void BuildQuickbar()
         {
-            var dim = Rect("Dim", modal.transform, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
-            dim.gameObject.AddComponent<Image>().color = new Color(0, 0, 0, .62f);
-            var window = Panel("Inventory", modal.transform, new Vector2(1, .5f), new Vector2(-550, 0), new Vector2(1050, 620));
-            LocalLabel(window, "hud.inventory", new Vector2(-265, 266), new Vector2(460, 50), 30);
-            var close = Panel("Close", window, new Vector2(.5f, .5f), new Vector2(413, 266), new Vector2(180, 42));
-            LocalLabel(close, "hud.close", Vector2.zero, new Vector2(170, 38), 20, "I / ESC  ·  ");
-            Button(close, CloseInventory);
-            for (int i = 0; i < 8; i++)
+            if (quickbarRoot != null) { quickbarRoot.gameObject.SetActive(false); Destroy(quickbarRoot.gameObject); }
+            slots.Clear();
+            int count = inventory != null ? inventory.SlotCount : 6;
+            float step = Mathf.Min(92, 680f / count);
+            quickbarRoot = Panel("Quickbar", hud.transform, new Vector2(.5f,0), new Vector2(0,91), new Vector2(step*count+20,112));
+            quickbarCaption = Label(quickbarRoot,"",new Vector2(0,-70),new Vector2(720,30),17);
+            selectedName = Label(quickbarRoot,"",new Vector2(0,78),new Vector2(600,32),19);
+            carryFeedback = Label(quickbarRoot,"",new Vector2(0,116),new Vector2(720,34),21);
+            carryFeedback.color = new Color32(255,178,102,255);
+            for (int i=0;i<count;i++)
             {
-                var tile = Panel("Material " + i, window, new Vector2(.5f, .5f), new Vector2(-410 + i % 4 * 143, 108 - i / 4 * 191), new Vector2(132, 177));
-                var slot = new Slot
-                {
-                    Background = tile.GetComponent<Image>(),
-                    Icon = Icon(tile, new Vector2(0, 25), new Vector2(74, 74)),
-                    Name = Label(tile, "", new Vector2(0, -40), new Vector2(116, 50), 18),
-                    Amount = Label(tile, "", new Vector2(0, 68), new Vector2(112, 26), 20)
-                };
-                Button(tile, () => { if (slot.Material != null) { selected = slot.Material; RefreshInventory(); } });
+                int index=i;
+                var tile=Panel("Carry slot "+(i+1),quickbarRoot,new Vector2(.5f,.5f),new Vector2((i-(count-1)*.5f)*step,0),new Vector2(step-8,96));
+                var marker=Panel("Selected",tile,new Vector2(.5f,0),new Vector2(0,4),new Vector2(step-16,4));
+                marker.GetComponent<Image>().color=Accent;
+                var slot=new Slot{Background=tile.GetComponent<Image>(),Icon=Icon(tile,new Vector2(0,7),new Vector2(step-24,54)),Name=Label(tile,i==9?"0":(i+1).ToString(),new Vector2(0,-32),new Vector2(step-18,22),16),Selection=marker.gameObject};
                 slots.Add(slot);
+                Button(tile,()=>{if(CanInteract() && inventory.SelectSlot(index)){RefreshInventory();}});
             }
-            emptyText = LocalLabel(window, "hud.empty", new Vector2(-190, -225), new Vector2(590, 45), 22);
-            var detail = Panel("Detail", window, new Vector2(.5f, .5f), new Vector2(320, -15), new Vector2(350, 475));
-            detailIcon = Icon(detail, new Vector2(0, 138), new Vector2(130, 130));
-            detailName = Label(detail, "", new Vector2(0, 34), new Vector2(320, 64), 27);
-            if (materialDrop == null)
-            {
-                detailDescription = Label(detail, "", new Vector2(0, -80), new Vector2(308, 150), 21);
-                detailAmount = Label(detail, "", new Vector2(0, -202), new Vector2(320, 42), 20);
-            }
-            else
-            {
-                detailDescription = Label(detail, "", new Vector2(0, -75), new Vector2(308, 130), 21);
-                detailAmount = Label(detail, "", new Vector2(0, -160), new Vector2(320, 42), 20);
-                dropButton = Panel("Drop one", detail, new Vector2(.5f, .5f), new Vector2(0, -210), new Vector2(260, 40));
-                Label(dropButton, "Soltar 1", Vector2.zero, new Vector2(250, 36), 20);
-                Button(dropButton, DropSelectedMaterial);
-            }
+            selectedSlot=Mathf.Clamp(selectedSlot,0,count-1);
         }
 
         private void Update()
@@ -203,14 +183,21 @@ namespace GameJam.UI
             Show(hud, !blocked && !avatar.TabletOpen);
             if (!blocked && Keyboard.current != null)
             {
-                if (Keyboard.current.iKey.wasPressedThisFrame) ToggleInventory();
-                if (Keyboard.current.tabKey.wasPressedThisFrame) CloseInventory();
+                if (CanInteract() && !avatar.TabletOpen && !VoicePreferences.CapturingBinding)
+                {
+                    for(int i=0;i<slots.Count;i++)
+                        if(Keyboard.current[i==9 ? Key.Digit0 : Key.Digit1+i].wasPressedThisFrame) {inventory.SelectSlot(i);RefreshInventory();}
+                    if(Mouse.current != null && Mathf.Abs(Mouse.current.scroll.ReadValue().y)>.1f)
+                    {inventory.SelectSlot((selectedSlot+(Mouse.current.scroll.ReadValue().y>0?-1:1)+slots.Count)%slots.Count);RefreshInventory();}
+                    if(Keyboard.current.gKey.wasPressedThisFrame) DropSelectedMaterial();
+                }
             }
             if (Time.unscaledTime >= nextInventoryPoll)
             {
                 nextInventoryPoll = Time.unscaledTime + .2f;
                 PollInventory();
             }
+            if(carryFeedback != null && Time.unscaledTime > carryFeedbackUntil) carryFeedback.text="";
             foreach (var notice in notices)
             {
                 float remaining = notice.Until - Time.unscaledTime;
@@ -238,7 +225,8 @@ namespace GameJam.UI
             string environmentKey = hasCold ? "hud.cold" : marsEnvironment ? "hud.heat" : "hud.environment";
             environmentBar.Label.text = GameLocalization.Get(environmentKey);
             environmentBar.Fill.color = hasCold ? new Color32(89, 185, 255, 255) : new Color32(255, 150, 69, 255);
-            equipped.text = GameLocalization.Get(avatar.TabletOpen ? "hud.tablet" : action != null && action.weaponVisual != null && action.weaponVisual.gameObject.activeInHierarchy ? "hud.weapon" : "hud.empty_hands");
+            var selectedItem = inventory != null ? inventory.SelectedItem : null;
+            equipped.text = avatar.TabletOpen ? GameLocalization.Get("hud.tablet") : selectedItem != null && selectedItem.kind != CarriedItemKind.Material ? MaterialName(selectedItem) : GameLocalization.Get("hud.empty_hands");
             bool busy = action != null && action.IsBusy;
             actionBar.Root.gameObject.SetActive(busy && hud.alpha > 0);
             if (busy)
@@ -252,44 +240,29 @@ namespace GameJam.UI
             (session == null || !session.MenuOpen) && !SceneTransitionVideo.IsBlockingInput && !PortalWhiteTransition.IsBlockingInput &&
             !LobbyDepartureEffects.IsBlockingInput && !GameJam.Crafting.CraftingBox.IsBlockingInput && (action == null || !action.IsBusy);
 
-        private void ToggleInventory()
-        {
-            if (IsInventoryOpen) { CloseInventory(); return; }
-            if (!CanInteract() || avatar.TabletOpen || (avatar.LocalUI != null && avatar.LocalUI.IsVisible)) return;
-            IsInventoryOpen = true;
-            RefreshInventory();
-            Show(modal, true);
-        }
+        // Kept for existing tablet/menu callers; the quickbar never captures the cursor.
+        public void CloseInventory() { }
+        public bool ConsumeEscape() => false;
 
-        public void CloseInventory()
+        public void NotifyCarryFull()
         {
-            IsInventoryOpen = false;
-            if (modal != null) Show(modal, false);
-        }
-
-        // Called by the pause handler so Escape closes the inventory before opening pause.
-        public bool ConsumeEscape()
-        {
-            if (!IsInventoryOpen) return false;
-            CloseInventory();
-            return true;
+            if(carryFeedback==null)return;
+            carryFeedback.text=GameLocalization.Get("hud.carry_full");carryFeedbackUntil=Time.unscaledTime+3;
         }
 
         private void PollInventory()
         {
             if (inventory == null || !inventory.StateBufferIsValid) return;
             var contents = inventory.GetContents();
-            bool changed = contents.Count != previous.Count;
             foreach (var pair in contents)
             {
                 previous.TryGetValue(pair.Key, out int old);
-                if (old != pair.Value) changed = true;
                 if (sampled && pair.Value > old) Notify(pair.Key, pair.Value - old);
             }
             previous.Clear();
             foreach (var pair in contents) previous.Add(pair.Key, pair.Value);
             sampled = true;
-            if (changed && IsInventoryOpen) RefreshInventory();
+            RefreshInventory();
         }
 
         private void Notify(MaterialData material, int amount)
@@ -314,57 +287,32 @@ namespace GameJam.UI
 
         private void RefreshInventory()
         {
-            var contents = inventory != null ? inventory.GetContents() : new Dictionary<MaterialData, int>();
-            var entries = new List<MaterialData>(contents.Keys);
-            entries.Sort((a, b) => string.CompareOrdinal(a.id, b.id));
-            if (selected == null || !contents.ContainsKey(selected)) selected = entries.Count > 0 ? entries[0] : null;
-            for (int i = 0; i < slots.Count; i++)
+            if(inventory==null)return;
+            selectedSlot = inventory.SelectedSlot;
+            if(slots.Count != inventory.SlotCount)BuildQuickbar();
+            for(int i=0;i<slots.Count;i++)
             {
-                var slot = slots[i];
-                slot.Material = i < entries.Count ? entries[i] : null;
-                SetIcon(slot.Icon, slot.Material != null ? slot.Material.icon : null);
-                slot.Name.text = slot.Material != null ? MaterialName(slot.Material) : "—";
-                slot.Amount.text = slot.Material != null ? "×" + contents[slot.Material] : "";
-                slot.Background.color = slot.Material != null && slot.Material == selected ? new Color32(37, 77, 77, 255) : Ink;
+                var slot=slots[i];slot.Material=inventory.GetSlotMaterial(i);
+                SetIcon(slot.Icon,slot.Material!=null?slot.Material.icon:null);
+                bool active=i==selectedSlot;
+                slot.Selection.SetActive(active);
+                slot.Background.color=active?new Color32(37,77,77,255):Ink;
+                slot.Name.color=active?Accent:Cream;
             }
-            emptyText.gameObject.SetActive(entries.Count == 0);
-            SetIcon(detailIcon, selected != null ? selected.icon : null);
-            detailName.text = selected != null ? MaterialName(selected) : GameLocalization.Get("hud.select");
-            detailDescription.text = selected != null ? GameLocalization.Get("material." + selected.id + ".description", selected.description) : "";
-            detailAmount.text = selected != null ? string.Format(GameLocalization.Get("hud.quantity"), contents[selected]) : "";
-            if (dropButton != null)
-            {
-                dropButton.gameObject.SetActive(selected != null && contents.ContainsKey(selected) && contents[selected] > 0);
-            }
+            var material=inventory.GetSlotMaterial(selectedSlot);
+            var gear=avatar != null ? avatar.GetComponent<PlayerEquipment>() : null;
+            if(material != null && material.kind == CarriedItemKind.Radio)
+                selectedName.text=GameLocalization.Get(gear != null && gear.IsRadioChannelOpen ? "radio.channel_open" : "radio.channel_closed");
+            else selectedName.text=material!=null?MaterialName(material):GameLocalization.Get("hud.carry_empty");
+            quickbarCaption.text=string.Format(GameLocalization.Get("hud.carry_help"),inventory.UsedSlots,inventory.SlotCount);
         }
 
-
-        /// <summary>
-        /// Solicita soltar una unidad del material seleccionado.
-        /// </summary>
         private void DropSelectedMaterial()
         {
-            if (!IsInventoryOpen || selected == null || materialDrop == null || dropButton == null)
-            {
-                return;
-            }
-
-            Button button = dropButton.GetComponent<Button>();
-            if (button == null || !button.interactable)
-            {
-                return;
-            }
-
-            button.interactable = false;
-
-            bool dropped = materialDrop.TryDropOne(selected);
-
-            if (dropped)
-            {
-                RefreshInventory();
-            }
-
-            button.interactable = true;
+            if(!CanInteract() || avatar.TabletOpen || materialDrop==null || inventory==null)return;
+            if(inventory.GetSlotMaterial(selectedSlot)==null)return;
+            if(materialDrop.TryDropSlot(selectedSlot))RefreshInventory();
+            else { carryFeedback.text=GameLocalization.Get("hud.carry_drop_blocked");carryFeedbackUntil=Time.unscaledTime+3; }
         }
 
         private void UpdateSafeArea()

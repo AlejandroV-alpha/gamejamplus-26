@@ -14,9 +14,6 @@ namespace GameJam.Crafting
     [RequireComponent(typeof(PlayerCollector))]
     public sealed class PlayerCrafter : NetworkBehaviour
     {
-        [SerializeField] private Key firstRecipeKey = Key.Digit4;
-        [SerializeField] private Key secondRecipeKey = Key.Digit5;
-        [SerializeField] private Key thirdRecipeKey = Key.Digit6;
         [SerializeField, Min(0.1f)] private float interactionDistance = 3f;
 
         private PlayerCollector collector;
@@ -31,36 +28,6 @@ namespace GameJam.Crafting
             collector = GetComponent<PlayerCollector>();
             characterInput = GetComponent<CharacterInput>();
             inventory = GetComponent<PlayerInventory>();
-        }
-
-        /// <summary>
-        /// Consulta las teclas sin alterar los controles originales.
-        /// </summary>
-        private void Update()
-        {
-            if (!CanCraftLocally())
-            {
-                return;
-            }
-
-            Keyboard keyboard = Keyboard.current;
-            if (keyboard == null)
-            {
-                return;
-            }
-
-            if (keyboard[firstRecipeKey].wasPressedThisFrame)
-            {
-                TryCraftNearest(0);
-            }
-            else if (keyboard[secondRecipeKey].wasPressedThisFrame)
-            {
-                TryCraftNearest(1);
-            }
-            else if (keyboard[thirdRecipeKey].wasPressedThisFrame)
-            {
-                TryCraftNearest(2);
-            }
         }
 
         /// <summary>
@@ -159,7 +126,7 @@ namespace GameJam.Crafting
 
             if (nearestTable == null)
             {
-                Debug.LogWarning($"[Crafting] No crafting table from this session within {interactionDistance:F1} m. Use keys 4, 5 or 6 beside the table.", this);
+                Debug.LogWarning($"[Crafting] No crafting table from this session within {interactionDistance:F1} m. Open the crafting box with E beside the table.", this);
                 return false;
             }
 

@@ -44,6 +44,8 @@ namespace GameJam.Combat
         // Fusion conserva la municion individual dentro del objeto del astronauta.
         [Networked] private int currentAmmo { get; set; }
 
+        private GameJam.Inventory.PlayerEquipment equipment;
+        public bool IsEquipped => equipment != null && equipment.IsWeaponEquipped;
         private Character character;
         private CharacterInput characterInput;
         private MarsFusionAvatar avatar;
@@ -53,12 +55,14 @@ namespace GameJam.Combat
         private Quaternion restRotation;
         private Coroutine tracerCoroutine;
         private Coroutine recoilCoroutine;
+        private GameObject activeMuzzleFlash;
 
         /// <summary>
         /// Obtiene los controles existentes y guarda la pose local de la pistola.
         /// </summary>
         private void Awake()
         {
+            equipment = GetComponentInParent<GameJam.Inventory.PlayerEquipment>();
             character = GetComponentInParent<Character>();
             characterInput = GetComponentInParent<CharacterInput>();
             avatar = GetComponentInParent<MarsFusionAvatar>();
@@ -90,7 +94,7 @@ namespace GameJam.Combat
         public override void FixedUpdateNetwork()
         {
             if (!HasStateAuthority || !reloadTimer.IsRunning) return;
-            if (avatar == null || !avatar.IsAlive)
+            if (avatar == null || !avatar.IsAlive || !IsEquipped)
             {
                 reloadTimer = TickTimer.None;
                 return;
@@ -459,6 +463,7 @@ namespace GameJam.Combat
         [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
         private void RpcShotEffects(Vector3 origin, Vector3 endpoint, Vector3 normal, bool hasImpact)
         {
+            if (!IsEquipped) return;
             if (audioSource != null && gunshot != null)
             {
                 audioSource.PlayOneShot(gunshot);
@@ -486,6 +491,7 @@ namespace GameJam.Combat
         [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
         private void RpcReloadEffect()
         {
+            if (!IsEquipped) return;
             if (audioSource != null && gunreload != null)
             {
                 audioSource.PlayOneShot(gunreload);
@@ -504,8 +510,9 @@ namespace GameJam.Combat
 
             Vector3 direction = endpoint - origin;
             Quaternion rotation = direction.sqrMagnitude > 0.0001f ? Quaternion.LookRotation(direction) : firePoint.rotation;
-            GameObject effect = Instantiate(muzzleFlashEffect, origin, rotation);
-            Destroy(effect, muzzleFlashDuration);
+            if (activeMuzzleFlash != null) Destroy(activeMuzzleFlash);
+            activeMuzzleFlash = Instantiate(muzzleFlashEffect, origin, rotation);
+            Destroy(activeMuzzleFlash, muzzleFlashDuration);
         }
 
         /// <summary>
@@ -614,6 +621,7 @@ namespace GameJam.Combat
         /// </summary>
         private void PlayRecoil()
         {
+            if (avatar != null && RecoilBody == avatar.transform) return;
             if (recoilCoroutine != null)
             {
                 StopCoroutine(recoilCoroutine);
@@ -647,8 +655,12 @@ namespace GameJam.Combat
         /// <summary>
         /// Limpia efectos y restaura la pose cuando se desactiva la pistola.
         /// </summary>
-        private void OnDisable()
+        private void OnDisable() => StopEquippedEffects();
+
+        public void StopEquippedEffects()
         {
+            if (audioSource != null) audioSource.Stop();
+            if (activeMuzzleFlash != null) Destroy(activeMuzzleFlash);
             StopAllCoroutines();
             tracerCoroutine = null;
             recoilCoroutine = null;
@@ -656,8 +668,11 @@ namespace GameJam.Combat
             {
                 tracer.enabled = false;
             }
-            RecoilBody.localPosition = restPosition;
-            RecoilBody.localRotation = restRotation;
+            if (avatar == null || RecoilBody != avatar.transform)
+            {
+                RecoilBody.localPosition = restPosition;
+                RecoilBody.localRotation = restRotation;
+            }
         }
 
         /// <summary>
@@ -690,7 +705,7 @@ namespace GameJam.Combat
         /// </summary>
         private bool CanUseGun()
         {
-            if (!IsReady() || !HasStateAuthority)
+            if (!IsReady() || !HasStateAuthority || !IsEquipped)
             {
                 return false;
             }

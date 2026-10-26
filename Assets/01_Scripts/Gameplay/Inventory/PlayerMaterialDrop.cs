@@ -52,7 +52,14 @@ namespace GameJam.Inventory
         /// <summary>
         /// Intenta soltar una unidad del material indicado.
         /// </summary>
-        public bool TryDropOne(MaterialData material)
+        public bool TryDropOne(MaterialData material) => TryDropUnit(material, -1);
+
+        public bool TryDropSlot(int slot)
+        {
+            return inventory != null && TryDropUnit(inventory.GetSlotMaterial(slot), slot);
+        }
+
+        private bool TryDropUnit(MaterialData material, int slot)
         {
             if (!CanDrop(material))
             {
@@ -95,7 +102,7 @@ namespace GameJam.Inventory
                     return false;
                 }
 
-                if (!inventory.RemoveMaterial(material, 1))
+                if (!(slot >= 0 ? inventory.GetSlotMaterial(slot) == material && inventory.RemoveSlot(slot) : inventory.RemoveMaterial(material, 1)))
                 {
                     Runner.Despawn(spawnedObject);
                     return false;

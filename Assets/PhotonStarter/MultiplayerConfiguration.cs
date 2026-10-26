@@ -11,7 +11,7 @@ namespace GameJam.Multiplayer
     public static class MultiplayerConfiguration
     {
         // Increment when prefab layout or gameplay protocol changes without a Networked property change.
-        public const string ContentProtocol = "expedition-2";
+        public const string ContentProtocol = "expedition-4-equipment-radio";
         static string protocol;
         public static string ProtocolVersion => protocol ??= ComputeProtocol();
         public static readonly string[] Regions = { "sa", "us", "usw", "eu", "asia", "jp", "au", "auto" };

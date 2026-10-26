@@ -14,7 +14,7 @@ namespace GameJam.Multiplayer
         public static int CaptureRevision { get; private set; }
         public static string Device => PlayerPrefs.GetString("GameJam.Voice.Device", "");
         public static float Threshold => Mathf.Clamp(PlayerPrefs.GetFloat("GameJam.Voice.Threshold", .01f), .001f, .2f);
-        public static Key TalkKey => Enum.TryParse(PlayerPrefs.GetString("GameJam.Voice.Key", "V"), out Key key) && key != Key.None ? key : Key.V;
+        public static Key TalkKey => Enum.TryParse(PlayerPrefs.GetString("GameJam.Voice.Key", "V"), out Key key) && key != Key.None && key != Key.G && key != Key.Digit0 ? key : Key.V;
         public static bool InputSuspended => CapturingBinding || TestingMicrophone || !Application.isFocused ||
             (EventSystem.current != null && EventSystem.current.currentSelectedGameObject != null &&
              EventSystem.current.currentSelectedGameObject.GetComponentInParent<TMP_InputField>() != null);
@@ -23,7 +23,7 @@ namespace GameJam.Multiplayer
         {
             // These keys already perform a gameplay/menu action outside InputActions.
             if (key == Key.None || key == Key.Escape || key == Key.Tab || key == Key.E || key == Key.Q ||
-                key == Key.R || key == Key.I || key == Key.W || key == Key.A || key == Key.S || key == Key.D ||
+                key == Key.R || key == Key.G || key == Key.Digit0 || key == Key.I || key == Key.W || key == Key.A || key == Key.S || key == Key.D ||
                 key == Key.Space || key == Key.LeftShift || key == Key.F8 || key == Key.F11 ||
                 (key >= Key.Digit1 && key <= Key.Digit9)) return false;
             var local = MarsFusionAvatar.Local;

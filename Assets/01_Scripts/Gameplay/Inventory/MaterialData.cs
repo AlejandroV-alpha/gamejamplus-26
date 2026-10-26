@@ -2,6 +2,7 @@ using UnityEngine;
 
 namespace GameJam.Inventory
 {
+    public enum CarriedItemKind { Material, PrimaryWeapon, Radio }
     /// <summary>
     /// Define los datos compartidos de un tipo de material.
     /// </summary>
@@ -10,6 +11,7 @@ namespace GameJam.Inventory
     {
         [Tooltip("Identificador unico y estable. No cambiar despues de asignarlo.")]
         public string id;
+        public CarriedItemKind kind;
         public string materialName;
         [TextArea]
         public string description;

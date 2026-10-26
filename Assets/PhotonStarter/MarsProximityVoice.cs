@@ -14,6 +14,7 @@ namespace GameJam.Multiplayer
         public Key pushToTalkKey = Key.V;
         private VoiceNetworkObject voice;
         private MarsFusionAvatar avatar;
+        private GameJam.Inventory.PlayerEquipment equipment;
         private AudioSource output;
         private Recorder recorder;
 
@@ -100,6 +101,7 @@ namespace GameJam.Multiplayer
         {
             voice = GetComponent<VoiceNetworkObject>();
             avatar = GetComponent<MarsFusionAvatar>();
+            equipment = GetComponent<GameJam.Inventory.PlayerEquipment>();
             recorder = GetComponentInChildren<Recorder>(true);
             pushToTalk = LocalPushToTalk = PlayerPrefs.GetInt("GameJam.VoiceMode", 1) == 1;
             MasterVoiceVolume = PlayerPrefs.GetFloat("GameJam.MasterVoiceVolume", 1f);
@@ -116,6 +118,12 @@ namespace GameJam.Multiplayer
                 output.dopplerLevel = 0;
                 output.volume = individualVolume * MasterVoiceVolume;
             }
+        }
+
+        private void OnDisable()
+        {
+            // This recorder belongs to this avatar. Fusion may already have disposed its runner.
+            if (recorder != null) recorder.TransmitEnabled = false;
         }
 
         private void Update()
@@ -148,7 +156,9 @@ namespace GameJam.Multiplayer
                     (string.IsNullOrEmpty(VoicePreferences.Device) || System.Array.IndexOf(availableMicrophones, VoicePreferences.Device) >= 0);
                 TalkPressed = Keyboard.current != null && Keyboard.current[pushToTalkKey].isPressed;
                 bool transmit = deviceAvailable && !VoicePreferences.InputSuspended && (avatar == null || avatar.IsAlive);
-                if (pushToTalk) transmit &= TalkPressed;
+                bool radio = equipment != null && equipment.IsRadioChannelOpen;
+                if (pushToTalk) transmit &= radio || TalkPressed;
+                recorder.VoiceDetection = !pushToTalk && !radio;
                 CaptureStatus = !deviceAvailable ? "Microphone unavailable: reconnect/select device and check OS permission" :
                     VoicePreferences.TestingMicrophone ? "Local test only (not transmitted)" :
                     recorder.IsCurrentlyTransmitting ? "Transmitting audio" : recorder.LevelMeter == null ? "Waiting for microphone capture" : "Ready";
@@ -156,7 +166,7 @@ namespace GameJam.Multiplayer
                 if (avatar != null)
                 {
                     // Holding the talk button drives the replicated face even during silence.
-                    float level = !transmit ? 0 : pushToTalk ? .8f :
+                    float level = !transmit ? 0 : pushToTalk || radio ? .8f :
                         recorder.IsCurrentlyTransmitting && recorder.LevelMeter != null ? recorder.LevelMeter.CurrentAvgAmp : 0;
                     avatar.SetVoiceLevel(level);
                 }
@@ -174,7 +184,13 @@ namespace GameJam.Multiplayer
                         individuallyMuted = PlayerPrefs.GetInt(loadedPreferenceKey + ".Muted", 0) == 1;
                     }
                 }
-                output.mute = individuallyMuted || local == null || (local.transform.position - transform.position).sqrMagnitude > hearingDistance * hearingDistance;
+                bool radio = equipment != null && equipment.IsRadioChannelOpen;
+                var listener = local != null ? local.GetComponent<GameJam.Inventory.PlayerEquipment>() : null;
+                bool allowed = radio
+                    ? GameJam.Inventory.PlayerEquipment.CanReceiveRadio(equipment,listener)
+                    : local != null && (local.transform.position-transform.position).sqrMagnitude <= hearingDistance*hearingDistance;
+                output.spatialBlend = radio ? 0f : 1f;
+                output.mute = individuallyMuted || !allowed;
                 output.volume = individualVolume * MasterVoiceVolume;
             }
         }

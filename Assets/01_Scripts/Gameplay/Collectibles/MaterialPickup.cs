@@ -25,6 +25,7 @@ namespace GameJam.Collectibles
         [Networked] private Vector3 PlacedPosition { get; set; }
         [Networked] private Quaternion PlacedRotation { get; set; }
         [Networked] private NetworkBool HasPlacedPose { get; set; }
+        public bool FitsInventory(PlayerInventory inventory) => inventory != null && inventory.CanAddMaterial(material, Quantity);
         private int Quantity => DroppedAmount > 0 ? DroppedAmount : amount;
 
         [Networked] private NetworkBool IsClaimed { get; set; }
@@ -294,6 +295,8 @@ namespace GameJam.Collectibles
             {
                 return false;
             }
+
+            if (!FitsInventory(playerObject.GetComponent<PlayerInventory>())) return false;
 
             float distanceSquared = (playerObject.transform.position - transform.position).sqrMagnitude;
             return distanceSquared <= collectionDistance * collectionDistance;

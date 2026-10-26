@@ -137,6 +137,12 @@ namespace GameJam.Gameplay
                 return false;
             }
 
+            if (!nearestPickup.FitsInventory(inventory))
+            {
+                if (avatar.LocalHud != null) avatar.LocalHud.NotifyCarryFull();
+                return false;
+            }
+
             Debug.Log($"[Interaction E] Requesting {nearestPickup.name} at {Mathf.Sqrt(nearestDistanceSquared):F2} m.", nearestPickup);
             var action = GetComponent<GameJam.Multiplayer.PlayerInteractionAction>();
             return action != null ? action.TryCollect(nearestPickup) : nearestPickup.RequestCollection();

@@ -124,9 +124,9 @@ namespace GameJam.UI
                 case 1:
                     heading = Tr("PREPÁRATE PARA LA MISIÓN", "PREPARE FOR THE MISSION", "PREPARE-SE PARA A MISSÃO");
                     body.text = Tr(
-                        "Tab · Consulta la tablet y las recetas.\nI · Abre tu inventario.\nEn la misión, acércate a los recursos y pulsa E para recolectar.\nUsa materiales en las estaciones de fabricación. Vigila salud, energía y ambiente en el HUD.",
-                        "Tab · Check the tablet and recipes.\nI · Open your inventory.\nOn the mission, approach resources and press E to collect them.\nUse materials at crafting stations. Watch health, stamina and environment on the HUD.",
-                        "Tab · Consulte o tablet e as receitas.\nI · Abra o inventário.\nNa missão, aproxime-se dos recursos e aperte E para coletar.\nUse materiais nas estações de fabricação. Observe saúde, energia e ambiente no HUD.");
+                        "Tab · Consulta la tablet y las recetas.\n1–6 · Selecciona un espacio. G · Suelta el objeto.\nEn la misión, acércate a los recursos y pulsa E para recolectar.\nUsa materiales en las estaciones de fabricación. Vigila salud, energía y ambiente en el HUD.",
+                        "Tab · Check the tablet and recipes.\n1–6 · Select a slot. G · Drop the item.\nOn the mission, approach resources and press E to collect them.\nUse materials at crafting stations. Watch health, stamina and environment on the HUD.",
+                        "Tab · Consulte o tablet e as receitas.\n1–6 · Selecione um espaço. G · Solte o item.\nNa missão, aproxime-se dos recursos e aperte E para coletar.\nUse materiais nas estações de fabricação. Observe saúde, energia e ambiente no HUD.");
                     break;
                 case 2:
                     heading = Tr("USO DEL ARMA", "USING YOUR WEAPON", "USO DA ARMA");

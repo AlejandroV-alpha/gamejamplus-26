@@ -637,6 +637,8 @@ GameObject:
   - component: {fileID: 8933138445109749252}
   - component: {fileID: 3369609033074655366}
   - component: {fileID: 3749382795239079306}
+  - component: {fileID: 3858328061434244049}
+  - component: {fileID: 6400030508146112083}
   m_Layer: 2
   m_Name: j_FusionAstronaut
   m_TagString: Untagged
@@ -692,6 +694,7 @@ MonoBehaviour:
   - {fileID: 7417582317096606280}
   - {fileID: 2970041377782251518}
   - {fileID: 8390952095215049936}
+  - {fileID: 3858328061434244049}
   ForceRemoteRenderTimeframe: 0
 --- !u!54 &1572134779871167590
 Rigidbody:
@@ -856,6 +859,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9e1738307459c144b855c25f192ca4e6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameJam.Inventory.Inventory
+  slotCount: 6
   materials:
   - {fileID: 11400000, guid: 8dd30e445ddc45a68953ca9ff2a2f1ef, type: 2}
   - {fileID: 11400000, guid: c8c01cb4b71f4c85b69cb3d5621f9fe7, type: 2}
@@ -865,6 +869,12 @@ MonoBehaviour:
   - {fileID: 11400000, guid: b664c05e1cff2aa46bf4044d125ba007, type: 2}
   - {fileID: 11400000, guid: fe963d5cfe3259e4882942ae5540f20e, type: 2}
   - {fileID: 11400000, guid: fb38869e8509b0a4db810781f1881176, type: 2}
+  - {fileID: 11400000, guid: 2ba4928b6a414e349aafe68f7e69b62c, type: 2}
+  - {fileID: 11400000, guid: 0327c51a6afbb13419e8c10d2f6f7832, type: 2}
+  startingItems:
+  - {fileID: 11400000, guid: 2ba4928b6a414e349aafe68f7e69b62c, type: 2}
+  - {fileID: 11400000, guid: 0327c51a6afbb13419e8c10d2f6f7832, type: 2}
+  _SelectedSlot: 0
 --- !u!114 &2804070628670475856
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -978,6 +988,7 @@ MonoBehaviour:
   _CurrentHealth: 0
   _MaxHealth: 0
   _IsAlive: 0
+  _DeathSequence: 0
 --- !u!114 &2757298304770010657
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1006,9 +1017,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b19206aa959dfe446945dd380ce890bf, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameJam.Crafting.PlayerCrafter
-  firstRecipeKey: 44
-  secondRecipeKey: 45
-  thirdRecipeKey: 46
   interactionDistance: 3
 --- !u!114 &7417582317096606280
 MonoBehaviour:
@@ -1111,6 +1119,43 @@ MonoBehaviour:
   groundLayers:
     serializedVersion: 2
     m_Bits: 4294967295
+  burstScale: 1
+--- !u!114 &3858328061434244049
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3827797598262270737}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 80ede4c0cc521354fa6a899aa3c44923, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::GameJam.Inventory.PlayerEquipment
+  radioEquippedSound: {fileID: 8300000, guid: 52eee25a34328e24c898d414b363f7c0, type: 3}
+  channelOpenSound: {fileID: 8300000, guid: a69c4890aa82d4d4e94f766614be87be, type: 3}
+  channelCloseSound: {fileID: 8300000, guid: 437f6ba956181eb4f92278fa8cf6e498, type: 3}
+  radioSoundVolume: 0.4
+--- !u!114 &6400030508146112083
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3827797598262270737}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 391a9e38391cb0d468bcb3a4717dd016, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::GameJam.Inventory.EquipmentPresentation
+  radioVisualPrefab: {fileID: 5871406114750175643, guid: 95b73fae2afe613489f4bc30ba3a6df3, type: 3}
+  radioGripOffset: {x: -0.092, y: 0.413, z: -0.036}
+  radioRotation: {x: 25.626, y: -67.976, z: 53.75}
+  radioScale: {x: 1.666664, y: 1.666664, z: 1.666664}
+  talkingHandOffset: {x: 0.32, y: -0.42, z: 0.3}
+  carryingHandOffset: {x: 0.17, y: -0.43, z: 0.24}
+  maximumArmReach: 0.78
+  poseBlendSeconds: 0.2
 --- !u!1 &3836924219179165295
 GameObject:
   m_ObjectHideFlags: 0

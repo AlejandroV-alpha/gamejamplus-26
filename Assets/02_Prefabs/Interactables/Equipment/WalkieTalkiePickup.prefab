@@ -1,0 +1,202 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &114576150471427528
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 3349821878517427667}
+  m_Layer: 0
+  m_Name: Visual
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &3349821878517427667
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 114576150471427528}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 9152000110764162019}
+  m_Father: {fileID: 211601733711298833}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &3826805259097142500
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 211601733711298833}
+  - component: {fileID: 3643986243464428364}
+  - component: {fileID: 8402989109298482457}
+  - component: {fileID: 5609208784217254470}
+  m_Layer: 0
+  m_Name: WalkieTalkiePickup
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &211601733711298833
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3826805259097142500}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 3349821878517427667}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!65 &3643986243464428364
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3826805259097142500}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.10645902, y: 0.34000003, z: 0.06354098}
+  m_Center: {x: 0.003065575, y: 0.19000001, z: -0.003901638}
+--- !u!114 &8402989109298482457
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3826805259097142500}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: -1552182283, guid: e725a070cec140c4caffb81624c8c787, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Fusion.Runtime.dll::Fusion.NetworkObject
+  SortKey: 3479451215
+  SendPriority: 1
+  EnableInterpolation: 1
+  Flags: 2
+  NestedObjects: []
+  NetworkedBehaviours:
+  - {fileID: 5609208784217254470}
+  ForceRemoteRenderTimeframe: 0
+--- !u!114 &5609208784217254470
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3826805259097142500}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 026b2dff06da1d04b95efe765c745e9d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GameJam.Collectibles.MaterialPickup
+  material: {fileID: 11400000, guid: 0327c51a6afbb13419e8c10d2f6f7832, type: 2}
+  amount: 1
+  collectionDistance: 2.5
+  visual: {fileID: 114576150471427528}
+  _DroppedAmount: 0
+  feedbackMaterial: {fileID: 2100000, guid: e66d2b428db84106b7c426dce22f1003, type: 2}
+--- !u!1001 &6935069816224063413
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 3349821878517427667}
+    m_Modifications:
+    - target: {fileID: 2250743035287528534, guid: 95b73fae2afe613489f4bc30ba3a6df3, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 1.1147541
+      objectReference: {fileID: 0}
+    - target: {fileID: 2250743035287528534, guid: 95b73fae2afe613489f4bc30ba3a6df3, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 1.1147541
+      objectReference: {fileID: 0}
+    - target: {fileID: 2250743035287528534, guid: 95b73fae2afe613489f4bc30ba3a6df3, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 1.1147541
+      objectReference: {fileID: 0}
+    - target: {fileID: 2250743035287528534, guid: 95b73fae2afe613489f4bc30ba3a6df3, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2250743035287528534, guid: 95b73fae2afe613489f4bc30ba3a6df3, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0.12590164
+      objectReference: {fileID: 0}
+    - target: {fileID: 2250743035287528534, guid: 95b73fae2afe613489f4bc30ba3a6df3, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2250743035287528534, guid: 95b73fae2afe613489f4bc30ba3a6df3, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2250743035287528534, guid: 95b73fae2afe613489f4bc30ba3a6df3, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2250743035287528534, guid: 95b73fae2afe613489f4bc30ba3a6df3, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2250743035287528534, guid: 95b73fae2afe613489f4bc30ba3a6df3, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2250743035287528534, guid: 95b73fae2afe613489f4bc30ba3a6df3, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2250743035287528534, guid: 95b73fae2afe613489f4bc30ba3a6df3, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2250743035287528534, guid: 95b73fae2afe613489f4bc30ba3a6df3, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5871406114750175643, guid: 95b73fae2afe613489f4bc30ba3a6df3, type: 3}
+      propertyPath: m_Name
+      value: WalkieTalkieVisual
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 95b73fae2afe613489f4bc30ba3a6df3, type: 3}
+--- !u!4 &9152000110764162019 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 2250743035287528534, guid: 95b73fae2afe613489f4bc30ba3a6df3, type: 3}
+  m_PrefabInstance: {fileID: 6935069816224063413}
+  m_PrefabAsset: {fileID: 0}

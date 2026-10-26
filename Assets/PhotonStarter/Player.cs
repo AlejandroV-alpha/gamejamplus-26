@@ -104,6 +104,11 @@ namespace Starter.ThirdPersonCharacter
                 movementInput.AimToggle = false;
                 _isAiming = false;
             }
+            if (!HasEquippedGun)
+            {
+                movementInput.AimToggle = false;
+                _isAiming = false;
+            }
             ProcessInput(movementInput);
 
             if (KCC.IsGrounded)
@@ -350,14 +355,17 @@ namespace Starter.ThirdPersonCharacter
         public bool IsAimReady => IsAimingPose() && _aimBlend >= CrosshairAimThreshold
             && PlayerInput != null && PlayerInput.ControlsEnabled;
 
+        public bool HasEquippedGun => _avatar == null || (GetComponent<GameJam.Inventory.PlayerEquipment>()?.IsWeaponEquipped ?? false);
+
         private bool IsAimingPose()
         {
-            return !(GetComponent<GameJam.Survival.SurvivalRevive>()?.IsAnimating ?? false) && (_avatar==null || _avatar.IsAlive) && !(GetComponent<GameJam.Combat.PlayerHurtReaction>()?.IsReacting ?? false) && _isAiming && !_isSprinting && KCC.IsGrounded && !_isJumping && !(GetComponent<GameJam.Multiplayer.PlayerInteractionAction>()?.IsBusy ?? false);
+            return HasEquippedGun && !(GetComponent<GameJam.Survival.SurvivalRevive>()?.IsAnimating ?? false) && (_avatar==null || _avatar.IsAlive) && !(GetComponent<GameJam.Combat.PlayerHurtReaction>()?.IsReacting ?? false) && _isAiming && !_isSprinting && KCC.IsGrounded && !_isJumping && !(GetComponent<GameJam.Multiplayer.PlayerInteractionAction>()?.IsBusy ?? false);
         }
 
         private void UpdateAimRig()
         {
             bool aimingPose = IsAimingPose();
+            if (!HasEquippedGun) { _aimBlend = 0; _aimBlendVelocity = 0; }
             float duration = Mathf.Max(0.01f, AimWeightBlendDuration);
             _aimBlend = Mathf.SmoothDamp(_aimBlend, aimingPose ? 1f : 0f, ref _aimBlendVelocity, duration);
             if (AimHand != null)

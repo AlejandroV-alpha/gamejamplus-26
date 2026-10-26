@@ -1087,6 +1087,8 @@ GameObject:
   - component: {fileID: 874000000000000001}
   - component: {fileID: 874000000000000002}
   - component: {fileID: 900100002}
+  - component: {fileID: 9219889035075090851}
+  - component: {fileID: 3070360244282941889}
   m_Layer: 2
   m_Name: A_FusionAstronaut
   m_TagString: Untagged
@@ -1148,6 +1150,7 @@ MonoBehaviour:
   - {fileID: 874000000000000001}
   - {fileID: 874000000000000002}
   - {fileID: 900100002}
+  - {fileID: 9219889035075090851}
   ForceRemoteRenderTimeframe: 0
 --- !u!54 &1572134779871167590
 Rigidbody:
@@ -1318,6 +1321,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9e1738307459c144b855c25f192ca4e6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameJam.Inventory.Inventory
+  slotCount: 6
   materials:
   - {fileID: 11400000, guid: 8dd30e445ddc45a68953ca9ff2a2f1ef, type: 2}
   - {fileID: 11400000, guid: c8c01cb4b71f4c85b69cb3d5621f9fe7, type: 2}
@@ -1327,6 +1331,12 @@ MonoBehaviour:
   - {fileID: 11400000, guid: b664c05e1cff2aa46bf4044d125ba007, type: 2}
   - {fileID: 11400000, guid: fe963d5cfe3259e4882942ae5540f20e, type: 2}
   - {fileID: 11400000, guid: fb38869e8509b0a4db810781f1881176, type: 2}
+  - {fileID: 11400000, guid: 2ba4928b6a414e349aafe68f7e69b62c, type: 2}
+  - {fileID: 11400000, guid: 0327c51a6afbb13419e8c10d2f6f7832, type: 2}
+  startingItems:
+  - {fileID: 11400000, guid: 2ba4928b6a414e349aafe68f7e69b62c, type: 2}
+  - {fileID: 11400000, guid: 0327c51a6afbb13419e8c10d2f6f7832, type: 2}
+  _SelectedSlot: 0
 --- !u!114 &5253031688877814740
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1355,9 +1365,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b19206aa959dfe446945dd380ce890bf, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameJam.Crafting.PlayerCrafter
-  firstRecipeKey: 44
-  secondRecipeKey: 45
-  thirdRecipeKey: 46
   interactionDistance: 3
 --- !u!114 &7169554143392359341
 MonoBehaviour:
@@ -1766,6 +1773,59 @@ MonoBehaviour:
   placementLayers:
     serializedVersion: 2
     m_Bits: 4294967295
+--- !u!114 &900100002
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3827797598262270737}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1bb94ef5f9874a01b2455b10e447a9fc, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  maxCold: 100
+  coldIncreaseRate: 2.5
+  damageThreshold: 80
+  coldDamage: 5
+  damageInterval: 2
+--- !u!114 &9219889035075090851
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3827797598262270737}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 80ede4c0cc521354fa6a899aa3c44923, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::GameJam.Inventory.PlayerEquipment
+  radioEquippedSound: {fileID: 8300000, guid: 52eee25a34328e24c898d414b363f7c0, type: 3}
+  channelOpenSound: {fileID: 8300000, guid: a69c4890aa82d4d4e94f766614be87be, type: 3}
+  channelCloseSound: {fileID: 8300000, guid: 437f6ba956181eb4f92278fa8cf6e498, type: 3}
+  radioSoundVolume: 0.4
+--- !u!114 &3070360244282941889
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3827797598262270737}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 391a9e38391cb0d468bcb3a4717dd016, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::GameJam.Inventory.EquipmentPresentation
+  radioVisualPrefab: {fileID: 5871406114750175643, guid: 95b73fae2afe613489f4bc30ba3a6df3, type: 3}
+  radioGripOffset: {x: -0.092, y: 0.413, z: -0.036}
+  radioRotation: {x: 25.626, y: -67.976, z: 53.75}
+  radioScale: {x: 1.666664, y: 1.666664, z: 1.666664}
+  talkingHandOffset: {x: 0.32, y: -0.42, z: 0.3}
+  carryingHandOffset: {x: 0.17, y: -0.43, z: 0.24}
+  maximumArmReach: 0.78
+  poseBlendSeconds: 0.2
 --- !u!1 &3836924219179165295
 GameObject:
   m_ObjectHideFlags: 0
@@ -3517,20 +3577,3 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 3548260476922820544, guid: cd976b636adfaeb4988ea2a014ea2581, type: 3}
   m_PrefabInstance: {fileID: 1199793683982394380}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &900100002
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3827797598262270737}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1bb94ef5f9874a01b2455b10e447a9fc, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
-  maxCold: 100
-  coldIncreaseRate: 2.5
-  damageThreshold: 80
-  coldDamage: 5
-  damageInterval: 2
