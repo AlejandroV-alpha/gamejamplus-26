@@ -21,6 +21,21 @@ namespace GameJam.Multiplayer
         public string planetLabel = "MARTE";
         public NetworkRunner Runner { get; private set; }
         public string Status { get; private set; } = "Photon Fusion — listo";
+        public string DisplayStatus
+        {
+            get
+            {
+                string raw=Status;
+                string T(string key)=>GameJam.Localization.GameLocalization.Get(key);
+                if(raw=="Photon Fusion — listo") return T("session.ready");
+                if(raw=="Iniciando prueba local...")return T("session.local_start");
+                if(raw=="Conectando con Photon...")return T("session.connecting");
+                if(raw.StartsWith("Conectado — "))return T("session.connected")+raw.Substring("Conectado — ".Length);
+                if(raw.StartsWith("Sesión cerrada: "))return T("session.closed")+raw.Substring("Sesión cerrada: ".Length);
+                if(raw.StartsWith("No se pudo iniciar: "))return T("session.failed")+raw.Substring("No se pudo iniciar: ".Length);
+                return raw;
+            }
+        }
         public bool MenuOpen { get; private set; } = true;
         public bool Busy { get; private set; }
         private CursorLockMode previousLock;

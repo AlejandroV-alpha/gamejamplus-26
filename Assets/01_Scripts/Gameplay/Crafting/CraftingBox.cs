@@ -228,7 +228,7 @@ namespace GameJam.Crafting
         {
             if (table.RequestCraft(recipeIndex, out string reason))
             {
-                ui.Flash("Fabricando...");
+                ui.Flash(GameJam.Localization.GameLocalization.Get("craft.busy"));
             }
             else
             {

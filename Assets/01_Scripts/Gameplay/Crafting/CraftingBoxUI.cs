@@ -1,3 +1,4 @@
+using GameJam.Localization;
 using System;
 using GameJam.Inventory;
 using UnityEngine;
@@ -23,6 +24,11 @@ namespace GameJam.Crafting
         private static readonly Color Missing = new Color(1f, 0.4f, 0.35f);
         private static readonly Color Enough = new Color(0.5f, 1f, 0.55f);
 
+        private readonly System.Collections.Generic.List<Action> localizers = new();
+        private Text Localized(Text label,string key) { void Refresh()=>label.text=GameLocalization.Get(key); localizers.Add(Refresh); Refresh(); return label; }
+        private void OnEnable()=>GameLocalization.OnLanguageChanged+=RefreshLanguage;
+        private void OnDisable()=>GameLocalization.OnLanguageChanged-=RefreshLanguage;
+        private void RefreshLanguage(){foreach(var refresh in localizers)refresh();}
         private Font font;
         private GameObject prompt;
         private GameObject panel;
@@ -129,17 +135,17 @@ namespace GameJam.Crafting
                     enough &= have >= ingredient.amount;
                     row.slotIcons[s].sprite = material != null ? material.icon : null;
                     row.slotIcons[s].enabled = row.slotIcons[s].sprite != null;
-                    row.slotCounts[s].text = (material != null && material.icon == null ? material.materialName + "\n" : "") + have + "/" + ingredient.amount;
+                    row.slotCounts[s].text = (material != null && material.icon == null ? GameLocalization.Get("material."+material.id+".name",material.materialName) + "\n" : "") + have + "/" + ingredient.amount;
                     row.slotCounts[s].color = have >= ingredient.amount ? Enough : Missing;
                 }
 
                 bool done = table.IsComponentCompleted(i);
                 row.resultIcon.sprite = recipe.icon;
                 row.resultIcon.enabled = recipe.icon != null;
-                row.resultName.text = recipe.recipeName;
-                row.description.text = recipe.description;
+                row.resultName.text = GameLocalization.Get("recipe."+recipe.id+".name",recipe.recipeName);
+                row.description.text = GameLocalization.Get("recipe."+recipe.id+".description",recipe.description);
                 row.button.interactable = enough && !done;
-                row.buttonText.text = done ? "Fabricado" : enough ? "Fabricar" : "Faltan materiales";
+                row.buttonText.text = done ? GameLocalization.Get("craft.done") : enough ? GameLocalization.Get("craft.make") : GameLocalization.Get("craft.missing");
             }
         }
 
@@ -151,14 +157,14 @@ namespace GameJam.Crafting
             // Aviso inferior "[E] Abrir".
             prompt = Box(transform, "Aviso", new Color(0f, 0f, 0f, 0.6f));
             Place(prompt, new Vector2(0.5f, 0f), new Vector2(0f, 140f), new Vector2(420f, 60f));
-            Label(prompt.transform, "[E]  Abrir caja de crafteo", 26, Color.white, TextAnchor.MiddleCenter, Vector2.zero, new Vector2(420f, 60f));
+            Localized(Label(prompt.transform, "[E]  Abrir caja de crafteo", 26, Color.white, TextAnchor.MiddleCenter, Vector2.zero, new Vector2(420f, 60f)), "craft.open");
             prompt.SetActive(false);
 
             panel = Box(transform, "Panel", PanelColor);
             Place(panel, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(900f, 640f));
             Outline(panel, Accent, 3f);
-            Label(panel.transform, title, 40, Accent, TextAnchor.MiddleCenter, new Vector2(0f, 270f), new Vector2(800f, 60f));
-            Label(panel.transform, "Junta los materiales y fabrica las piezas de la nave", 20, new Color(0.8f, 0.85f, 0.9f), TextAnchor.MiddleCenter, new Vector2(0f, 228f), new Vector2(800f, 30f));
+            Localized(Label(panel.transform, title, 40, Accent, TextAnchor.MiddleCenter, new Vector2(0f, 270f), new Vector2(800f, 60f)), "craft.title");
+            Localized(Label(panel.transform, "Junta los materiales y fabrica las piezas de la nave", 20, new Color(0.8f, 0.85f, 0.9f), TextAnchor.MiddleCenter, new Vector2(0f, 228f), new Vector2(800f, 30f)), "craft.help");
 
             for (int i = 0; i < RecipeCount; i++)
             {
@@ -173,7 +179,7 @@ namespace GameJam.Crafting
             Label(closeButton.transform, "X", 30, Color.white, TextAnchor.MiddleCenter, Vector2.zero, new Vector2(56f, 56f));
             closeButton.AddComponent<Button>().onClick.AddListener(() => close());
 
-            Label(panel.transform, "[E] o [Esc] para cerrar", 18, new Color(0.7f, 0.75f, 0.8f), TextAnchor.MiddleRight, new Vector2(300f, -300f), new Vector2(260f, 30f));
+            Localized(Label(panel.transform, "[E] o [Esc] para cerrar", 18, new Color(0.7f, 0.75f, 0.8f), TextAnchor.MiddleRight, new Vector2(300f, -300f), new Vector2(260f, 30f)), "craft.close");
             panel.SetActive(false);
         }
 

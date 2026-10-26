@@ -20,10 +20,10 @@ namespace GameJam.Tablet
         private bool ViewingLiveMission => mission != null && mission.IsLive && Planet != null
             && Planet.recipes != null && Planet.recipes.Length > 0 && Planet.recipes[0].source != null
             && Planet.recipes[0].source.planet == mission.Planet;
-        private string MissionSummary => !ViewingLiveMission ? "CATALOGO · Sin misión activa en este planeta"
-            : mission.RepairProgress >= 0f ? "INSTALANDO " + Mathf.FloorToInt(mission.RepairProgress * 100f) + "% · " + mission.InstalledCount + "/3 instaladas"
-            : mission.InstalledCount == 3 ? "NAVE REPARADA · 3/3 componentes instalados"
-            : mission.CraftedCount + "/3 fabricadas · " + mission.InstalledCount + "/3 instaladas";
+        private string MissionSummary => !ViewingLiveMission ? GameJam.Localization.GameLocalization.Get("tablet.mission_ui_0")
+            : mission.RepairProgress >= 0f ? GameJam.Localization.GameLocalization.Get("tablet.mission_ui_1") + Mathf.FloorToInt(mission.RepairProgress * 100f) + "% · " + mission.InstalledCount + GameJam.Localization.GameLocalization.Get("tablet.mission_ui_3")
+            : mission.InstalledCount == 3 ? GameJam.Localization.GameLocalization.Get("tablet.mission_ui_4")
+            : mission.CraftedCount + GameJam.Localization.GameLocalization.Get("tablet.mission_ui_5") + mission.InstalledCount + GameJam.Localization.GameLocalization.Get("tablet.mission_ui_3");
 
         public void BindMission(MarsFusionAvatar owner)
         {
@@ -71,15 +71,15 @@ namespace GameJam.Tablet
         }
         private string ComponentState(int index)
         {
-            if (!ViewingLiveMission) return "RECETA DE REFERENCIA";
-            return mission.IsInstalled(index) ? "[x] INSTALADO"
-                : mission.IsCrafted(index) ? "FABRICADO · Instalar con Q" : "PENDIENTE DE FABRICAR";
+            if (!ViewingLiveMission) return GameJam.Localization.GameLocalization.Get("tablet.mission_ui_6");
+            return mission.IsInstalled(index) ? GameJam.Localization.GameLocalization.Get("tablet.mission_ui_7")
+                : mission.IsCrafted(index) ? GameJam.Localization.GameLocalization.Get("tablet.mission_ui_8") : GameJam.Localization.GameLocalization.Get("tablet.mission_ui_9");
         }
 
         private bool RenderMissionChecklist()
         {
             if (!HasRecipeSources()) return false;
-            var summary = PageHeader("Checklist · " + Clean(Planet.name), "");
+            var summary = PageHeader(GameJam.Localization.GameLocalization.Get("tablet.mission_ui_10") + Clean(Planet.name), "");
             BindMissionLabel(() => summary.text = MissionSummary);
             var content = AppList("b_Checklist_Vivo", Planet.recipes.Length, 110f);
             for (int i = 0; i < Planet.recipes.Length; i++)
@@ -90,28 +90,28 @@ namespace GameJam.Tablet
                 row.anchorMin = row.anchorMax = new Vector2(.5f, 1f);
                 row.anchoredPosition = new Vector2(0, -50 - i * 110f);
                 CreateItemSlot(row, recipe.icon, new Vector2(-460, 0), 68);
-                var name = CreateLabel(row, Clean(recipe.recipeName), 22, new Vector2(-230, 0), new Vector2(340, 60), InkWhite);
+                var name = CreateLabel(row, Clean(GameJam.Localization.GameLocalization.Get("recipe."+recipe.id+".name",recipe.recipeName)), 22, new Vector2(-230, 0), new Vector2(340, 60), InkWhite);
                 name.alignment = TextAlignmentOptions.Left;
                 var made = CreateLabel(row, "", 17, new Vector2(120, 0), new Vector2(260, 60), MutedCyan);
                 var installed = CreateLabel(row, "", 17, new Vector2(380, 0), new Vector2(240, 60), MutedCyan);
                 BindMissionLabel(() =>
                 {
                     bool live = ViewingLiveMission, a = live && mission.IsCrafted(index), b = live && mission.IsInstalled(index);
-                    made.text = a ? "[x] FABRICADO" : "[ ] FABRICAR";
-                    installed.text = b ? "[x] INSTALADO" : "[ ] INSTALAR";
+                    made.text = a ? GameJam.Localization.GameLocalization.Get("tablet.mission_ui_11") : GameJam.Localization.GameLocalization.Get("tablet.mission_ui_12");
+                    installed.text = b ? GameJam.Localization.GameLocalization.Get("tablet.mission_ui_7") : GameJam.Localization.GameLocalization.Get("tablet.mission_ui_13");
                     made.color = a ? CompleteColor : MutedCyan;
                     installed.color = b ? CompleteColor : MutedCyan;
                 });
             }
-            PageNote("Progreso compartido del equipo · Fabricar en caja [E] · Instalar en nave [Q]");
+            PageNote(GameJam.Localization.GameLocalization.Get("tablet.mission_ui_14"));
             return true;
         }
 
         private bool RenderMissionRecipes()
         {
             if (!HasRecipeSources()) return false;
-            var summary = PageHeader("Recetas · " + Clean(Planet.name), "");
-            BindMissionLabel(() => summary.text = ViewingLiveMission ? MissionSummary + " · Cantidades de TU inventario" : MissionSummary);
+            var summary = PageHeader(GameJam.Localization.GameLocalization.Get("tablet.mission_ui_15") + Clean(Planet.name), "");
+            BindMissionLabel(() => summary.text = ViewingLiveMission ? MissionSummary + GameJam.Localization.GameLocalization.Get("tablet.mission_ui_16") : MissionSummary);
             var content = AppList("b_Recetas_Visuales", Planet.recipes.Length, 116f);
             for (int i = 0; i < Planet.recipes.Length; i++)
             {
@@ -127,7 +127,7 @@ namespace GameJam.Tablet
                     float x = -445 + s * 135;
                     var slot = CreateItemSlot(row, ingredient.material.icon, new Vector2(x, 8), 66);
                     var count = CreateLabel(slot, "", 16, new Vector2(13, -18), new Vector2(55, 22), InkWhite);
-                    var mineral = CreateLabel(row, Clean(ingredient.material.materialName), 12, new Vector2(x, -39), new Vector2(126, 28), MutedCyan);
+                    var mineral = CreateLabel(row, Clean(GameJam.Localization.GameLocalization.Get("material."+ingredient.material.id+".name",ingredient.material.materialName)), 12, new Vector2(x, -39), new Vector2(126, 28), MutedCyan);
                     BindMissionLabel(() =>
                     {
                         int amount = ViewingLiveMission ? mission.Amount(ingredient.material) : 0;
@@ -137,7 +137,7 @@ namespace GameJam.Tablet
                 }
                 CreateLabel(row, ">", 36, new Vector2(80, 0), new Vector2(60, 70), CyanAccent);
                 CreateItemSlot(row, recipe.icon, new Vector2(170, 0), 76);
-                var name = CreateLabel(row, Clean(recipe.recipeName), 21, new Vector2(355, 19), new Vector2(270, 40), InkWhite);
+                var name = CreateLabel(row, Clean(GameJam.Localization.GameLocalization.Get("recipe."+recipe.id+".name",recipe.recipeName)), 21, new Vector2(355, 19), new Vector2(270, 40), InkWhite);
                 var status = CreateLabel(row, "", 14, new Vector2(355, -24), new Vector2(270, 38), MutedCyan);
                 BindMissionLabel(() =>
                 {
@@ -145,7 +145,7 @@ namespace GameJam.Tablet
                     status.color = ViewingLiveMission && mission.IsInstalled(index) ? CompleteColor : MutedCyan;
                 });
             }
-            PageNote("Ingredientes > Componente · Usa la caja de crafteo [E] para fabricar; la tablet muestra el estado.");
+            PageNote(GameJam.Localization.GameLocalization.Get("tablet.mission_ui_17"));
             return true;
         }
         private RectTransform CreateItemSlot(Transform parent, Sprite sprite, Vector2 position, float size)
@@ -159,7 +159,7 @@ namespace GameJam.Tablet
         }
         private void RenderMissionJournal()
         {
-            var summary = PageHeader("Registro de misión", "");
+            var summary = PageHeader(GameJam.Localization.GameLocalization.Get("tablet.mission_ui_18"), "");
             BindMissionLabel(() => summary.text = MissionSummary);
             var content = AppList("b_Registro", 1, 350f);
             var log = CreateLabel(content, "", 18, Vector2.zero, new Vector2(1020, 350), InkWhite);
@@ -171,7 +171,7 @@ namespace GameJam.Tablet
             BindMissionLabel(() =>
             {
                 var text = new StringBuilder();
-                if (mission == null || mission.Journal.Count == 0) text.Append("Sin actividad registrada en esta misión.");
+                if (mission == null || mission.Journal.Count == 0) text.Append(GameJam.Localization.GameLocalization.Get("tablet.mission_ui_19"));
                 else for (int i = mission.Journal.Count - 1; i >= 0; i--)
                     text.Append("[").Append((i + 1).ToString("00")).Append("]  ").Append(Clean(mission.Journal[i])).Append("\n\n");
                 log.text = text.ToString();
@@ -179,7 +179,7 @@ namespace GameJam.Tablet
                 rect.sizeDelta = new Vector2(1020, height);
                 content.sizeDelta = new Vector2(0, height + 24f);
             });
-            PageNote("Recogidas, fabricación e instalaciones · Actualización automática desde el estado de red.");
+            PageNote(GameJam.Localization.GameLocalization.Get("tablet.mission_ui_20"));
         }
         private void BuildMissionFeedback()
         {
@@ -193,7 +193,7 @@ namespace GameJam.Tablet
         }
         private void NotifyMissionActivity(string message)
         {
-            if (missionToastText != null) missionToastText.text = "TABLET · " + Clean(message) + "\n[TAB] Ver progreso de misión";
+            if (missionToastText != null) missionToastText.text = "TABLET · " + Clean(message) + GameJam.Localization.GameLocalization.Get("tablet.mission_ui_21");
             missionToastUntil = Time.unscaledTime + 4f;
         }
         private void UpdateMissionFeedback()

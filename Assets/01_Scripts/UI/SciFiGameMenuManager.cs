@@ -413,7 +413,7 @@ namespace GameJam.UI
             var dot=CreateRoundedPanel(status,"StatusDot",new Vector2(10,10),5,AmberAccent);dot.anchoredPosition=new Vector2(-276,0);statusDot=dot.GetComponent<TabletRoundedPanel>();
             statusLabel=CreateLabel(status,"menu.status_ready",17,new Vector2(12,0),new Vector2(540,32),InkWhite,true);statusLabel.alignment=TextAlignmentOptions.Left;
             if(portraitLayout)CreateLabel(form,"menu.connection_hint",17,new Vector2(0,-350),new Vector2(580,64),MutedCyan,true);
-            CreateDatapadButton(form,"BtnSystemSettings","SYSTEMS / AJUSTES",new Vector2(0,portraitLayout?-280:-302),new Vector2(600,40),()=>ExpeditionSettingsPanel.Open(fontAsset),out var systemsBg);
+            CreateDatapadButton(form,"BtnSystemSettings","pause.tab_settings",new Vector2(0,portraitLayout?-280:-302),new Vector2(600,40),()=>ExpeditionSettingsPanel.Open(fontAsset),out var systemsBg,true);
             connectionRegionLabel = CreateLabel(status,"Region",14,new Vector2(205,0),new Vector2(160,32),MutedCyan);
             connectionRegionLabel.alignment = TextAlignmentOptions.Right;
             ((RectTransform)statusLabel.transform).sizeDelta = new Vector2(350,32);
@@ -451,23 +451,23 @@ namespace GameJam.UI
             display.anchoredPosition = Vector2.zero;
             display.gameObject.AddComponent<RectMask2D>();
 
-            // --- HEADER DE PAUSA ---
-            var title = CreateLabel(display, "pause.title", 28, new Vector2(0, 268), new Vector2(700, 42), InkWhite, true);
-            title.alignment = TextAlignmentOptions.Center;
+            var title = CreateLabel(display, "pause.new_title", 36, new Vector2(-58, 238), new Vector2(600, 52), InkWhite, true);
+            title.alignment = TextAlignmentOptions.Left;
             title.fontStyle = FontStyles.Bold;
+            var subtitle = CreateLabel(display, "pause.new_subtitle", 17, new Vector2(-58, 194), new Vector2(600, 30), MutedCyan, true);
+            subtitle.alignment = TextAlignmentOptions.Left;
+            var close = CreateDatapadButton(display, "BtnClosePause", "ESC", new Vector2(332, 239), new Vector2(64, 38), ResumeGame, out var closeBg);
+            closeBg.color = SlotBg;
+            var rule = CreateRoundedPanel(display, "Header divider", new Vector2(720, 1), 0, ChassisRim);
+            rule.anchoredPosition = new Vector2(0, 161);
 
-            // Botón de reanudar rápido [X]
-            CreateDatapadButton(display, "BtnClosePause", "✕", new Vector2(360, 268), new Vector2(36, 32), ResumeGame, out var closeBg);
-            closeBg.color = new Color(0.12f, 0.16f, 0.22f, 0.9f);
-
-            // --- FILA DE PESTAÑAS (PILLS) ---
-            var tabRow = CreateRect("TabRow", display, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0, 225), new Vector2(750, 38));
-            tabBtnMission = CreateDatapadButton(tabRow, "TabMission", "pause.tab_mission", new Vector2(-240, 0), new Vector2(230, 34), () => SwitchTab("Mission"), out tabBtnMissionBg, true);
-            tabBtnSettings = CreateDatapadButton(tabRow, "TabSettings", "pause.tab_settings", new Vector2(0, 0), new Vector2(230, 34), () => SwitchTab("Settings"), out tabBtnSettingsBg, true);
-            tabBtnCrew = CreateDatapadButton(tabRow, "TabCrew", "pause.tab_crew", new Vector2(240, 0), new Vector2(230, 34), () => SwitchTab("Crew"), out tabBtnCrewBg, true);
-
-            // Contenedor principal de contenidos de pestañas
-            var contentRoot = CreateRect("TabContentArea", display, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0, -32), new Vector2(760, 440));
+            var nav = CreateRect("Navigation", display, new Vector2(.5f,.5f), new Vector2(.5f,.5f), new Vector2(-251,-18), new Vector2(204,316));
+            tabBtnMission = CreatePauseNav(nav, "TabMission", "pause.tab_mission", 116, MenuSymbolGraphic.Symbol.Mission, () => SwitchTab("Mission"), out tabBtnMissionBg);
+            tabBtnSettings = CreatePauseNav(nav, "TabSettings", "pause.tab_settings", 46, MenuSymbolGraphic.Symbol.Settings, () => SwitchTab("Settings"), out tabBtnSettingsBg);
+            tabBtnCrew = CreatePauseNav(nav, "TabCrew", "pause.tab_crew", -24, MenuSymbolGraphic.Symbol.Crew, () => SwitchTab("Crew"), out tabBtnCrewBg);
+            var help = CreateLabel(nav, "pause.controls_location", 16, new Vector2(0,-134), new Vector2(180,72), DimCyan, true);
+            help.alignment = TextAlignmentOptions.Left;
+            var contentRoot = CreateRect("TabContentArea", display, new Vector2(.5f,.5f), new Vector2(.5f,.5f), new Vector2(124,-40), new Vector2(464,352));
 
             // ================= 1. TAB: MISIÓN =================
             tabContentMission = CreateRect("MissionContent", contentRoot, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero).gameObject;
@@ -475,7 +475,7 @@ namespace GameJam.UI
 
             // ================= 2. TAB: AJUSTES =================
             tabContentSettings = CreateRect("SettingsContent", contentRoot, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero).gameObject;
-            BuildSettingsTab(tabContentSettings.transform);
+            // Settings use the same unified surface from the start and pause menus.
 
             // ================= 3. TAB: TRIPULACIÓN =================
             tabContentCrew = CreateRect("CrewContent", contentRoot, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero).gameObject;
@@ -484,96 +484,61 @@ namespace GameJam.UI
             SwitchTab("Mission");
         }
 
-        private void BuildMissionTab(Transform parent)
+        private static void AddMenuIcon(Transform parent, MenuSymbolGraphic.Symbol symbol, Vector2 position, float size, Color color)
         {
-            // Botón Continuar
-            var btnResume = CreateDatapadButton(parent, "BtnResume", "pause.btn_resume", new Vector2(0, 150), new Vector2(520, 48), ResumeGame, out var resumeBg, true);
-            resumeBg.color = new Color(0.00f, 0.45f, 0.52f, 0.95f);
-            var resumeTxt = btnResume.GetComponentInChildren<TextMeshProUGUI>();
-            if (resumeTxt != null) { resumeTxt.fontSize = 20; resumeTxt.fontStyle = FontStyles.Bold; }
-
-            // Botón Volver al Lobby
-            var btnReturnLobby = CreateDatapadButton(parent, "BtnReturnLobby", "pause.btn_return_lobby", new Vector2(0, 92), new Vector2(520, 44), OnClickReturnToLobby, out var lobbyBg, true);
-            lobbyBg.color = new Color(0.12f, 0.18f, 0.26f, 0.95f);
-
-            // Botón Desconectar
-            var btnDisconnect = CreateDatapadButton(parent, "BtnDisconnect", "pause.btn_disconnect", new Vector2(0, 38), new Vector2(520, 40), OnClickDisconnect, out var discBg, true);
-            discBg.color = new Color(0.24f, 0.08f, 0.10f, 0.95f);
-            var discTxt = btnDisconnect.GetComponentInChildren<TextMeshProUGUI>();
-            if (discTxt != null) discTxt.color = new Color(1f, 0.65f, 0.65f, 1f);
-
-            // Tarjeta de Controles
-            var controlsCard = CreateCard(parent, "ControlsCard", new Vector2(720, 195), new Vector2(0, -95));
-            var cardTitle = CreateLabel(controlsCard, "controls.title", 12, new Vector2(0, 72), new Vector2(680, 22), AmberAccent, true);
-            cardTitle.alignment = TextAlignmentOptions.Center;
-
-            string[] controlKeys = { "controls.move", "controls.jump", "controls.tablet", "controls.voice", "controls.pause" };
-            for (int i = 0; i < controlKeys.Length; i++)
-            {
-                var label = CreateLabel(controlsCard, controlKeys[i], 12, new Vector2(0, 38 - i * 28), new Vector2(660, 24), InkWhite, true);
-                label.alignment = TextAlignmentOptions.Left;
-            }
+            var rect = CreateRect("Icon " + symbol, parent, new Vector2(.5f,.5f), new Vector2(.5f,.5f), position, Vector2.one * size);
+            var icon = rect.gameObject.AddComponent<MenuSymbolGraphic>();
+            icon.symbol = symbol; icon.color = color; icon.raycastTarget = false;
         }
 
-        private void BuildSettingsTab(Transform parent)
+        private Button CreatePauseNav(Transform parent, string name, string key, float y, MenuSymbolGraphic.Symbol icon, UnityAction action, out TabletRoundedPanel bg)
         {
-            // --- SELECTOR DE IDIOMA EN PAUSA ---
-            var langCard = CreateCard(parent, "PauseLangCard", new Vector2(720, 80), new Vector2(0, 145));
-            var langLabel = CreateLabel(langCard, "lang.title", 12, new Vector2(0, 20), new Vector2(680, 20), AmberAccent, true);
-            langLabel.alignment = TextAlignmentOptions.Center;
+            var button = CreateDatapadButton(parent, name, key, new Vector2(0,y), new Vector2(204,56), action, out bg, true);
+            button.GetComponent<Outline>().enabled = false;
+            bg.radius = 8;
+            var label = button.GetComponentInChildren<TextMeshProUGUI>();
+            label.rectTransform.anchoredPosition = new Vector2(22,0); label.rectTransform.sizeDelta = new Vector2(136,40);
+            label.fontSize = 17; label.alignment = TextAlignmentOptions.Left;
+            AddMenuIcon(button.transform, icon, new Vector2(-74,0), 26, InkWhite);
+            return button;
+        }
 
-            var langRow = CreateRect("PauseLangRow", langCard, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0, -12), new Vector2(680, 34));
-            btnPauseLangEs = CreateDatapadButton(langRow, "BtnPauseES", "ES · Español", new Vector2(-220, 0), new Vector2(200, 32), () => SelectLanguage(GameLanguage.Spanish), out btnPauseLangEsBg);
-            btnPauseLangEn = CreateDatapadButton(langRow, "BtnPauseEN", "EN · English", new Vector2(0, 0), new Vector2(200, 32), () => SelectLanguage(GameLanguage.English), out btnPauseLangEnBg);
-            btnPauseLangPt = CreateDatapadButton(langRow, "BtnPausePT", "PT · Brasil", new Vector2(220, 0), new Vector2(200, 32), () => SelectLanguage(GameLanguage.Portuguese), out btnPauseLangPtBg);
+        private Button CreatePauseAction(Transform parent, string name, string key, float y, MenuSymbolGraphic.Symbol icon, UnityAction action, Color background, Color foreground, float height)
+        {
+            var button = CreateDatapadButton(parent, name, key, new Vector2(0,y), new Vector2(432,height), action, out var bg, true);
+            button.GetComponent<Outline>().enabled = false; bg.color = background; bg.radius = 10;
+            var label = button.GetComponentInChildren<TextMeshProUGUI>();
+            label.rectTransform.anchoredPosition = new Vector2(24,0); label.rectTransform.sizeDelta = new Vector2(326,height-12);
+            label.fontSize = 19; label.alignment = TextAlignmentOptions.Left; label.color = foreground;
+            label.enableAutoSizing = true; label.fontSizeMin = 16; label.fontSizeMax = 19;
+            AddMenuIcon(button.transform, icon, new Vector2(-179,0), 26, foreground);
+            return button;
+        }
 
-            // --- VOLUMEN GENERAL ---
-            var audioCard = CreateCard(parent, "AudioCard", new Vector2(720, 74), new Vector2(0, 55));
-            var audioHeader = CreateLabel(audioCard, "audio.master_volume", 12, new Vector2(-60, 16), new Vector2(540, 20), InkWhite, true);
-            audioHeader.alignment = TextAlignmentOptions.Left;
-
-            masterVolumePercentLabel = CreateLabel(audioCard, "100%", 12, new Vector2(300, 16), new Vector2(80, 20), CyanAccent);
-            masterVolumePercentLabel.alignment = TextAlignmentOptions.Right;
-
-            masterVolumeSlider = CreateSlider(audioCard, "MasterVolSlider", 0f, 1f, AudioListener.volume, new Vector2(0, -14), new Vector2(660, 18));
-            masterVolumeSlider.onValueChanged.AddListener(SetMasterVolume);
-
-            // --- CONFIGURACIÓN DE VOZ POR PROXIMIDAD ---
-            var voiceCard = CreateCard(parent, "VoiceCard", new Vector2(720, 175), new Vector2(0, -85));
-            var voiceTitle = CreateLabel(voiceCard, "voice.title", 13, new Vector2(0, 62), new Vector2(680, 22), AmberAccent, true);
-            voiceTitle.alignment = TextAlignmentOptions.Center;
-
-            // Modos de transmisión
-            var modeRow = CreateRect("ModeRow", voiceCard, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0, 22), new Vector2(680, 36));
-            btnVoicePtt = CreateDatapadButton(modeRow, "BtnPTT", "voice.ptt", new Vector2(-160, 0), new Vector2(300, 32), () => SetVoiceMode(true), out btnVoicePttBg, true);
-            btnVoiceOpenMic = CreateDatapadButton(modeRow, "BtnOpenMic", "voice.open_mic", new Vector2(160, 0), new Vector2(300, 32), () => SetVoiceMode(false), out btnVoiceOpenMicBg, true);
-
-            // Slider de volumen de voz
-            var voiceVolLabel = CreateLabel(voiceCard, "crew.voice_volume", 12, new Vector2(-60, -20), new Vector2(540, 20), MutedCyan, true);
-            voiceVolLabel.alignment = TextAlignmentOptions.Left;
-
-            voiceMasterPercentLabel = CreateLabel(voiceCard, "100%", 12, new Vector2(300, -20), new Vector2(80, 20), CyanAccent);
-            voiceMasterPercentLabel.alignment = TextAlignmentOptions.Right;
-
-            voiceMasterVolumeSlider = CreateSlider(voiceCard, "VoiceMasterVolSlider", 0f, 1.5f, MarsProximityVoice.MasterVoiceVolume, new Vector2(0, -46), new Vector2(660, 18));
-            voiceMasterVolumeSlider.onValueChanged.AddListener(SetVoiceMasterVolume);
-
-            var rangeLabel = CreateLabel(voiceCard, "voice.distance", 11, new Vector2(0, -70), new Vector2(660, 16), DimCyan, true);
-            rangeLabel.alignment = TextAlignmentOptions.Center;
-            CreateDatapadButton(parent,"BtnAdvancedSystems","SYSTEMS / AJUSTES",new Vector2(0,-202),new Vector2(700,36),()=>ExpeditionSettingsPanel.Open(fontAsset),out var advancedBg);
+        private void BuildMissionTab(Transform parent)
+        {
+            var title = CreateLabel(parent, "pause.your_mission", 25, new Vector2(0,145), new Vector2(432,40), InkWhite, true);
+            title.alignment = TextAlignmentOptions.Left;
+            CreatePauseAction(parent, "BtnResume", "pause.continue", 77, MenuSymbolGraphic.Symbol.Play, ResumeGame, new Color(.94f,.62f,.32f), ChassisBezel, 76);
+            var divider = CreateRoundedPanel(parent, "Actions divider", new Vector2(432,1), 0, ChassisRim); divider.anchoredPosition = new Vector2(0,8);
+            CreatePauseAction(parent, "BtnReturnLobby", "pause.return", -46, MenuSymbolGraphic.Symbol.Home, OnClickReturnToLobby, SlotBg, InkWhite, 60);
+            CreatePauseAction(parent, "BtnDisconnect", "pause.disconnect", -118, MenuSymbolGraphic.Symbol.Exit, OnClickDisconnect, new Color(.14f,.075f,.095f), new Color(.96f,.61f,.60f), 56);
         }
 
         private void BuildCrewTab(Transform parent)
         {
-            var header = CreateLabel(parent, "crew.title", 15, new Vector2(0, 185), new Vector2(720, 26), AmberAccent, true);
+            var header = CreateLabel(parent, "crew.title", 15, new Vector2(0, 154), new Vector2(432, 26), AmberAccent, true);
             header.alignment = TextAlignmentOptions.Center;
 
-            var scrollCard = CreateCard(parent, "CrewScrollCard", new Vector2(720, 340), new Vector2(0, -15));
+            var scrollCard = CreateCard(parent, "CrewScrollCard", new Vector2(432, 290), new Vector2(0, -24));
             scrollCard.gameObject.AddComponent<RectMask2D>();
 
             var containerGo = CreateRect("CrewListContent", scrollCard, new Vector2(0, 1), new Vector2(1, 1), Vector2.zero, new Vector2(0, 340));
             containerGo.pivot = new Vector2(0.5f, 1f);
             crewListContainer = containerGo;
+            var scroll = scrollCard.gameObject.AddComponent<ScrollRect>();
+            scroll.viewport = scrollCard; scroll.content = containerGo; scroll.horizontal = false;
+            scroll.movementType = ScrollRect.MovementType.Clamped; scroll.scrollSensitivity = 32;
 
             var layout = containerGo.gameObject.AddComponent<VerticalLayoutGroup>();
             layout.childControlHeight = false;
@@ -586,7 +551,7 @@ namespace GameJam.UI
             var fitter = containerGo.gameObject.AddComponent<ContentSizeFitter>();
             fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
 
-            crewEmptyLabel = CreateLabel(scrollCard, "crew.no_other_players", 13, Vector2.zero, new Vector2(660, 36), MutedCyan, true);
+            crewEmptyLabel = CreateLabel(scrollCard, "crew.no_other_players", 13, Vector2.zero, new Vector2(400, 70), MutedCyan, true);
             crewEmptyLabel.alignment = TextAlignmentOptions.Center;
         }
 
@@ -636,6 +601,7 @@ namespace GameJam.UI
 
             var btn = rect.gameObject.AddComponent<Button>();
             btn.targetGraphic = bg;
+            var edge=rect.gameObject.AddComponent<Outline>();edge.effectColor=new Color(.28f,.66f,.72f,.55f);edge.effectDistance=new Vector2(1,-1);
             btn.colors = new ColorBlock
             {
                 normalColor = Color.white,
@@ -922,12 +888,13 @@ namespace GameJam.UI
 
         public void SwitchTab(string tabName)
         {
+            if (tabName == "Settings") { ExpeditionSettingsPanel.Open(fontAsset); return; }
             activeTab = tabName;
             if (tabContentMission != null) tabContentMission.SetActive(tabName == "Mission");
             if (tabContentSettings != null) tabContentSettings.SetActive(tabName == "Settings");
             if (tabContentCrew != null) tabContentCrew.SetActive(tabName == "Crew");
 
-            Color activeTabColor = new(0.00f, 0.45f, 0.52f, 0.95f);
+            Color activeTabColor = new(0.19f, 0.28f, 0.35f, 1f);
             Color inactiveTabColor = SlotBg;
 
             if (tabBtnMissionBg != null) tabBtnMissionBg.color = tabName == "Mission" ? activeTabColor : inactiveTabColor;
@@ -1005,7 +972,7 @@ namespace GameJam.UI
 
             if (statusLabel != null)
             {
-                statusLabel.text = session.Status;
+                statusLabel.text = session.DisplayStatus;
             }
 
             if (statusDot != null)
@@ -1170,7 +1137,7 @@ namespace GameJam.UI
         {
             var widget = new CrewRowWidget();
 
-            var rowCard = CreateRoundedPanel(crewListContainer, "CrewRow", new Vector2(680, 56), 10, CardBg);
+            var rowCard = CreateRoundedPanel(crewListContainer, "CrewRow", new Vector2(404, 108), 10, CardBg);
             widget.Root = rowCard.gameObject;
 
             var outline = rowCard.gameObject.AddComponent<Outline>();
@@ -1179,19 +1146,19 @@ namespace GameJam.UI
 
             // Icono de casco
             var avatarPill = CreateRoundedPanel(rowCard, "AvatarPill", new Vector2(36, 36), 18, InsetBg);
-            avatarPill.anchoredPosition = new Vector2(-310, 0);
+            avatarPill.anchoredPosition = new Vector2(-174, 24);
 
             var avatarDot = CreateRoundedPanel(avatarPill, "AvatarCenter", new Vector2(16, 16), 8, CyanAccent);
             avatarDot.anchoredPosition = Vector2.zero;
 
             // Nombre del astronauta
-            widget.NameLabel = CreateLabel(rowCard, "Astronauta", 13, new Vector2(-170, 0), new Vector2(230, 26), InkWhite);
+            widget.NameLabel = CreateLabel(rowCard, "Astronauta", 13, new Vector2(-52, 24), new Vector2(188, 26), InkWhite);
             widget.NameLabel.alignment = TextAlignmentOptions.Left;
             widget.NameLabel.fontStyle = FontStyles.Bold;
 
             // Indicador de habla
             var speakPill = CreateRoundedPanel(rowCard, "SpeakPill", new Vector2(120, 28), 6, InsetBg);
-            speakPill.anchoredPosition = new Vector2(30, 0);
+            speakPill.anchoredPosition = new Vector2(124, 24);
 
             var dotRect = CreateRoundedPanel(speakPill, "Dot", new Vector2(8, 8), 4, DimCyan);
             dotRect.anchoredPosition = new Vector2(-44, 0);
@@ -1200,22 +1167,22 @@ namespace GameJam.UI
             widget.SpeakingLabel = CreateLabel(speakPill, "crew.muted", 10, new Vector2(10, 0), new Vector2(80, 20), DimCyan, true);
             widget.SpeakingLabel.alignment = TextAlignmentOptions.Left;
 
-            widget.MuteButton = CreateDatapadButton(rowCard, "MutePeer", "MUTE", new Vector2(118, 0), new Vector2(64, 30), () =>
+            widget.MuteButton = CreateDatapadButton(rowCard, "MutePeer", GameLocalization.Get("crew.silence"), new Vector2(-142, -28), new Vector2(100, 34), () =>
             {
                 if (widget.Avatar != null && widget.Avatar.TryGetComponent<MarsProximityVoice>(out var peer)) peer.SetMuted(!peer.IndividuallyMuted);
             }, out var muteBg);
             widget.MuteLabel = widget.MuteButton.GetComponentInChildren<TextMeshProUGUI>();
-            widget.MuteLabel.fontSize = 10;
+            widget.MuteLabel.fontSize = 14;
             // Slider de volumen individual
-            var sliderRoot = CreateRect("VolumeGroup", rowCard, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(230, 0), new Vector2(170, 40));
+            var sliderRoot = CreateRect("VolumeGroup", rowCard, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(65, -28), new Vector2(210, 40));
 
-            var volLabel = CreateLabel(sliderRoot, "VOL", 10, new Vector2(-70, 0), new Vector2(30, 20), MutedCyan);
+            var volLabel = CreateLabel(sliderRoot, "VOL", 10, new Vector2(-76, 0), new Vector2(44, 24), MutedCyan);
             volLabel.alignment = TextAlignmentOptions.Center;
 
-            widget.VolumePercentLabel = CreateLabel(sliderRoot, "100%", 10, new Vector2(65, 0), new Vector2(40, 20), CyanAccent);
+            widget.VolumePercentLabel = CreateLabel(sliderRoot, "100%", 10, new Vector2(84, 0), new Vector2(62, 24), CyanAccent);
             widget.VolumePercentLabel.alignment = TextAlignmentOptions.Left;
 
-            widget.VolumeSlider = CreateSlider(sliderRoot, "IndivVolSlider", 0f, 1.5f, 1f, new Vector2(2, 0), new Vector2(90, 16));
+            widget.VolumeSlider = CreateSlider(sliderRoot, "IndivVolSlider", 0f, 1.5f, 1f, new Vector2(0, 0), new Vector2(92, 16));
 
             return widget;
         }
@@ -1256,7 +1223,7 @@ namespace GameJam.UI
             {
                 widget.MuteButton.gameObject.SetActive(!isSelf);
                 bool muted = avatar != null && avatar.TryGetComponent<MarsProximityVoice>(out var mutedPeer) && mutedPeer.IndividuallyMuted;
-                widget.MuteLabel.text = muted ? "UNMUTE" : "MUTE";
+                widget.MuteLabel.text = GameLocalization.Get(muted ? "crew.unmute" : "crew.silence");
             }
             if (widget.VolumeSlider != null)
             {

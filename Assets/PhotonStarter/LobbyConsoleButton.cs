@@ -1,3 +1,4 @@
+using GameJam.Localization;
 using Fusion;
 using TMPro;
 using UnityEngine;
@@ -54,10 +55,10 @@ namespace GameJam.Multiplayer
                 cap.localPosition = Time.time < pressedUntil ? capRest - Vector3.up * 0.03f : capRest;
             if (label != null)
             {
-                string actionTitle = title;
+                string actionTitle = action == ButtonAction.LeaveLobby ? GameLocalization.Get("console.leave") : GameLocalization.Get("console.ready");
                 if (action == ButtonAction.StartGame && avatar != null)
-                    actionTitle = departure != null && departure.DepartureActive ? "SECUENCIA\nACTIVA"
-                        : avatar.LobbyReady ? "CANCELAR\nLISTO" : "ESTOY\nLISTO";
+                    actionTitle = departure != null && departure.DepartureActive ? GameLocalization.Get("console.active")
+                        : avatar.LobbyReady ? GameLocalization.Get("console.cancel") : GameLocalization.Get("console.ready");
                 string text = Time.time < messageUntil ? message : near ? "<color=#FFFFFF>[E]</color> " + actionTitle : actionTitle;
                 if (label.text != text) label.text = text;
                 label.alpha = near || Time.time < messageUntil ? 1f : 0.8f;
@@ -103,21 +104,21 @@ namespace GameJam.Multiplayer
             pressedUntil = Time.time + 0.2f;
             if (action == ButtonAction.LeaveLobby)
             {
-                Show("SALIENDO...");
+                Show(GameLocalization.Get("console.leaving"));
                 _ = session.Disconnect();
                 return;
             }
             var player = runner.GetPlayerObject(runner.LocalPlayer);
             var avatar = player != null ? player.GetComponent<MarsFusionAvatar>() : null;
-            if (avatar == null) { Show("ESPERANDO JUGADOR"); return; }
+            if (avatar == null) { Show(GameLocalization.Get("console.waiting")); return; }
             if (!avatar.LobbyReady)
             {
                 avatar.SetLobbyReady(true);
-                Show("LISTO");
+                Show(GameLocalization.Get("lobby.ready"));
                 return;
             }
             avatar.SetLobbyReady(false);
-            Show("LISTO CANCELADO");
+            Show(GameLocalization.Get("console.cancelled"));
         }
 
         private void Show(string text)

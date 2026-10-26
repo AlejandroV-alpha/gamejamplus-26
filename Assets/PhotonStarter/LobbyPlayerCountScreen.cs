@@ -1,3 +1,4 @@
+using GameJam.Localization;
 using System.Linq;
 using Fusion;
 using TMPro;
@@ -26,7 +27,7 @@ namespace GameJam.Multiplayer
             label.alignment = TextAlignmentOptions.Top;
             label.fontSize = 1.9f;
             label.enableAutoSizing = false;
-            label.text = "TRIPULACIÓN";
+            label.text = GameLocalization.Get("lobby.crew");
             for (int i = 0; i < 4; i++)
             {
                 float y = .3f - i * .26f;
@@ -65,7 +66,7 @@ namespace GameJam.Multiplayer
             var runner = session != null ? session.Runner : null;
             var players = runner != null && runner.IsRunning
                 ? runner.ActivePlayers.OrderBy(p => p.PlayerId).ToArray() : new PlayerRef[0];
-            label.text = "TRIPULACIÓN  ·  " + players.Length + " / 4";
+            label.text = GameLocalization.Get("lobby.crew") + "  ·  " + players.Length + " / 4";
             for (int i = 0; i < 4; i++)
             {
                 bool occupied = i < players.Length;
@@ -73,9 +74,9 @@ namespace GameJam.Multiplayer
                 var avatar = player != null ? player.GetComponent<MarsFusionAvatar>() : null;
                 Color color = avatar != null && avatar.HasAssignedColor ? MarsPlayerIdentityView.Palette[avatar.SuitColorIndex] : MarsPlayerIdentityView.PendingColor;
                 icons[i].color = color;
-                names[i].text = avatar != null ? avatar.PlayerName.ToString() : occupied ? "CONECTANDO..." : "PLAZA LIBRE";
+                names[i].text = avatar != null ? avatar.PlayerName.ToString() : occupied ? GameLocalization.Get("lobby.connecting") : GameLocalization.Get("lobby.free");
                 names[i].color = occupied ? Color.white : new Color(.4f,.52f,.57f);
-                states[i].text = !occupied ? "—" : avatar != null && avatar.LobbyReady ? "LISTO" : "ESPERANDO";
+                states[i].text = !occupied ? "—" : avatar != null && avatar.LobbyReady ? GameLocalization.Get("lobby.ready") : GameLocalization.Get("lobby.waiting");
                 states[i].color = avatar != null && avatar.LobbyReady ? new Color(.4f,1f,.65f) : new Color(.9f,.67f,.35f);
             }
         }

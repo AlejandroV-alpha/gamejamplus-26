@@ -99,7 +99,7 @@ namespace GameJam.Multiplayer
             var label = new GameObject("Texto").AddComponent<TMPro.TextMeshProUGUI>();
             label.transform.SetParent(button.transform, false);
             Stretch(label.rectTransform);
-            label.text = "Volver al menú";
+            label.text = GameJam.Localization.GameLocalization.Get("ending.return");
             label.fontSize = 24;
             label.alignment = TMPro.TextAlignmentOptions.Center;
             label.color = new Color(1f, .85f, .48f);
@@ -202,8 +202,7 @@ namespace GameJam.Multiplayer
             var intro = new GameObject("IntroduccionCreditos").AddComponent<TMPro.TextMeshProUGUI>();
             intro.transform.SetParent(transform, false);
             Stretch(intro.rectTransform);
-            intro.text = "<size=32><cspace=8>EL FINAL DE UNA MISIÓN</cspace></size>\n\n"
-                + "<size=86><b>UNA HISTORIA\nHECHA EN EQUIPO</b></size>";
+            intro.text = GameJam.Localization.GameLocalization.Get("ending.intro");
             intro.alignment = TMPro.TextAlignmentOptions.Center;
             intro.color = new Color(1f, .82f, .22f);
             intro.raycastTarget = false;
@@ -294,8 +293,7 @@ namespace GameJam.Multiplayer
             message.rectTransform.anchorMax = Vector2.one;
             message.rectTransform.offsetMin = new Vector2(100, 120);
             message.rectTransform.offsetMax = new Vector2(-100, -70);
-            message.text = "<size=76><b>GRACIAS POR JUGAR</b></size>\n\n"
-                + "<size=28><cspace=5>HASTA LA PRÓXIMA MISIÓN</cspace></size>";
+            message.text = GameJam.Localization.GameLocalization.Get("ending.thanks");
             message.ForceMeshUpdate();
         }
 

@@ -73,3 +73,17 @@ La propuesta de radio/barra está únicamente en el vault del juego y permanece 
 - 130: conservar mensajes útiles si se corta la conexión durante el inicio.
 
 El ejecutable de prueba está en `.local/MenuValidation/Windows/ExpeditionValidation.exe`. No es una entrega de itch.io: es Development Build y requiere regenerarse con el último commit antes de probar los fixes finales. Generar desde GameJam > Diagnostics > Build multiplayer validation (Windows), fuera de Play. Para publicar usar Build Profiles sin Development Build.
+
+### Prueba Multiplayer Play Mode — 2026-10-25
+
+Main Editor (Player 1) y Player 2 entraron a la misma sala en SA con protocolo expedition-2-A96C6F6139242851; ambos registraron player-spawned valid=True y el personaje remoto fue visible. Player 2 leyó correctamente la configuración cifrada local. Ambos solicitaron la sala Voice correspondiente.
+
+Se encontró el Editor en pausa al inicio; al reanudar se reconectó. Durante la prueba posterior volvió a aparecer SendOutgoingCommands >5 s y el principal terminó con DisconnectedByPluginLogic. runInBackground ya está habilitado en proyecto, runner y sesión: no se atribuye el segundo corte solamente al foco sin más evidencia. Conexión inicial de dos clientes confirmada; estabilidad sostenida, Voice Joined, transmisión, escucha, mute y volumen aún no validados. El micrófono informó captura a 48 kHz con remuestreo del encoder de 16 kHz; es un aviso de adaptación, no evidencia de fallo de audio.
+
+## Revisión de UX e idioma — 2026-10-25
+
+Inicio y pausa comparten un único panel de ajustes. Resolución, modo de pantalla, calidad, FPS, idioma, micrófono, modo de voz y región tienen listas de elección directa; no requieren recorrer todos los valores con clics. Los valores continuos conservan sliders con lectura numérica. Pausa tiene acciones mayores, borde visible y cierre ESC sin glifos faltantes.
+
+Se corrigieron textos de ajustes de inicio, estados habituales de conexión, tripulación/monitores del lobby, ayudas y estados de fabricación, estados/ayudas de misión de tablet y títulos finales. Las cadenas de datos de recetas conservan fallback al contenido original si falta su traducción; mensajes históricos del diario y errores técnicos aún pueden conservar el idioma de origen. No se declara traducido el 100% del contenido.
+
+Validación: compilación C# Editor y variante Player sin errores, diff sin errores de espacios y validador de assets multiplayer PASS. Visualmente se confirmó el inicio en portugués incluyendo ajustes y estado de conexión. La automatización no abrió fiablemente el panel durante la última sesión: selección, cierre y teclado de las listas y nuevo aspecto de pausa requieren revisión interactiva. No se generó una build nueva en esta revisión.
