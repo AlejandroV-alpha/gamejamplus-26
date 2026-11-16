@@ -1489,6 +1489,73 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 1.0197077, y: 0.5695287, z: 1.2146318}
   m_Center: {x: -0.10711892, y: 0.145668, z: -0.01751104}
+--- !u!1 &54951521
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 54951524}
+  - component: {fileID: 54951523}
+  - component: {fileID: 54951522}
+  m_Layer: 0
+  m_Name: Venomwing_Spawn
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &54951522
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 54951521}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9eb728bb3476b01479612c709b01bd4f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ReksaiFusionAreaSpawner
+  enemyPrefab: {fileID: 4609473335657631184, guid: 35f46996cdd2cb4409a757b036960230, type: 3}
+  activationDistance: 0
+--- !u!114 &54951523
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 54951521}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: -1552182283, guid: e725a070cec140c4caffb81624c8c787, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Fusion.Runtime.dll::Fusion.NetworkObject
+  SortKey: 2811805100
+  SendPriority: 1
+  EnableInterpolation: 1
+  Flags: 262146
+  NestedObjects: []
+  NetworkedBehaviours:
+  - {fileID: 54951522}
+  ForceRemoteRenderTimeframe: 0
+--- !u!4 &54951524
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 54951521}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0.945071, z: 0, w: -0.32686517}
+  m_LocalPosition: {x: 7.71, y: 17.27341, z: -43.43}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &62053076
 GameObject:
   m_ObjectHideFlags: 0
@@ -48399,6 +48466,73 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 0.6341367, y: 0.5518031, z: 0.55394053}
   m_Center: {x: -0.009612039, y: 0.1980346, z: -0.0194882}
+--- !u!1 &641180417
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 641180420}
+  - component: {fileID: 641180419}
+  - component: {fileID: 641180418}
+  m_Layer: 0
+  m_Name: GusanoMarte_Spawn
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &641180418
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 641180417}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9eb728bb3476b01479612c709b01bd4f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ReksaiFusionAreaSpawner
+  enemyPrefab: {fileID: 1317130557849947152, guid: 4c9d27e86e971fe47b89f770d8028917, type: 3}
+  activationDistance: 0
+--- !u!114 &641180419
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 641180417}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: -1552182283, guid: e725a070cec140c4caffb81624c8c787, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Fusion.Runtime.dll::Fusion.NetworkObject
+  SortKey: 1837562051
+  SendPriority: 1
+  EnableInterpolation: 1
+  Flags: 262146
+  NestedObjects: []
+  NetworkedBehaviours:
+  - {fileID: 641180418}
+  ForceRemoteRenderTimeframe: 0
+--- !u!4 &641180420
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 641180417}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -44.64, y: 5.36, z: -223.21}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &650578035
 GameObject:
   m_ObjectHideFlags: 0
@@ -51446,6 +51580,73 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 1.5226386, y: 0.9450576, z: 3.2248359}
   m_Center: {x: -0.01194039, y: 0.22856829, z: -0.041213214}
+--- !u!1 &786613499
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 786613502}
+  - component: {fileID: 786613501}
+  - component: {fileID: 786613500}
+  m_Layer: 0
+  m_Name: ElCuernudo_Spawn
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &786613500
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 786613499}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9eb728bb3476b01479612c709b01bd4f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ReksaiFusionAreaSpawner
+  enemyPrefab: {fileID: 9168095584331543358, guid: aa2decae565cf204d867c61af878a772, type: 3}
+  activationDistance: 0
+--- !u!114 &786613501
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 786613499}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: -1552182283, guid: e725a070cec140c4caffb81624c8c787, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Fusion.Runtime.dll::Fusion.NetworkObject
+  SortKey: 2659203111
+  SendPriority: 1
+  EnableInterpolation: 1
+  Flags: 262146
+  NestedObjects: []
+  NetworkedBehaviours:
+  - {fileID: 786613500}
+  ForceRemoteRenderTimeframe: 0
+--- !u!4 &786613502
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 786613499}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 1, z: -0, w: -0}
+  m_LocalPosition: {x: -14.29, y: 12.873255, z: -36.43}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &788158339
 GameObject:
   m_ObjectHideFlags: 0
@@ -69839,67 +70040,6 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 1.0391567, y: 0.4747274, z: 0.8475793}
   m_Center: {x: 0.059659928, y: 0.1257653, z: -0.014941812}
---- !u!1001 &1274831968
-PrefabInstance:
-  m_ObjectHideFlags: 0
-  serializedVersion: 2
-  m_Modification:
-    serializedVersion: 3
-    m_TransformParent: {fileID: 0}
-    m_Modifications:
-    - target: {fileID: 2031957853526025492, guid: f4919ca4170c03a4ab8af7780c621f6e, type: 3}
-      propertyPath: m_LocalPosition.x
-      value: -44.642857
-      objectReference: {fileID: 0}
-    - target: {fileID: 2031957853526025492, guid: f4919ca4170c03a4ab8af7780c621f6e, type: 3}
-      propertyPath: m_LocalPosition.y
-      value: 5.356162
-      objectReference: {fileID: 0}
-    - target: {fileID: 2031957853526025492, guid: f4919ca4170c03a4ab8af7780c621f6e, type: 3}
-      propertyPath: m_LocalPosition.z
-      value: -223.21428
-      objectReference: {fileID: 0}
-    - target: {fileID: 2031957853526025492, guid: f4919ca4170c03a4ab8af7780c621f6e, type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 2031957853526025492, guid: f4919ca4170c03a4ab8af7780c621f6e, type: 3}
-      propertyPath: m_LocalRotation.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 2031957853526025492, guid: f4919ca4170c03a4ab8af7780c621f6e, type: 3}
-      propertyPath: m_LocalRotation.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 2031957853526025492, guid: f4919ca4170c03a4ab8af7780c621f6e, type: 3}
-      propertyPath: m_LocalRotation.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 2031957853526025492, guid: f4919ca4170c03a4ab8af7780c621f6e, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 2031957853526025492, guid: f4919ca4170c03a4ab8af7780c621f6e, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 2031957853526025492, guid: f4919ca4170c03a4ab8af7780c621f6e, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5264162825550896949, guid: f4919ca4170c03a4ab8af7780c621f6e, type: 3}
-      propertyPath: SortKey
-      value: 2653531131
-      objectReference: {fileID: 0}
-    - target: {fileID: 7257724131042049624, guid: f4919ca4170c03a4ab8af7780c621f6e, type: 3}
-      propertyPath: m_Name
-      value: Gusano_Excavador_Fusion
-      objectReference: {fileID: 0}
-    m_RemovedComponents: []
-    m_RemovedGameObjects: []
-    m_AddedGameObjects: []
-    m_AddedComponents: []
-  m_SourcePrefab: {fileID: 100100000, guid: f4919ca4170c03a4ab8af7780c621f6e, type: 3}
 --- !u!1 &1275201680
 GameObject:
   m_ObjectHideFlags: 0
@@ -123045,6 +123185,8 @@ MonoBehaviour:
   pauseSeconds: 5
   characterHeight: 2.3
   headingOffset: 0
+  playerAvoidanceRadius: 2
+  playerAvoidanceStrength: 2.5
 --- !u!1 &1987106010
 GameObject:
   m_ObjectHideFlags: 0
@@ -123104,6 +123246,8 @@ MonoBehaviour:
   pauseSeconds: 7
   characterHeight: 2.3
   headingOffset: 0
+  playerAvoidanceRadius: 2
+  playerAvoidanceStrength: 2.5
 --- !u!1 &1987106020
 GameObject:
   m_ObjectHideFlags: 0
@@ -123163,6 +123307,8 @@ MonoBehaviour:
   pauseSeconds: 6
   characterHeight: 2.3
   headingOffset: 0
+  playerAvoidanceRadius: 2
+  playerAvoidanceStrength: 2.5
 --- !u!1 &1987106030
 GameObject:
   m_ObjectHideFlags: 0
@@ -123222,6 +123368,8 @@ MonoBehaviour:
   pauseSeconds: 8
   characterHeight: 2.3
   headingOffset: 0
+  playerAvoidanceRadius: 2
+  playerAvoidanceStrength: 2.5
 --- !u!1 &1987782472
 GameObject:
   m_ObjectHideFlags: 0
@@ -129649,7 +129797,6 @@ SceneRoots:
   - {fileID: 1133600300}
   - {fileID: 1142762359}
   - {fileID: 1334024326}
-  - {fileID: 1274831968}
   - {fileID: 8600000000000001001}
   - {fileID: 8600000000000001011}
   - {fileID: 8600000000000001021}
@@ -129658,3 +129805,6 @@ SceneRoots:
   - {fileID: 8600000000000001051}
   - {fileID: 7992269063252781041}
   - {fileID: 8800000000000004000}
+  - {fileID: 786613502}
+  - {fileID: 54951524}
+  - {fileID: 641180420}

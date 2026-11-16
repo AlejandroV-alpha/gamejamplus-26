@@ -81,7 +81,7 @@ namespace GameJam.Crafting
                 && !GameJam.Multiplayer.SceneTransitionVideo.IsBlockingInput
                 && !GameJam.Multiplayer.LobbyDepartureEffects.IsBlockingInput
                 && !GameJam.Multiplayer.PortalWhiteTransition.IsBlockingInput
-                && !GusanoExcavadorFusion.LocalPlayerHeld;
+                && !GusanoExcavadorFusion.LocalPlayerHeld && !GusanoMarteFusion.LocalPlayerHeld;
         }
 
         /// <summary>

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
@@ -144,36 +145,23 @@ namespace GameJam.Combat
 
         public Vector3 DamagePosition => BodyBounds().center + Vector3.up * .3f;
 
-        public void Damage(float amount)
+        public void Damage(float amount) => Damage(amount, DamageKind.Normal, false);
+
+        public void Damage(float amount, DamageKind kind, bool critical = false)
         {
-            lastDamageAt = lastDamageAtForAnimation = Time.unscaledTime;
-            ShowDamage(amount, DamagePosition, damageSequence++ % 5);
+            if (kind != DamageKind.Heal) lastDamageAt = lastDamageAtForAnimation = Time.unscaledTime;
+            EnemyDamagePopup.Show(this, amount, DamagePosition, kind, critical);
         }
 
+        // Kept for existing callers; popups now alternate sides by themselves.
         public static void ShowDamage(float amount, Vector3 position, int lane = 0)
-        {
-            if (amount <= 0 || GameJam.Multiplayer.SceneTransitionVideo.IsPresent) return;
-            var container = Rect("DamagePopup", Overlay(), new Vector2(240, 100), Vector2.zero);
-            var text = Text("Damage", container, new Vector2(240, 100), Vector2.zero, 56);
-            text.text = "<size=65%>−</size>" + Mathf.CeilToInt(amount);
-            text.fontStyle = FontStyles.Bold | FontStyles.Italic;
-            text.characterSpacing = -1f;
-            text.color = Color.white;
-            text.enableVertexGradient = true;
-            text.colorGradient = new VertexGradient(new Color(1f, .38f, .4f), new Color(1f, .38f, .4f),
-                new Color(.8f, .025f, .09f), new Color(.8f, .025f, .09f));
-            text.outlineWidth = .28f;
-            text.outlineColor = new Color32(18, 3, 8, 255);
-            var shadow = Text("NumberDepth", container, new Vector2(240, 100), new Vector2(3, -4), 56);
-            shadow.font = text.font;
-            shadow.text = text.text;
-            shadow.fontStyle = text.fontStyle;
-            shadow.characterSpacing = text.characterSpacing;
-            shadow.color = new Color(.055f, .005f, .015f, .95f);
-            shadow.transform.SetAsFirstSibling();
-            var popup = container.gameObject.AddComponent<EnemyDamagePopup>();
-            popup.Initialize(text, position, overlay, lane);
-        }
+            => EnemyDamagePopup.Show(null, amount, position, DamageKind.Normal, false);
+
+        internal static RectTransform PopupRoot() => Overlay();
+        internal static RectTransform PopupRect(string title, Transform parent, Vector2 size, Vector2 position)
+            => Rect(title, parent, size, position);
+        internal static TextMeshProUGUI PopupText(string title, Transform parent, Vector2 size, Vector2 position, float fontSize)
+            => Text(title, parent, size, position, fontSize);
 
         private void LateUpdate()
         {
@@ -213,67 +201,197 @@ namespace GameJam.Combat
         private void OnDestroy() { if (panel != null) Destroy(panel.gameObject); }
     }
 
+    public enum DamageKind { Normal, Burn, Bleed, Poison, Heal }
+
+    // Floating damage numbers: pop on spawn, arc to alternating sides, hold steady, fade.
+    // Size is relative to the recent average hit, crits are a big yellow moment, hits on the
+    // same enemy merge while the number is still in the air, and never more than 50 on screen.
     public sealed class EnemyDamagePopup : MonoBehaviour
     {
-        private TextMeshProUGUI label;
-        private RectTransform canvas, rect;
+        private const int MaxOnScreen = 50;
+        private const float Life = 1.1f, MergeWindow = .55f, PopTime = .12f;
+        private static readonly List<EnemyDamagePopup> live = new List<EnemyDamagePopup>();
+        private static float averageHit = -1f;
+        private static int sideToggle;
+
+        private object owner;
+        private DamageKind kind;
+        private bool critical;
+        private float total, born, side, size;
         private Vector3 origin;
-        private float born, sideways, tilt, laneOffset;
+        private RectTransform rect, canvas;
+        private TextMeshProUGUI label, critLabel;
+        private float flash;
+        private VertexGradient baseGradient;
         private CanvasGroup fade;
-        private RectTransform[] sparks;
-        public void Initialize(TextMeshProUGUI text, Vector3 point, RectTransform parent, int lane)
+
+        public static void Show(object owner, float amount, Vector3 position, DamageKind kind, bool critical)
         {
-            label = text; canvas = parent; rect = (RectTransform)transform;
-            origin = point; born = Time.unscaledTime;
-            // Five deterministic lanes separate consecutive shots without changing gameplay randomness.
-            laneOffset = lane == 0 ? 0 : lane == 1 ? -48 : lane == 2 ? 48 : lane == 3 ? -24 : 24;
-            sideways = laneOffset < 0 ? -26f : 26f;
-            tilt = laneOffset < 0 ? 5f : -5f;
-            fade = gameObject.AddComponent<CanvasGroup>();
-            fade.blocksRaycasts = false;
-            fade.interactable = false;
-            sparks = new RectTransform[3];
-            for (int i = 0; i < sparks.Length; i++)
+            if (!Application.isPlaying || amount <= 0 || GameJam.Multiplayer.SceneTransitionVideo.IsPresent) return;
+            if (kind != DamageKind.Heal)
+                averageHit = averageHit < 0 ? amount : Mathf.Lerp(averageHit, amount, .12f);
+
+            // Still in the air on the same enemy and same type: add to it instead of spawning another.
+            if (owner != null)
+                for (int i = live.Count - 1; i >= 0; i--)
+                {
+                    var p = live[i];
+                    if (p != null && p.owner == owner && p.kind == kind
+                        && Time.unscaledTime - p.born < MergeWindow)
+                    {
+                        p.total += amount;
+                        p.critical |= critical;
+                        p.origin = position;
+                        p.born = Time.unscaledTime;
+                        p.Refresh();
+                        return;
+                    }
+                }
+
+            while (live.Count >= MaxOnScreen)
             {
-                var go = new GameObject("ImpactSpark", typeof(RectTransform));
-                var spark = (RectTransform)go.transform;
-                spark.SetParent(transform, false);
-                spark.anchorMin = spark.anchorMax = new Vector2(.5f, .5f);
-                spark.sizeDelta = new Vector2(12, 2);
-                spark.localRotation = Quaternion.Euler(0, 0, i * 120f + 20f);
-                var graphic = go.AddComponent<TabletRoundedPanel>();
-                graphic.radius = 1;
-                graphic.color = new Color(1, .2f, .25f);
-                graphic.raycastTarget = false;
-                sparks[i] = spark;
+                var oldest = live[0];
+                live.RemoveAt(0);
+                if (oldest != null) Destroy(oldest.gameObject);
             }
+
+            var root = EnemyCombatUI.PopupRoot();
+            var container = EnemyCombatUI.PopupRect("DamagePopup", root, new Vector2(260, 140), Vector2.zero);
+            var popup = container.gameObject.AddComponent<EnemyDamagePopup>();
+            popup.Build(owner, amount, position, kind, critical, root);
+        }
+
+        private void Build(object who, float amount, Vector3 position, DamageKind type, bool crit, RectTransform root)
+        {
+            owner = who; total = amount; origin = position; kind = type; critical = crit;
+            canvas = root; rect = (RectTransform)transform;
+            born = Time.unscaledTime;
+            side = (sideToggle++ & 1) == 0 ? -1f : 1f;
+            fade = gameObject.AddComponent<CanvasGroup>();
+            fade.blocksRaycasts = fade.interactable = false;
+
+            label = EnemyCombatUI.PopupText("Damage", transform, new Vector2(300, 110), Vector2.zero, 38);
+            StyleNumber(label);
+
+            critLabel = EnemyCombatUI.PopupText("Crit", transform, new Vector2(220, 60), new Vector2(-10, 36), 26);
+            StyleNumber(critLabel);
+            critLabel.text = "CRIT!";
+            critLabel.fontStyle = FontStyles.UpperCase;
+            critLabel.characterSpacing = 4f;
+            critLabel.color = Color.white;
+            critLabel.enableVertexGradient = true;
+            critLabel.colorGradient = Gradient(new Color(1f, .97f, .6f), new Color(1f, .62f, .08f));
+            critLabel.transform.localRotation = Quaternion.Euler(0, 0, 8);
+
+            live.Add(this);
+            Refresh();
             LateUpdate();
         }
+
+        private void Refresh()
+        {
+            string number = Mathf.CeilToInt(total).ToString();
+            label.text = kind == DamageKind.Heal ? "+" + number : number;
+            label.color = Color.white;
+            label.enableVertexGradient = true;
+            var tint = critical ? new Color(1f, .8f, .1f) : ColorFor(kind);
+            // Light top, richer bottom: reads as a solid "chunky" number instead of flat text.
+            label.colorGradient = baseGradient = kind == DamageKind.Normal && !critical
+                ? Gradient(Color.white, new Color(.78f, .82f, .9f))
+                : Gradient(Color.Lerp(tint, Color.white, .45f), tint * .85f);
+            flash = 1f;
+            critLabel.gameObject.SetActive(critical);
+            float relative = averageHit > 0 ? total / averageHit : 1f;
+            size = Mathf.Clamp(.8f + .32f * (relative - 1f), .7f, 1.7f);
+            if (critical) size = Mathf.Max(size, 1.6f);
+            transform.SetAsLastSibling();
+        }
+
+        private static Material numberMaterial;
+        private static TMP_FontAsset numberFont;
+
+        // Thick dark outline + hard drop shadow baked into one shared TMP material (no extra text objects).
+        private static void StyleNumber(TextMeshProUGUI text)
+        {
+            if (numberFont == null)
+            {
+                // Silkscreen (SIL OFL) lives in Resources/UI/Fonts; built as a dynamic TMP font at runtime.
+                var source = Resources.Load<Font>("UI/Fonts/Silkscreen-Bold");
+                if (source != null) numberFont = TMP_FontAsset.CreateFontAsset(source, 96, 12,
+                    UnityEngine.TextCore.LowLevel.GlyphRenderMode.SDFAA, 1024, 1024);
+            }
+            if (numberFont != null) text.font = numberFont;
+            if (numberMaterial == null)
+            {
+                numberMaterial = new Material(text.fontSharedMaterial) { name = "DamageNumberMaterial" };
+                numberMaterial.SetFloat(ShaderUtilities.ID_FaceDilate, .05f);
+                numberMaterial.SetFloat(ShaderUtilities.ID_OutlineWidth, .22f);
+                numberMaterial.SetColor(ShaderUtilities.ID_OutlineColor, new Color32(14, 10, 18, 255));
+                numberMaterial.EnableKeyword(ShaderUtilities.Keyword_Underlay);
+                numberMaterial.SetColor(ShaderUtilities.ID_UnderlayColor, new Color(0, 0, 0, .9f));
+                numberMaterial.SetFloat(ShaderUtilities.ID_UnderlayOffsetX, .35f);
+                numberMaterial.SetFloat(ShaderUtilities.ID_UnderlayOffsetY, -.5f);
+                numberMaterial.SetFloat(ShaderUtilities.ID_UnderlayDilate, .22f);
+                numberMaterial.SetFloat(ShaderUtilities.ID_UnderlaySoftness, 0f);
+            }
+            text.fontSharedMaterial = numberMaterial;
+            // The pixel font is already bold; faux-bold would blur its pixels.
+            text.fontStyle = numberFont != null ? FontStyles.Normal : FontStyles.Bold;
+            text.characterSpacing = numberFont != null ? 3f : -4f;
+        }
+
+        private static VertexGradient Gradient(Color top, Color bottom) => new VertexGradient(top, top, bottom, bottom);
+
+        private static Color ColorFor(DamageKind type)
+        {
+            switch (type)
+            {
+                case DamageKind.Burn: return new Color(1f, .55f, .15f);
+                case DamageKind.Bleed: return new Color(.95f, .15f, .2f);
+                case DamageKind.Poison: return new Color(.55f, .9f, .25f);
+                case DamageKind.Heal: return new Color(.35f, 1f, .5f);
+                default: return Color.white;
+            }
+        }
+
         private void LateUpdate()
         {
             float age = Time.unscaledTime - born;
-            if (age >= 1.35f) { Destroy(gameObject); return; }
+            // label is null if this popup survived a domain reload: it is stale, never show it.
+            if (age >= Life || age < 0f || label == null) { Destroy(gameObject); return; }
             var camera = Camera.main;
             if (camera == null || label == null) return;
             var screen = camera.WorldToScreenPoint(origin);
-            bool visible = screen.z > 0 && !GameJam.Multiplayer.SceneTransitionVideo.IsPresent;
             RectTransformUtility.ScreenPointToLocalPointInRectangle(canvas, screen, null, out var point);
-            float rise = 1f - Mathf.Exp(-age * 4f);
-            rect.anchoredPosition = point + new Vector2(laneOffset + sideways * rise,
-                32f + rise * 60f + age * 15f);
-            float scale = age < .075f ? Mathf.Lerp(.65f, 1.32f, 1f - Mathf.Pow(1f - age / .075f, 3f))
-                : age < .22f ? Mathf.Lerp(1.32f, 1f, Mathf.SmoothStep(0, 1, (age - .075f) / .145f))
-                : 1f - .06f * Mathf.Clamp01((age - 1f) / .35f);
-            rect.localScale = Vector3.one * scale;
-            rect.localRotation = Quaternion.Euler(0, 0, tilt * Mathf.Exp(-age * 7f));
-            fade.alpha = visible ? Mathf.Clamp01(age / .025f)
-                * (1f - Mathf.SmoothStep(0, 1, (age - .75f) / .6f)) : 0f;
-            for (int i = 0; i < sparks.Length; i++)
+
+            // Arc: shoots up and out to one side, then settles (firm) instead of drifting forever.
+            float t = Mathf.Clamp01(age / .45f);
+            float ease = 1f - (1f - t) * (1f - t);
+            float x = side * 55f * ease;
+            float y = 40f + 95f * ease - 30f * t * t;
+            float shake = critical ? Mathf.Sin(age * 70f) * 4f * Mathf.Exp(-age * 9f) : 0f;
+            rect.anchoredPosition = point + new Vector2(x + shake, y);
+
+            // Pop on spawn (or on merge): overshoot wide-and-flat, then spring back to its size.
+            float pop = age < PopTime ? Mathf.Lerp(1.8f, 1f, Mathf.SmoothStep(0, 1, age / PopTime))
+                : 1f + .08f * Mathf.Sin((age - PopTime) * 30f) * Mathf.Exp(-(age - PopTime) * 14f);
+            float squash = age < PopTime ? Mathf.Lerp(1.2f, 1f, age / PopTime) : 1f;
+            rect.localScale = new Vector3(size * pop * squash, size * pop / squash, 1f);
+            rect.localRotation = Quaternion.Euler(0, 0, -side * 6f * Mathf.Exp(-age * 6f));
+
+            // Brief white flash on hit/merge, then settles into its color.
+            if (flash > 0f)
             {
-                float angle = (i * 120f + 20f) * Mathf.Deg2Rad;
-                sparks[i].anchoredPosition = new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * (25 + age * 85);
-                sparks[i].localScale = Vector3.one * Mathf.Clamp01(1f - age / .28f);
+                flash = Mathf.MoveTowards(flash, 0f, Time.unscaledDeltaTime * 8f);
+                label.colorGradient = new VertexGradient(
+                    Color.Lerp(baseGradient.topLeft, Color.white, flash), Color.Lerp(baseGradient.topRight, Color.white, flash),
+                    Color.Lerp(baseGradient.bottomLeft, Color.white, flash), Color.Lerp(baseGradient.bottomRight, Color.white, flash));
             }
+
+            bool visible = screen.z > 0 && !GameJam.Multiplayer.SceneTransitionVideo.IsPresent;
+            fade.alpha = visible ? 1f - Mathf.SmoothStep(0, 1, (age - .75f) / (Life - .75f)) : 0f;
         }
+
+        private void OnDestroy() => live.Remove(this);
     }
 }
