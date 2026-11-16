@@ -10574,7 +10574,7 @@ Transform:
   m_GameObject: {fileID: 386908489}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -249.72525, y: 20.752983, z: -277.191}
+  m_LocalPosition: {x: 12, y: 12.5, z: -42}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -64839,7 +64839,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameJam.Collectibles.MaterialPickup
   material: {fileID: 11400000, guid: 57b1499ca0d04d23b250bf09d7a37089, type: 2}
-  amount: 1
+  amount: 3
   collectionDistance: 2.5
   visual: {fileID: 686950764}
   _DroppedAmount: 0
@@ -70660,15 +70660,15 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 2031957853526025492, guid: f4919ca4170c03a4ab8af7780c621f6e, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -44.642857
+      value: 6
       objectReference: {fileID: 0}
     - target: {fileID: 2031957853526025492, guid: f4919ca4170c03a4ab8af7780c621f6e, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 5.356162
+      value: 12.6
       objectReference: {fileID: 0}
     - target: {fileID: 2031957853526025492, guid: f4919ca4170c03a4ab8af7780c621f6e, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -223.21428
+      value: -56
       objectReference: {fileID: 0}
     - target: {fileID: 2031957853526025492, guid: f4919ca4170c03a4ab8af7780c621f6e, type: 3}
       propertyPath: m_LocalRotation.w
@@ -72256,7 +72256,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameJam.Collectibles.MaterialPickup
   material: {fileID: 11400000, guid: 57b1499ca0d04d23b250bf09d7a37089, type: 2}
-  amount: 1
+  amount: 3
   collectionDistance: 2.5
   visual: {fileID: 1587182169}
   _DroppedAmount: 0
@@ -88759,7 +88759,7 @@ Transform:
   m_GameObject: {fileID: 1541027508}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: 0.8660254, z: -0, w: -0.5}
-  m_LocalPosition: {x: -222.01244, y: 11.699317, z: -229.19101}
+  m_LocalPosition: {x: 22, y: 13.5, z: 18}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -120599,7 +120599,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameJam.Collectibles.MaterialPickup
   material: {fileID: 11400000, guid: 6453654fe44ffdc429c6fff7b65ceb59, type: 2}
-  amount: 1
+  amount: 3
   collectionDistance: 2.5
   visual: {fileID: 820770656}
   _DroppedAmount: 0
@@ -126175,7 +126175,7 @@ Transform:
   m_GameObject: {fileID: 2024447032}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: 0.86602545, z: -0, w: 0.49999994}
-  m_LocalPosition: {x: -277.43805, y: 14.858506, z: -229.19101}
+  m_LocalPosition: {x: -28, y: 13, z: 24}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -128810,7 +128810,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameJam.Collectibles.MaterialPickup
   material: {fileID: 11400000, guid: 6453654fe44ffdc429c6fff7b65ceb59, type: 2}
-  amount: 1
+  amount: 3
   collectionDistance: 2.5
   visual: {fileID: 1128717331}
   _DroppedAmount: 0
@@ -129780,7 +129780,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2488151335881321099, guid: 77192f9930eb41242a0102055d941090, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -44.642857
+      value: 6
       objectReference: {fileID: 0}
     - target: {fileID: 2488151335881321099, guid: 77192f9930eb41242a0102055d941090, type: 3}
       propertyPath: m_LocalPosition.y
@@ -129788,7 +129788,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2488151335881321099, guid: 77192f9930eb41242a0102055d941090, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -223.21428
+      value: -56
       objectReference: {fileID: 0}
     - target: {fileID: 2488151335881321099, guid: 77192f9930eb41242a0102055d941090, type: 3}
       propertyPath: m_LocalRotation.w
@@ -130129,6 +130129,204 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 0d175b97fe2564d4b9761167311af72d, type: 3}
+--- !u!1 &2142602090
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2142602093}
+  - component: {fileID: 2142602092}
+  - component: {fileID: 2142602091}
+  m_Layer: 0
+  m_Name: Venomwing_Spawn
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &2142602091
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2142602090}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9eb728bb3476b01479612c709b01bd4f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ReksaiFusionAreaSpawner
+  enemyPrefab: {fileID: 4609473335657631184, guid: 35f46996cdd2cb4409a757b036960230, type: 3}
+  activationDistance: 0
+--- !u!114 &2142602092
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2142602090}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: -1552182283, guid: e725a070cec140c4caffb81624c8c787, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Fusion.Runtime.dll::Fusion.NetworkObject
+  SortKey: 2789201645
+  SendPriority: 1
+  EnableInterpolation: 1
+  Flags: 262146
+  NestedObjects: []
+  NetworkedBehaviours:
+  - {fileID: 2142602091}
+  ForceRemoteRenderTimeframe: 0
+--- !u!4 &2142602093
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2142602090}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 1, z: 0, w: 0}
+  m_LocalPosition: {x: -22, y: 15.5, z: -12}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+--- !u!1 &2142602094
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2142602097}
+  - component: {fileID: 2142602096}
+  - component: {fileID: 2142602095}
+  m_Layer: 0
+  m_Name: GusanoMarte_Spawn
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &2142602095
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2142602094}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9eb728bb3476b01479612c709b01bd4f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ReksaiFusionAreaSpawner
+  enemyPrefab: {fileID: 1317130557849947152, guid: 4c9d27e86e971fe47b89f770d8028917, type: 3}
+  activationDistance: 0
+--- !u!114 &2142602096
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2142602094}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: -1552182283, guid: e725a070cec140c4caffb81624c8c787, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Fusion.Runtime.dll::Fusion.NetworkObject
+  SortKey: 2789201646
+  SendPriority: 1
+  EnableInterpolation: 1
+  Flags: 262146
+  NestedObjects: []
+  NetworkedBehaviours:
+  - {fileID: 2142602095}
+  ForceRemoteRenderTimeframe: 0
+--- !u!4 &2142602097
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2142602094}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 1, z: 0, w: 0}
+  m_LocalPosition: {x: -38, y: 13, z: -45}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+--- !u!1 &2142602098
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2142602101}
+  - component: {fileID: 2142602100}
+  - component: {fileID: 2142602099}
+  m_Layer: 0
+  m_Name: JungleNightmare_Spawn
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &2142602099
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2142602098}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9eb728bb3476b01479612c709b01bd4f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ReksaiFusionAreaSpawner
+  enemyPrefab: {fileID: 6106222393702131574, guid: 75566413badb65947ab3a36666c0b91c, type: 3}
+  activationDistance: 0
+--- !u!114 &2142602100
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2142602098}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: -1552182283, guid: e725a070cec140c4caffb81624c8c787, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Fusion.Runtime.dll::Fusion.NetworkObject
+  SortKey: 2789201647
+  SendPriority: 1
+  EnableInterpolation: 1
+  Flags: 262146
+  NestedObjects: []
+  NetworkedBehaviours:
+  - {fileID: 2142602099}
+  ForceRemoteRenderTimeframe: 0
+--- !u!4 &2142602101
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2142602098}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 1, z: 0, w: 0}
+  m_LocalPosition: {x: 36, y: 13.8, z: -28}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
@@ -130175,3 +130373,6 @@ SceneRoots:
   - {fileID: 1334024326}
   - {fileID: 1274831968}
   - {fileID: 2142602087}
+  - {fileID: 2142602093}
+  - {fileID: 2142602097}
+  - {fileID: 2142602101}
