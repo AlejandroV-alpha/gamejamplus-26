@@ -178,7 +178,7 @@ GameObject:
   - component: {fileID: 4948023768239185644}
   - component: {fileID: 4074729645400207178}
   - component: {fileID: 2172729875544181273}
-  - component: {fileID: 6543617966662527400}
+  - component: {fileID: 8359978838156295011}
   m_Layer: 0
   m_Name: Venomwing_Fusion
   m_TagString: Untagged
@@ -307,7 +307,7 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 4294967295
   burstScale: 1
---- !u!114 &6543617966662527400
+--- !u!114 &8359978838156295011
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
