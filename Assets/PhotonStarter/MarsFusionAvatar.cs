@@ -76,6 +76,7 @@ namespace GameJam.Multiplayer
         private float fakeDeadUntil, nextTrollActionAt;
         private float pendingHopImpulse;
         private PlayerRagdoll ragdoll;
+        public PlayerRagdoll Ragdoll => ragdoll;
         private float punchStartTime = -10f;
         public bool IsPunching => Time.time - punchStartTime < 0.28f;
         private Transform punchSpine, punchRightUpperArm, punchRightForeArm;
@@ -188,6 +189,11 @@ namespace GameJam.Multiplayer
             friendlyPushProtection = TickTimer.CreateFromSeconds(Runner, FriendlyPushImmunity);
             HurtSequence++;
             RPC_BroadcastTrollEvent(1, transform.position + Vector3.up * 1.4f);
+            if (ragdoll != null)
+            {
+                Vector3 shoveImpulse = direction.normalized * 15f + Vector3.up * 4.2f;
+                RequestRagdollKnockdown(shoveImpulse, 2.4f);
+            }
             Debug.Log("[Player push] Empujon recibido.", this);
         }
 

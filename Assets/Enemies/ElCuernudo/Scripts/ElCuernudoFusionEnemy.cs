@@ -273,7 +273,12 @@ public sealed class ElCuernudoFusionEnemy : NetworkBehaviour, ITakeDamage
         if (!hitApplied && Elapsed >= swipeHitTime / speed)
         {
             hitApplied = true;
-            if (InFrontAndClose(swipeRange * Size + .8f, 85f)) target.TakeMonsterDamage(Mathf.CeilToInt(swipeDamage));
+            if (InFrontAndClose(swipeRange * Size + .8f, 85f))
+            {
+                target.TakeMonsterDamage(Mathf.CeilToInt(swipeDamage));
+                Vector3 slapImpulse = (nextSwipeLeft ? -transform.right : transform.right) * 10f + transform.forward * 8f + Vector3.up * 3.5f;
+                target.RequestRagdollKnockdown(slapImpulse, 2.2f);
+            }
         }
         if (Elapsed >= swipeDuration / speed)
         {
@@ -314,7 +319,12 @@ public sealed class ElCuernudoFusionEnemy : NetworkBehaviour, ITakeDamage
             if (target != null && target.IsAlive)
             {
                 var d = target.transform.position - impact; d.y = 0;
-                if (d.magnitude <= leapHitRadius * Size) target.TakeMonsterDamage(Mathf.CeilToInt(leapDamage));
+                if (d.magnitude <= leapHitRadius * Size)
+                {
+                    target.TakeMonsterDamage(Mathf.CeilToInt(leapDamage));
+                    Vector3 slamImpulse = (d.sqrMagnitude > 0.01f ? d.normalized : transform.forward) * 16f + Vector3.up * 5f;
+                    target.RequestRagdollKnockdown(slamImpulse, 2.8f);
+                }
             }
         }
         if (t >= leapDuration)

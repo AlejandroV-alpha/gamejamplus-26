@@ -297,6 +297,8 @@ public sealed class ReksaiFusionEnemy : NetworkBehaviour, ITakeDamage
         if (targetFusion != null)
         {
             targetFusion.TakeMonsterDamage(Mathf.CeilToInt(amount));
+            Vector3 pushDir = (targetTransform.position - transform.position).normalized;
+            targetFusion.RequestRagdollKnockdown(pushDir * 11f + Vector3.up * 4f, 2.2f);
         }
     }
 

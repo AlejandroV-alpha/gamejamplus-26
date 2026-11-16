@@ -1,5 +1,6 @@
 using Fusion;
 using Fusion.Addons.SimpleKCC;
+using GameJam.Combat;
 using GameJam.Multiplayer;
 using UnityEngine;
 using UnityEngine.Animations;
@@ -113,10 +114,15 @@ namespace GameJam.Environment.Mars
                 {
                     if (downState == 2) downState = 1;
                 }
-                else if (kcc != null && kcc.IsGrounded && downState == 1)
+                else if (kcc != null && downState == 1)
                 {
                     downState = 2;
-                    recoveryTimer = TickTimer.CreateFromSeconds(Runner, standUpClip != null ? standUpClip.length : 8.267f);
+                    recoveryTimer = TickTimer.CreateFromSeconds(Runner, 2.5f);
+                    if (avatar != null && avatar.IsRagdoll && avatar.Ragdoll != null)
+                    {
+                        avatar.IsRagdoll = false;
+                        avatar.Ragdoll.StandUp();
+                    }
                     Debug.Log("[Sandstorm] Tormenta terminada: levantando astronauta.", this);
                 }
                 else if (downState == 2 && recoveryTimer.Expired(Runner))
@@ -139,6 +145,12 @@ namespace GameJam.Environment.Mars
                 fallTimer = TickTimer.CreateFromSeconds(Runner, fallDuration);
                 gustVelocity = new Vector3(11f, 0f, 3f).normalized * airbornePushSpeed;
                 gustEndTimer = TickTimer.CreateFromSeconds(Runner, fallDuration);
+                if (avatar != null)
+                {
+                    Vector3 stormImpulse = (gustVelocity.sqrMagnitude > 0.1f ? gustVelocity.normalized : transform.forward) * 14f + Vector3.up * 4f;
+                    avatar.RequestRagdollKnockdown(stormImpulse, 3.8f);
+                    EnemyDamagePopup.ShowCallout(transform.position + Vector3.up * 1.6f, "¡TUMBADO!", "TORMENTA", new Color(1f, .55f, .18f), 1.5f);
+                }
                 Debug.Log("[Sandstorm] Astronauta derribado; inmovil hasta el fin de la tormenta.", this);
                 return;
             }
@@ -169,6 +181,15 @@ namespace GameJam.Environment.Mars
             gustVelocity = -direction.normalized * gustStrength;
             gustEndTimer = TickTimer.CreateFromSeconds(Runner, gustDuration);
             Debug.Log("[Sandstorm] Rafaga aplicada.", this);
+
+            if (Random.value < 0.28f && avatar != null && !avatar.IsRagdoll)
+            {
+                downState = 1;
+                fallTimer = TickTimer.CreateFromSeconds(Runner, fallDuration);
+                Vector3 stormImpulse = (gustVelocity.sqrMagnitude > 0.1f ? gustVelocity.normalized : -transform.forward) * 12f + Vector3.up * 3.5f;
+                avatar.RequestRagdollKnockdown(stormImpulse, 3.2f);
+                EnemyDamagePopup.ShowCallout(transform.position + Vector3.up * 1.6f, "¡RÁFAGA!", "TORMENTA", new Color(1f, .45f, .15f), 1.4f);
+            }
         }
 
         /// <summary>
@@ -234,6 +255,11 @@ namespace GameJam.Environment.Mars
         // replicated recovery timer drives the complete clip on every client.
         private void LateUpdate()
         {
+            if (avatar != null && avatar.IsRagdoll)
+            {
+                ReleaseRecoveryGraph();
+                return;
+            }
             if (!IsDowned || animator == null || visualBody == null)
             {
                 ReleaseRecoveryGraph();
