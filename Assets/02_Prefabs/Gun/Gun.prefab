@@ -596,7 +596,7 @@ MonoBehaviour:
   hitLayers:
     serializedVersion: 2
     m_Bits: 4294967295
-  allowFriendlyFire: 0
+  allowFriendlyFire: 1
   reloadDuration: 1.6
 --- !u!1 &5360719335734736277
 GameObject:

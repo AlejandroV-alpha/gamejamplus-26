@@ -1182,7 +1182,7 @@ namespace GameJam.UI
             widget.VolumePercentLabel = CreateLabel(sliderRoot, "100%", 10, new Vector2(84, 0), new Vector2(62, 24), CyanAccent);
             widget.VolumePercentLabel.alignment = TextAlignmentOptions.Left;
 
-            widget.VolumeSlider = CreateSlider(sliderRoot, "IndivVolSlider", 0f, 1.5f, 1f, new Vector2(0, 0), new Vector2(92, 16));
+            widget.VolumeSlider = CreateSlider(sliderRoot, "IndivVolSlider", 0f, 2.0f, 1f, new Vector2(0, 0), new Vector2(92, 16));
 
             return widget;
         }

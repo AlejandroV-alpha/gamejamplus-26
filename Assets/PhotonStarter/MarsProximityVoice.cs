@@ -9,7 +9,7 @@ namespace GameJam.Multiplayer
     [RequireComponent(typeof(VoiceNetworkObject))]
     public sealed class MarsProximityVoice : MonoBehaviour
     {
-        [Min(1)] public float hearingDistance = 22f;
+        [Min(1)] public float hearingDistance = 42f;
         public bool pushToTalk = true;
         public Key pushToTalkKey = Key.V;
         private VoiceNetworkObject voice;
@@ -73,6 +73,14 @@ namespace GameJam.Multiplayer
                 recorder.MicrophoneDevice = new Photon.Voice.DeviceInfo(VoicePreferences.Device);
             }
             else recorder.MicrophoneDevice = Photon.Voice.DeviceInfo.Default;
+
+            var dsp = recorder.GetComponent<WebRtcAudioDsp>() ?? recorder.gameObject.AddComponent<WebRtcAudioDsp>();
+            dsp.AGC = true;
+            dsp.AgcCompressionGain = 21;
+            dsp.AgcTargetLevel = 2;
+            dsp.NoiseSuppression = true;
+            dsp.HighPass = true;
+
             if (!VoicePreferences.TestingMicrophone) recorder.RestartRecording();
             appliedRevision = VoicePreferences.Revision;
             appliedCaptureRevision = VoicePreferences.CaptureRevision;
@@ -85,8 +93,8 @@ namespace GameJam.Multiplayer
 
         public void SetIndividualVolume(float volume)
         {
-            individualVolume = Mathf.Clamp01(volume);
-            if (output != null) output.volume = individualVolume * MasterVoiceVolume;
+            individualVolume = Mathf.Clamp(volume, 0f, 2f);
+            if (output != null) output.volume = Mathf.Clamp01(individualVolume * MasterVoiceVolume * 1.35f);
             if (loadedPreferenceKey != null) { PlayerPrefs.SetFloat(loadedPreferenceKey, individualVolume); PlayerPrefs.Save(); }
         }
 
@@ -106,17 +114,38 @@ namespace GameJam.Multiplayer
             pushToTalk = LocalPushToTalk = PlayerPrefs.GetInt("GameJam.VoiceMode", 1) == 1;
             MasterVoiceVolume = PlayerPrefs.GetFloat("GameJam.MasterVoiceVolume", 1f);
 
-            if (recorder != null && pushToTalk) recorder.TransmitEnabled = false;
+            if (recorder != null)
+            {
+                if (pushToTalk) recorder.TransmitEnabled = false;
+                var dsp = recorder.GetComponent<WebRtcAudioDsp>() ?? recorder.gameObject.AddComponent<WebRtcAudioDsp>();
+                dsp.AGC = true;
+                dsp.AgcCompressionGain = 21;
+                dsp.AgcTargetLevel = 2;
+                dsp.NoiseSuppression = true;
+                dsp.HighPass = true;
+            }
+
             var speaker = GetComponentInChildren<Speaker>(true);
             output = speaker != null ? speaker.GetComponent<AudioSource>() : null;
             if (output != null)
             {
-                output.spatialBlend = 1;
-                output.rolloffMode = AudioRolloffMode.Linear;
-                output.minDistance = 2f;
-                output.maxDistance = hearingDistance;
-                output.dopplerLevel = 0;
-                output.volume = individualVolume * MasterVoiceVolume;
+                output.spatialBlend = 1f;
+                output.minDistance = 7.5f;
+                output.maxDistance = Mathf.Max(hearingDistance, 42f);
+                output.dopplerLevel = 0f;
+                output.priority = 10;
+
+                var curve = new AnimationCurve();
+                curve.AddKey(new Keyframe(0f, 1f));
+                curve.AddKey(new Keyframe(7.5f / output.maxDistance, 1f));
+                curve.AddKey(new Keyframe(18f / output.maxDistance, 0.88f));
+                curve.AddKey(new Keyframe(28f / output.maxDistance, 0.58f));
+                curve.AddKey(new Keyframe(38f / output.maxDistance, 0.22f));
+                curve.AddKey(new Keyframe(1f, 0f));
+                output.rolloffMode = AudioRolloffMode.Custom;
+                output.SetCustomCurve(AudioSourceCurveType.CustomRolloff, curve);
+
+                output.volume = Mathf.Clamp01(individualVolume * MasterVoiceVolume * 1.35f);
             }
         }
 
@@ -180,18 +209,20 @@ namespace GameJam.Multiplayer
                     loadedPreferenceKey = VolumePreferenceKey;
                     if (loadedPreferenceKey != null)
                     {
-                        individualVolume = PlayerPrefs.GetFloat(loadedPreferenceKey, 1f);
+                        individualVolume = PlayerPrefs.GetFloat(loadedPreferenceKey, 1.25f);
                         individuallyMuted = PlayerPrefs.GetInt(loadedPreferenceKey + ".Muted", 0) == 1;
                     }
                 }
                 bool radio = equipment != null && equipment.IsRadioChannelOpen;
                 var listener = local != null ? local.GetComponent<GameJam.Inventory.PlayerEquipment>() : null;
+                float maxDist = Mathf.Max(hearingDistance, 42f);
+                float distSqr = local != null ? (local.transform.position - transform.position).sqrMagnitude : 99999f;
                 bool allowed = radio
-                    ? GameJam.Inventory.PlayerEquipment.CanReceiveRadio(equipment,listener)
-                    : local != null && (local.transform.position-transform.position).sqrMagnitude <= hearingDistance*hearingDistance;
+                    ? GameJam.Inventory.PlayerEquipment.CanReceiveRadio(equipment, listener)
+                    : distSqr <= maxDist * maxDist;
                 output.spatialBlend = radio ? 0f : 1f;
                 output.mute = individuallyMuted || !allowed;
-                output.volume = individualVolume * MasterVoiceVolume;
+                output.volume = Mathf.Clamp01(individualVolume * MasterVoiceVolume * 1.35f);
             }
         }
     }

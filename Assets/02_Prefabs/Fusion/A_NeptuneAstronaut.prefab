@@ -1176,7 +1176,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b580fa3e8060f28489924841678f6c69, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameJam.Multiplayer.MarsProximityVoice
-  hearingDistance: 22
+  hearingDistance: 42
   pushToTalk: 1
   pushToTalkKey: 36
 --- !u!114 &175305171120472857

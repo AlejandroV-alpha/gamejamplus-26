@@ -38,7 +38,7 @@ namespace GameJam.Combat
         [SerializeField, Min(0f)] private float recoilAngle = 5f;
         [SerializeField, Min(0.01f)] private float recoilDuration = 0.12f;
         [SerializeField] private LayerMask hitLayers = ~0;
-        [SerializeField] private bool allowFriendlyFire;
+        [SerializeField] private bool allowFriendlyFire = true;
         [SerializeField, Min(.2f)] private float reloadDuration = 1.6f;
         [Networked] private TickTimer reloadTimer { get; set; }
         public bool IsReloading => IsReady() && reloadTimer.IsRunning && !reloadTimer.Expired(Runner);
@@ -64,6 +64,7 @@ namespace GameJam.Combat
         /// </summary>
         private void Awake()
         {
+            allowFriendlyFire = true;
             equipment = GetComponentInParent<GameJam.Inventory.PlayerEquipment>();
             character = GetComponentInParent<Character>();
             characterInput = GetComponentInParent<CharacterInput>();
@@ -423,7 +424,7 @@ namespace GameJam.Combat
                 if (targetAvatar.Runner != Runner || targetAvatar == avatar) return;
                 // The victim's authority validates protection and applies its own KCC push.
                 HitFeedbackHUD.Hit();
-                EnemyDamagePopup.ShowCallout(targetAvatar.transform.position + Vector3.up * 1.75f, "¡FUEGO AMIGO!", "-0 IQ", new Color(1f, .62f, .18f), 1.25f);
+                EnemyDamagePopup.ShowCallout(targetAvatar.transform.position + Vector3.up * 1.75f, "¡FUEGO AMIGO!", $"-{damage} HP", new Color(1f, .45f, .15f), 1.35f);
                 targetAvatar.RequestFriendlyPush(avatar);
                 if (!allowFriendlyFire) return;
                 if (targetAvatar.Object == null || !targetAvatar.Object.IsValid)

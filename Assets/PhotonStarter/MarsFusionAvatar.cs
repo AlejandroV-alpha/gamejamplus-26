@@ -541,8 +541,11 @@ namespace GameJam.Multiplayer
                 var health = HealthSource;
                 float before = health.CurrentHealth;
                 health.TakeDamage(damage);
-                // Only the victim's authority receives this RPC and plays the 2D feedback once.
-                if (fromMonster && health.CurrentHealth < before) PlayMonsterHurtSound();
+                if (health.CurrentHealth < before)
+                {
+                    HurtSequence++;
+                    PlayMonsterHurtSound();
+                }
             }
             else if (!warnedMissingHealth)
             {
@@ -792,7 +795,8 @@ namespace GameJam.Multiplayer
             }
             if (!IsAlive && ragdoll != null && !ragdoll.IsRagdolled)
             {
-                ragdoll.GoRagdoll(Vector3.down * 2.5f, 99999f);
+                Vector3 deathTumble = friendlyPushVelocity.sqrMagnitude > 1f ? (friendlyPushVelocity + Vector3.up * 2.5f) : (Vector3.down * 2.5f);
+                ragdoll.GoRagdoll(deathTumble, 99999f);
             }
             else if (IsAlive && !IsRagdoll && ragdoll != null && ragdoll.IsRagdolled && !(GetComponent<GameJam.Environment.Mars.PlayerSandstorm>()?.IsDowned ?? false))
             {
