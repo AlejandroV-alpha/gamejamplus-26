@@ -442,13 +442,6 @@ namespace GameJam.Combat
                 return;
             }
 
-            var holoDummy = target.GetComponentInParent<GameJam.Showcase.HologramCombatDummy>();
-            if (holoDummy != null)
-            {
-                holoDummy.TakeDamage(damage);
-                return;
-            }
-
             foreach (MonoBehaviour component in target.GetComponentsInParent<MonoBehaviour>())
             {
                 ITakeDamage damageReceiver = component as ITakeDamage;

@@ -107,7 +107,7 @@ namespace GameJam.UI
             RefreshLanguage();
             if (SciFiGameMenuManager.IsLobbyScene)
                 gameObject.AddComponent<LobbyGameplayTutorial>().Build(avatar, safeRoot, font);
-            gameObject.AddComponent<GameJam.Showcase.ExhibitionDemoDirector>().Build(avatar, safeRoot, font);
+            BuildCrewActionsHint();
         }
 
         private void BuildHUD()
@@ -147,6 +147,18 @@ namespace GameJam.UI
                 notices.Add(new Notice { Group = group, Text = Label(row, "", Vector2.zero, new Vector2(294, 44), 20) });
                 Show(group, false);
             }
+        }
+
+        private void BuildCrewActionsHint()
+        {
+            var box = Panel("Crew actions hint", hud.transform, new Vector2(1, 0), new Vector2(-205, 50), new Vector2(370, 68));
+            var title = Label(box, "ACCIONES CO-OP / TROLL", new Vector2(0, 18), new Vector2(350, 20), 14);
+            title.color = Accent;
+            title.fontStyle = FontStyles.Bold;
+            var row1 = Label(box, "[F] Empujón  ·  [H] Bocina Marciana", new Vector2(0, -3), new Vector2(350, 19), 13);
+            row1.color = Cream;
+            var row2 = Label(box, "[T] Pánico  ·  [Y] Fingir Muerte", new Vector2(0, -21), new Vector2(350, 19), 13);
+            row2.color = Cream;
         }
 
         private void BuildQuickbar()

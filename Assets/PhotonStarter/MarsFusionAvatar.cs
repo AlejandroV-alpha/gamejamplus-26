@@ -221,10 +221,30 @@ namespace GameJam.Multiplayer
                     break;
                 }
 
-                var dummy = col.GetComponentInParent<GameJam.Showcase.HologramCombatDummy>();
-                if (dummy != null)
+                var reksai = col.GetComponentInParent<ReksaiFusionEnemy>();
+                if (reksai != null && reksai.Runner == Runner)
                 {
-                    dummy.TakeDamage(3);
+                    reksai.TakeDamage(2);
+                    EnemyDamagePopup.ShowCallout(col.transform.position + Vector3.up * 1.5f, "¡PUM!", "-2 HP", Color.red, 1.2f);
+                    HitFeedbackHUD.Hit();
+                    hitTarget = true;
+                    break;
+                }
+                var cuernudo = col.GetComponentInParent<ElCuernudoFusionEnemy>();
+                if (cuernudo != null && cuernudo.Runner == Runner)
+                {
+                    cuernudo.TakeDamage(2);
+                    EnemyDamagePopup.ShowCallout(col.transform.position + Vector3.up * 1.8f, "¡PUM!", "-2 HP", Color.red, 1.2f);
+                    HitFeedbackHUD.Hit();
+                    hitTarget = true;
+                    break;
+                }
+                var venom = col.GetComponentInParent<VenomwingFusionEnemy>();
+                if (venom != null && venom.Runner == Runner)
+                {
+                    venom.TakeDamage(2);
+                    EnemyDamagePopup.ShowCallout(col.transform.position + Vector3.up * 1.6f, "¡PUM!", "-2 HP", Color.red, 1.2f);
+                    HitFeedbackHUD.Hit();
                     hitTarget = true;
                     break;
                 }
@@ -257,9 +277,27 @@ namespace GameJam.Multiplayer
         public void TriggerSkillIssueSiren()
         {
             if (!IsNetworkReady || !HasStateAuthority || !IsAlive || Time.unscaledTime < nextTrollActionAt) return;
-            nextTrollActionAt = Time.unscaledTime + .55f;
+            nextTrollActionAt = Time.unscaledTime + .6f;
             HurtSequence++;
             RPC_BroadcastTrollEvent(3, transform.position + Vector3.up * 1.85f);
+            int count = Physics.OverlapSphereNonAlloc(transform.position, 42f, nearbyScanBuffer, ~0, QueryTriggerInteraction.Collide);
+            for (int i = 0; i < count; i++)
+            {
+                var c = nearbyScanBuffer[i];
+                if (c == null) continue;
+                var cuernudo = c.GetComponentInParent<ElCuernudoFusionEnemy>();
+                if (cuernudo != null && cuernudo.Runner == Runner) cuernudo.TakeDamage(0);
+                var venom = c.GetComponentInParent<VenomwingFusionEnemy>();
+                if (venom != null && venom.Runner == Runner) venom.TakeDamage(0);
+            }
+        }
+
+        public void TriggerPanicEmote()
+        {
+            if (!IsNetworkReady || !HasStateAuthority || !IsAlive || Time.unscaledTime < nextTrollActionAt) return;
+            nextTrollActionAt = Time.unscaledTime + .5f;
+            hurtUntil = Time.time + 1.2f;
+            RPC_BroadcastTrollEvent(7, transform.position + Vector3.up * 1.8f);
         }
 
         public void ToggleFakeDeath()
@@ -274,7 +312,7 @@ namespace GameJam.Multiplayer
             }
             else
             {
-                fakeDeadUntil = Time.unscaledTime + 8f;
+                fakeDeadUntil = Time.unscaledTime + 3.0f;
                 RPC_BroadcastTrollEvent(4, transform.position + Vector3.up * 1.6f);
             }
         }
@@ -288,44 +326,45 @@ namespace GameJam.Multiplayer
             {
                 case 1: // Boop / Push Hit
                     trollAudioSource.pitch = Random.Range(.95f, 1.15f);
-                    trollAudioSource.PlayOneShot(boopClip, .8f);
-                    identityView?.ShowCalloutBanner("¡EMPUJÓN ESPACIAL!", new Color32(255, 196, 45, 255), 2.2f);
-                    EnemyDamagePopup.ShowCallout(worldPos, "¡BOOP!", "TRAICIÓN", new Color(1f, .72f, .18f), 1.35f);
+                    trollAudioSource.PlayOneShot(boopClip, .85f);
+                    EnemyDamagePopup.ShowCallout(worldPos, "¡BOOP!", "EMPUJÓN", new Color(1f, .72f, .18f), 1.35f);
                     SpawnQuickRingBurst(worldPos, new Color(.25f, .95f, 1f));
                     break;
                 case 2: // Jetpack Dash
                     trollAudioSource.pitch = Random.Range(.95f, 1.1f);
                     trollAudioSource.PlayOneShot(jetpackClip, .75f);
-                    identityView?.ShowCalloutBanner("⚡ PROPULSOR FUERA DE CONTROL", new Color32(89, 225, 255, 255), 2.4f);
                     EnemyDamagePopup.ShowCallout(worldPos, "¡TURBO CAOS!", "JETPACK", new Color(.35f, .9f, 1f), 1.25f);
                     SpawnQuickRingBurst(transform.position + Vector3.up * .4f, new Color(1f, .55f, .15f));
                     break;
-                case 3: // Skill Issue Siren
+                case 3: // Martian Airhorn / Monster Bait
                     hurtUntil = Time.time + 1.2f;
                     trollAudioSource.pitch = 1f;
-                    trollAudioSource.PlayOneShot(sirenClip, .85f);
-                    identityView?.ShowCalloutBanner("⚠ ALERTA: SKILL ISSUE DETECTADO", new Color32(255, 82, 82, 255), 3.4f);
-                    EnemyDamagePopup.ShowCallout(worldPos, "SKILL ISSUE!", "0% IQ", new Color(1f, .3f, .3f), 1.45f);
+                    trollAudioSource.PlayOneShot(sirenClip, .9f);
+                    EnemyDamagePopup.ShowCallout(worldPos, "¡HONK!", "BOCINA", new Color(1f, .28f, .28f), 1.45f);
                     break;
                 case 4: // Fake Death Start
-                    fakeDeadUntil = Time.unscaledTime + 8f;
+                    fakeDeadUntil = Time.unscaledTime + 3.0f;
                     trollAudioSource.pitch = 1f;
                     trollAudioSource.PlayOneShot(fakeDeadClip, .8f);
-                    identityView?.ShowCalloutBanner("💀 [F] REVIVIR (100% REAL NO FAKE)", new Color32(255, 110, 95, 255), 7.8f);
-                    EnemyDamagePopup.ShowCallout(worldPos, "SISTEMA CAÍDO...", "¿SEGURO?", new Color(.95f, .4f, .4f), 1.2f);
+                    EnemyDamagePopup.ShowCallout(worldPos, "*D.E.P.*", "FINGIENDO", new Color(.95f, .4f, .4f), 1.2f);
                     break;
                 case 5: // Fake Death Baited Pop!
                     fakeDeadUntil = 0f;
                     trollAudioSource.pitch = 1.08f;
                     trollAudioSource.PlayOneShot(baitedClip, .9f);
-                    identityView?.ShowCalloutBanner("😂 ¡CAÍSTE! +999 TROLLEO", new Color32(81, 229, 45, 255), 3.0f);
-                    EnemyDamagePopup.ShowCallout(worldPos, "+999 ¡TROLEADO!", "BAITED!", new Color(.35f, 1f, .45f), 1.5f);
+                    EnemyDamagePopup.ShowCallout(worldPos, "¡ESTOY VIVO!", "BUUU!", new Color(.35f, 1f, .45f), 1.4f);
                     SpawnQuickRingBurst(transform.position + Vector3.up * 1f, new Color(.35f, 1f, .45f));
                     break;
-                case 6: // Boop Whiff / Wave
-                    trollAudioSource.pitch = 1.2f;
-                    trollAudioSource.PlayOneShot(boopClip, .55f);
+                case 6: // Boop Whiff / Swing
+                    trollAudioSource.pitch = 1.25f;
+                    trollAudioSource.PlayOneShot(boopClip, .45f);
                     SpawnQuickRingBurst(worldPos, new Color(.35f, .95f, .85f));
+                    break;
+                case 7: // Panic Scream
+                    hurtUntil = Time.time + 1.2f;
+                    trollAudioSource.pitch = Random.Range(1.3f, 1.5f);
+                    trollAudioSource.PlayOneShot(sirenClip, .7f);
+                    EnemyDamagePopup.ShowCallout(worldPos, "¡AAAAHHH!", "PÁNICO", new Color(1f, .85f, .2f), 1.35f);
                     break;
             }
         }
@@ -497,9 +536,12 @@ namespace GameJam.Multiplayer
             if (keyboard != null && !menu && !SceneTransitionVideo.IsBlockingInput && !LobbyDepartureEffects.IsBlockingInput && !PortalWhiteTransition.IsBlockingInput)
             {
                 if (keyboard.tabKey.wasPressedThisFrame) ToggleTablet();
-                if (Application.isEditor || Debug.isDebugBuild)
+                if (input != null && input.ControlsEnabled)
                 {
-                    if (keyboard.hKey.wasPressedThisFrame) PreviewHurt();
+                    if (keyboard.fKey.wasPressedThisFrame) RequestMeleeBoop();
+                    if (keyboard.hKey.wasPressedThisFrame) TriggerSkillIssueSiren();
+                    if (keyboard.tKey.wasPressedThisFrame) TriggerPanicEmote();
+                    if (keyboard.yKey.wasPressedThisFrame) ToggleFakeDeath();
                 }
             }
             // Auto-pop fake death bait if a teammate walks right up to "revive" us!
