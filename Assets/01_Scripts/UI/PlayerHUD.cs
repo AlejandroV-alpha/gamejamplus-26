@@ -151,13 +151,13 @@ namespace GameJam.UI
 
         private void BuildCrewActionsHint()
         {
-            var box = Panel("Crew actions hint", hud.transform, new Vector2(1, 0), new Vector2(-205, 50), new Vector2(370, 68));
-            var title = Label(box, "ACCIONES CO-OP / TROLL", new Vector2(0, 18), new Vector2(350, 20), 14);
+            var box = Panel("Crew actions hint", hud.transform, new Vector2(1, 0), new Vector2(-225, 58), new Vector2(410, 82));
+            var title = Label(box, "FÍSICA CO-OP & TROLL (LETHAL / REPO)", new Vector2(0, 24), new Vector2(390, 20), 13);
             title.color = Accent;
             title.fontStyle = FontStyles.Bold;
-            var row1 = Label(box, "[F] Empujón  ·  [H] Bocina Marciana", new Vector2(0, -3), new Vector2(350, 19), 13);
+            var row1 = Label(box, "[F] Empujón Físico (Ragdoll)  ·  [Y] Flop / Buceo", new Vector2(0, 2), new Vector2(390, 18), 12);
             row1.color = Cream;
-            var row2 = Label(box, "[T] Pánico  ·  [Y] Fingir Muerte", new Vector2(0, -21), new Vector2(350, 19), 13);
+            var row2 = Label(box, "[H] Bocina Marciana  ·  [T] Saludo  ·  [E] Arrastrar Amigo", new Vector2(0, -18), new Vector2(390, 18), 12);
             row2.color = Cream;
         }
 

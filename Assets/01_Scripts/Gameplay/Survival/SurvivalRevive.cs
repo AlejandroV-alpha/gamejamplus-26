@@ -199,6 +199,12 @@ namespace GameJam.Survival
             byte choice = keyboard.digit7Key.wasPressedThisFrame ? (byte)1
                 : keyboard.digit8Key.wasPressedThisFrame ? (byte)2 : keyboard.digit9Key.wasPressedThisFrame ? (byte)3 : (byte)0;
             if (choice == 0) return;
+            TriggerEmote(choice);
+        }
+
+        public void TriggerEmote(byte choice)
+        {
+            if (choice < 1 || choice > 3 || !HasStateAuthority) return;
             var clip = PlayerSocialAnimation.EmoteClip(choice);
             if (clip == null) return;
             Emote = choice;

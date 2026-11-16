@@ -300,6 +300,37 @@ public sealed class ReksaiFusionEnemy : NetworkBehaviour, ITakeDamage
         }
     }
 
+    // ------------------------------------------------------------------ Alerta acústica (Bocina / Siren)
+
+    public void AlertNoise(MarsFusionAvatar noisemaker)
+    {
+        if (Object == null || !Object.IsValid || noisemaker == null || noisemaker.Object == null) return;
+        RPC_AlertNoise(noisemaker.Object.Id);
+    }
+
+    [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
+    private void RPC_AlertNoise(NetworkId noisemakerId)
+    {
+        if (CurrentMode == Mode.Death) return;
+        if (Runner.TryFindObject(noisemakerId, out var nobj))
+        {
+            var avatar = nobj.GetComponent<MarsFusionAvatar>();
+            if (avatar != null && avatar.IsAlive)
+            {
+                targetFusion = avatar;
+                targetTransform = avatar.transform;
+                if (CurrentMode == Mode.Hidden)
+                {
+                    SetMode(Mode.Emerge);
+                }
+                else if (CurrentMode == Mode.Idle)
+                {
+                    SetMode(Mode.Run);
+                }
+            }
+        }
+    }
+
     public void TakeDamage(int amount)
     {
         if (Object == null || !Object.IsValid || amount <= 0) return;

@@ -395,6 +395,31 @@ public sealed class ElCuernudoFusionEnemy : NetworkBehaviour, ITakeDamage
         return y;
     }
 
+    // ------------------------------------------------------------------ Alerta acústica (Bocina / Siren)
+
+    public void AlertNoise(MarsFusionAvatar noisemaker)
+    {
+        if (Object == null || !Object.IsValid || noisemaker == null || noisemaker.Object == null) return;
+        RPC_AlertNoise(noisemaker.Object.Id);
+    }
+
+    [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
+    private void RPC_AlertNoise(NetworkId noisemakerId)
+    {
+        if (CurrentMode == Mode.Death) return;
+        if (Runner.TryFindObject(noisemakerId, out var nobj))
+        {
+            var avatar = nobj.GetComponent<MarsFusionAvatar>();
+            if (avatar != null && avatar.IsAlive)
+            {
+                Reveal();
+                aggroTarget = avatar;
+                target = avatar;
+                aggroUntil = Now + 14f;
+            }
+        }
+    }
+
     // ------------------------------------------------------------------ Daño recibido
 
     public void TakeDamage(int amount)

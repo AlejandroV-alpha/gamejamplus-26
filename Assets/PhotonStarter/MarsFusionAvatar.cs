@@ -1,3 +1,4 @@
+using GameJam.PhysicsControl;
 using Fusion;
 using System.Collections.Generic;
 using System.Linq;
@@ -47,6 +48,8 @@ namespace GameJam.Multiplayer
         [Networked] public byte SuitColorIndex { get; private set; }
         [Networked] public NetworkString<_32> PlayerName { get; private set; }
         [Networked] public NetworkBool LobbyReady { get; private set; }
+        [Networked] public NetworkBool IsRagdoll { get; set; }
+        [Networked] private TickTimer ragdollTimer { get; set; }
         [Networked] private NetworkBool IdentityInitialized { get; set; }
         public static MarsFusionAvatar Local { get; private set; }
         // Session-scoped identity survives scene/avatar recreation, but not a new runner.
@@ -72,6 +75,10 @@ namespace GameJam.Multiplayer
         private float hurtUntil, blinkUntil, nextBlink, voiceUntil, nextVoiceSend;
         private float fakeDeadUntil, nextTrollActionAt;
         private float pendingHopImpulse;
+        private PlayerRagdoll ragdoll;
+        private float punchStartTime = -10f;
+        public bool IsPunching => Time.time - punchStartTime < 0.28f;
+        private Transform punchSpine, punchRightUpperArm, punchRightForeArm;
         private readonly Collider[] nearbyScanBuffer = new Collider[24];
         private AudioSource trollAudioSource;
         private static AudioClip boopClip, jetpackClip, sirenClip, fakeDeadClip, baitedClip;
@@ -90,6 +97,14 @@ namespace GameJam.Multiplayer
         {
             input = GetComponent<PlayerInput>();
             session = FindFirstObjectByType<MarsFusionSession>();
+            ragdoll = GetComponent<PlayerRagdoll>() ?? gameObject.AddComponent<PlayerRagdoll>();
+            var anim = GetComponentInChildren<Animator>();
+            if (anim != null && anim.isHuman)
+            {
+                punchSpine = anim.GetBoneTransform(HumanBodyBones.Spine);
+                punchRightUpperArm = anim.GetBoneTransform(HumanBodyBones.RightUpperArm);
+                punchRightForeArm = anim.GetBoneTransform(HumanBodyBones.RightLowerArm);
+            }
             if (healthSource == null)
                 foreach (var component in GetComponents<MonoBehaviour>())
                     if (component is IPlayerHealth) { healthSource = component; break; }
@@ -204,6 +219,7 @@ namespace GameJam.Multiplayer
         {
             if (!IsNetworkReady || !HasStateAuthority || !IsAlive || Time.unscaledTime < nextTrollActionAt) return;
             nextTrollActionAt = Time.unscaledTime + .45f;
+            punchStartTime = Time.time;
             Vector3 center = transform.position + transform.forward * 1.6f + Vector3.up * .9f;
             int hitCount = Physics.OverlapSphereNonAlloc(center, 2.8f, nearbyScanBuffer, ~0, QueryTriggerInteraction.Collide);
             bool hitTarget = false;
@@ -215,7 +231,8 @@ namespace GameJam.Multiplayer
                 MarsFusionAvatar otherAvatar = col.GetComponentInParent<MarsFusionAvatar>();
                 if (otherAvatar != null && otherAvatar != this && otherAvatar.Runner == Runner)
                 {
-                    otherAvatar.RequestFriendlyPush(this);
+                    Vector3 shoveImpulse = transform.forward * 16f + Vector3.up * 4.5f;
+                    otherAvatar.RequestRagdollKnockdown(shoveImpulse, 2.8f);
                     HitFeedbackHUD.Hit();
                     hitTarget = true;
                     break;
@@ -274,21 +291,54 @@ namespace GameJam.Multiplayer
             RPC_BroadcastTrollEvent(2, transform.position + Vector3.up * 1.1f);
         }
 
+        public void RequestRagdollKnockdown(Vector3 impulse, float duration)
+        {
+            if (Object == null || !Object.IsValid) return;
+            RPC_RequestRagdollKnockdown(impulse, duration);
+        }
+
+        [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
+        private void RPC_RequestRagdollKnockdown(Vector3 impulse, float duration)
+        {
+            if (!IsAlive || ragdoll == null) return;
+            IsRagdoll = true;
+            ragdollTimer = TickTimer.CreateFromSeconds(Runner, duration);
+            ragdoll.GoRagdoll(impulse, duration);
+            EnemyDamagePopup.ShowCallout(transform.position + Vector3.up * 1.5f, "¡RAGDOLL!", "KNOCKDOWN", new Color(1f, 0.4f, 0.2f), 1.4f);
+            RPC_SyncRagdoll(true, impulse);
+        }
+
+        [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+        private void RPC_SyncRagdoll(bool active, Vector3 impulse)
+        {
+            if (ragdoll == null) return;
+            if (active)
+            {
+                if (!ragdoll.IsRagdolled) ragdoll.GoRagdoll(impulse, 2.8f);
+            }
+            else
+            {
+                if (ragdoll.IsRagdolled) ragdoll.StandUp();
+            }
+        }
+
         public void TriggerSkillIssueSiren()
         {
             if (!IsNetworkReady || !HasStateAuthority || !IsAlive || Time.unscaledTime < nextTrollActionAt) return;
             nextTrollActionAt = Time.unscaledTime + .6f;
             HurtSequence++;
             RPC_BroadcastTrollEvent(3, transform.position + Vector3.up * 1.85f);
-            int count = Physics.OverlapSphereNonAlloc(transform.position, 42f, nearbyScanBuffer, ~0, QueryTriggerInteraction.Collide);
+            int count = Physics.OverlapSphereNonAlloc(transform.position, 48f, nearbyScanBuffer, ~0, QueryTriggerInteraction.Collide);
             for (int i = 0; i < count; i++)
             {
                 var c = nearbyScanBuffer[i];
                 if (c == null) continue;
                 var cuernudo = c.GetComponentInParent<ElCuernudoFusionEnemy>();
-                if (cuernudo != null && cuernudo.Runner == Runner) cuernudo.TakeDamage(0);
+                if (cuernudo != null && cuernudo.Runner == Runner) cuernudo.AlertNoise(this);
                 var venom = c.GetComponentInParent<VenomwingFusionEnemy>();
-                if (venom != null && venom.Runner == Runner) venom.TakeDamage(0);
+                if (venom != null && venom.Runner == Runner) venom.AlertNoise(this);
+                var reksai = c.GetComponentInParent<ReksaiFusionEnemy>();
+                if (reksai != null && reksai.Runner == Runner) reksai.AlertNoise(this);
             }
         }
 
@@ -506,6 +556,17 @@ namespace GameJam.Multiplayer
             if (!HasStateAuthority) return;
             RequestSessionColor();
             if (!IsAlive) TabletOpen = false;
+            if (IsRagdoll && ragdoll != null)
+            {
+                bool wantsRecover = input != null && (input.CurrentInput.Jump || input.CurrentInput.MoveDirection.sqrMagnitude > 0.1f);
+                if (ragdollTimer.Expired(Runner) || (wantsRecover && Time.time > ragdoll.RagdollStartTime + ragdoll.MinRagdollDuration))
+                {
+                    IsRagdoll = false;
+                    ragdoll.StandUp();
+                    RPC_SyncRagdoll(false, Vector3.zero);
+                    EnemyDamagePopup.ShowCallout(transform.position + Vector3.up * 1.6f, "¡DE PIE!", "", Color.green, 1.2f);
+                }
+            }
             UpdateStamina();
         }
 
@@ -540,8 +601,41 @@ namespace GameJam.Multiplayer
                 {
                     if (keyboard.fKey.wasPressedThisFrame) RequestMeleeBoop();
                     if (keyboard.hKey.wasPressedThisFrame) TriggerSkillIssueSiren();
-                    if (keyboard.tKey.wasPressedThisFrame) TriggerPanicEmote();
-                    if (keyboard.yKey.wasPressedThisFrame) ToggleFakeDeath();
+                    if (keyboard.tKey.wasPressedThisFrame) GetComponent<GameJam.Survival.SurvivalRevive>()?.TriggerEmote(1);
+                    if (keyboard.yKey.wasPressedThisFrame)
+                    {
+                        if (!IsRagdoll)
+                        {
+                            var player = GetComponent<Starter.ThirdPersonCharacter.Player>();
+                            float speed = player != null && player.KCC != null ? player.KCC.RealSpeed : 0f;
+                            Vector3 diveImpulse = transform.forward * (speed > 1f ? 11f : 3.5f) + Vector3.up * 2.2f;
+                            RequestRagdollKnockdown(diveImpulse, 2.6f);
+                            EnemyDamagePopup.ShowCallout(transform.position + Vector3.up * 1.5f, "*FLOP*", "RAGDOLL", new Color(1f, 0.45f, 0.45f), 1.2f);
+                        }
+                        else if (ragdoll != null && Time.time > ragdoll.RagdollStartTime + 0.6f)
+                        {
+                            IsRagdoll = false;
+                            ragdoll.StandUp();
+                            RPC_SyncRagdoll(false, Vector3.zero);
+                        }
+                    }
+                    if (keyboard.eKey.isPressed && !IsRagdoll && ragdoll != null)
+                    {
+                        int count = Physics.OverlapSphereNonAlloc(transform.position + transform.forward * 1.2f, 2.4f, nearbyScanBuffer, ~0, QueryTriggerInteraction.Ignore);
+                        for (int i = 0; i < count; i++)
+                        {
+                            var c = nearbyScanBuffer[i];
+                            if (c == null || c.transform.IsChildOf(transform)) continue;
+                            var other = c.GetComponentInParent<MarsFusionAvatar>();
+                            if (other != null && other != this && other.IsRagdoll && other.ragdoll != null && other.ragdoll.HipsRigidbody != null)
+                            {
+                                Vector3 targetPos = transform.position + transform.forward * 1.1f + Vector3.up * 0.35f;
+                                Vector3 pull = (targetPos - other.ragdoll.HipsRigidbody.position) * 14f;
+                                other.ragdoll.HipsRigidbody.AddForce(pull, ForceMode.Acceleration);
+                                break;
+                            }
+                        }
+                    }
                 }
             }
             // Auto-pop fake death bait if a teammate walks right up to "revive" us!
@@ -686,6 +780,33 @@ namespace GameJam.Multiplayer
         }
 
         public override void Despawned(NetworkRunner runner, bool hasState) => CleanUp();
+        private void LateUpdate()
+        {
+            if (IsPunching)
+            {
+                float pt = (Time.time - punchStartTime) / 0.28f;
+                float pw = Mathf.Sin(pt * Mathf.PI);
+                if (punchSpine != null) punchSpine.localRotation *= Quaternion.Euler(-12f * pw, -18f * pw, 0f);
+                if (punchRightUpperArm != null) punchRightUpperArm.localRotation *= Quaternion.Euler(-60f * pw, 22f * pw, 32f * pw);
+                if (punchRightForeArm != null) punchRightForeArm.localRotation *= Quaternion.Euler(0f, 0f, -28f * pw);
+            }
+            if (!IsAlive && ragdoll != null && !ragdoll.IsRagdolled)
+            {
+                ragdoll.GoRagdoll(Vector3.down * 2.5f, 99999f);
+            }
+            else if (IsAlive && !IsRagdoll && ragdoll != null && ragdoll.IsRagdolled && !(GetComponent<GameJam.Environment.Mars.PlayerSandstorm>()?.IsDowned ?? false))
+            {
+                ragdoll.StandUp();
+            }
+            else if (!HasStateAuthority && ragdoll != null)
+            {
+                if (IsRagdoll && !ragdoll.IsRagdolled)
+                    ragdoll.GoRagdoll(transform.forward * 4f, 2.5f);
+                else if (!IsRagdoll && ragdoll.IsRagdolled && IsAlive)
+                    ragdoll.StandUp();
+            }
+        }
+
         private void OnDestroy() => CleanUp();
         private void CleanUp()
         {

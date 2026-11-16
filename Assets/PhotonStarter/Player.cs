@@ -95,6 +95,7 @@ namespace Starter.ThirdPersonCharacter
         public override void FixedUpdateNetwork()
         {
             if (!HasStateAuthority) return;
+            if (_avatar != null && _avatar.IsRagdoll) return;
             var movementInput = PrepareMovementInput(PlayerInput.CurrentInput);
             if ((_sandstorm != null && _sandstorm.IsTumbling) || (GetComponent<GameJam.Survival.SurvivalRevive>()?.IsAnimating ?? false))
             {
@@ -122,6 +123,7 @@ namespace Starter.ThirdPersonCharacter
 
         public override void Render()
         {
+            if (_avatar != null && _avatar.IsRagdoll) return;
             Animator.SetFloat(AnimatorId.Speed, KCC.RealSpeed, 0.15f, Time.deltaTime);
             Animator.SetFloat(AnimatorId.MotionSpeed, 1f);
             Animator.SetBool(AnimatorId.Jump, _isJumping);
@@ -373,7 +375,7 @@ namespace Starter.ThirdPersonCharacter
 
         private bool IsAimingPose()
         {
-            return HasEquippedGun && !(GetComponent<GameJam.Survival.SurvivalRevive>()?.IsAnimating ?? false) && (_avatar==null || _avatar.IsAlive) && !(GetComponent<GameJam.Combat.PlayerHurtReaction>()?.IsReacting ?? false) && _isAiming && !_isSprinting && KCC.IsGrounded && !_isJumping && !(GetComponent<GameJam.Multiplayer.PlayerInteractionAction>()?.IsBusy ?? false);
+            return HasEquippedGun && !(GetComponent<GameJam.Survival.SurvivalRevive>()?.IsAnimating ?? false) && (_avatar==null || (_avatar.IsAlive && !_avatar.IsRagdoll)) && !(GetComponent<GameJam.Combat.PlayerHurtReaction>()?.IsReacting ?? false) && _isAiming && !_isSprinting && KCC.IsGrounded && !_isJumping && !(GetComponent<GameJam.Multiplayer.PlayerInteractionAction>()?.IsBusy ?? false);
         }
 
         private void UpdateAimRig()
