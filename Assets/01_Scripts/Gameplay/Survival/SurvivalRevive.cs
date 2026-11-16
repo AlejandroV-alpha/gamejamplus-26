@@ -205,6 +205,7 @@ namespace GameJam.Survival
         public void TriggerEmote(byte choice)
         {
             if (choice < 1 || choice > 3 || !HasStateAuthority) return;
+            if (avatar != null && (avatar.IsRagdoll || (avatar.Ragdoll != null && (avatar.Ragdoll.IsRagdolled || avatar.Ragdoll.IsRecovering)))) return;
             var clip = PlayerSocialAnimation.EmoteClip(choice);
             if (clip == null) return;
             Emote = choice;

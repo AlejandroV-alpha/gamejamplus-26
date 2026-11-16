@@ -80,6 +80,10 @@ namespace GameJam.Combat
             {
                 return;
             }
+            if (avatar.IsRagdoll || (avatar.Ragdoll != null && avatar.Ragdoll.IsRagdolled))
+            {
+                return;
+            }
 
             bool dead = !avatar.IsAlive;
             if (dead && !wasDead)

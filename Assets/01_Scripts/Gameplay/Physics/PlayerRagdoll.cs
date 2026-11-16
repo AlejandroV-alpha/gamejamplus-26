@@ -2,7 +2,9 @@ using System;
 using System.Collections.Generic;
 using Fusion.Addons.SimpleKCC;
 using GameJam.Multiplayer;
+using Starter.ThirdPersonCharacter;
 using UnityEngine;
+using UnityEngine.Animations.Rigging;
 
 namespace GameJam.PhysicsControl
 {
@@ -11,8 +13,10 @@ namespace GameJam.PhysicsControl
     /// Mientras el jugador camina, los cuerpos rígidos están en kinematic y los colliders apagados (cero coste de física).
     /// Al recibir un empujón fuerte, bomba o pulsar [Y] (Flop), el cuerpo entra en física activa con impulsos,
     /// cayendo y rodando por las dunas marcianas, con la cámara siguiéndolo de forma suave.
+    /// Al levantarse, los huesos realizan una transición suave de rigidez muscular progresiva desde la pose caída
+    /// hasta la postura de locomoción estándar, evitando cualquier chasquido o artefacto visual.
     /// </summary>
-    [DefaultExecutionOrder(11920)]
+    [DefaultExecutionOrder(12200)]
     [DisallowMultipleComponent]
     public sealed class PlayerRagdoll : MonoBehaviour
     {
@@ -52,17 +56,29 @@ namespace GameJam.PhysicsControl
         private readonly List<Collider> colliders = new List<Collider>();
         private readonly Dictionary<Transform, Rigidbody> boneToRb = new Dictionary<Transform, Rigidbody>();
 
+        private Transform[] allBones;
+        private Vector3[] snapshotPositions;
+        private Quaternion[] snapshotRotations;
+        private int hipsBoneIndex = -1;
+
         private Animator animator;
         private SimpleKCC kcc;
         private MarsFusionAvatar avatar;
+        private Starter.ThirdPersonCharacter.Player player;
+        private RigBuilder rigBuilder;
         private Transform cameraPivot;
         private Vector3 cameraPivotLocalRest;
+        private Vector3 snapshotCameraPivotLocalPos;
         private Transform hipsTransform;
         public Rigidbody HipsRigidbody { get; private set; }
 
         public bool IsRagdolled { get; private set; }
+        public bool IsRecovering { get; private set; }
         public float RagdollStartTime { get; private set; }
         public float MinRagdollDuration { get; set; } = 1.3f;
+
+        private float recoveryStartTime;
+        private const float RecoveryDuration = 0.40f;
 
         private readonly RaycastHit[] groundHits = new RaycastHit[16];
 
@@ -71,6 +87,8 @@ namespace GameJam.PhysicsControl
             animator = GetComponentInChildren<Animator>();
             kcc = GetComponent<SimpleKCC>();
             avatar = GetComponent<MarsFusionAvatar>();
+            player = GetComponent<Starter.ThirdPersonCharacter.Player>();
+            rigBuilder = GetComponentInChildren<RigBuilder>(true);
 
             foreach (var t in GetComponentsInChildren<Transform>(true))
             {
@@ -92,6 +110,8 @@ namespace GameJam.PhysicsControl
             // Make sure skinned meshes don't pop out of view when tumbling
             foreach (var smr in GetComponentsInChildren<SkinnedMeshRenderer>(true))
                 smr.updateWhenOffscreen = true;
+
+            hipsTransform = animator.GetBoneTransform(HumanBodyBones.Hips);
 
             var kccCollider = GetComponent<Collider>();
 
@@ -174,6 +194,22 @@ namespace GameJam.PhysicsControl
             for (int i = 0; i < colliders.Count; i++)
                 for (int j = i + 1; j < colliders.Count; j++)
                     Physics.IgnoreCollision(colliders[i], colliders[j], true);
+
+            // Index all skeleton transforms under hips for smooth zero-pop get-up blending
+            var boneList = new List<Transform>();
+            if (hipsTransform != null)
+            {
+                boneList.Add(hipsTransform);
+                hipsBoneIndex = 0;
+                foreach (Transform t in hipsTransform.GetComponentsInChildren<Transform>(true))
+                {
+                    if (t != hipsTransform)
+                        boneList.Add(t);
+                }
+            }
+            allBones = boneList.ToArray();
+            snapshotPositions = new Vector3[allBones.Length];
+            snapshotRotations = new Quaternion[allBones.Length];
         }
 
         private Rigidbody FindParentRigidbody(Transform current)
@@ -199,14 +235,17 @@ namespace GameJam.PhysicsControl
         {
             if (IsRagdolled) return;
             IsRagdolled = true;
+            IsRecovering = false;
             RagdollStartTime = Time.time;
             MinRagdollDuration = minDuration;
+
+            if (rigBuilder != null) rigBuilder.enabled = false;
+            if (player != null) player.CancelCombatState();
 
             Vector3 inheritedVelocity = kcc != null ? kcc.RealVelocity : Vector3.zero;
 
             if (kcc != null)
             {
-                
                 kcc.enabled = false;
             }
 
@@ -235,27 +274,27 @@ namespace GameJam.PhysicsControl
         }
 
         /// <summary>
-        /// Recupera al astronauta colocándolo sobre el suelo y restaurando el Animator y KCC.
+        /// Recupera al astronauta colocándolo sobre el suelo y restaurando el Animator y KCC mediante
+        /// una transición progresiva de rigidez muscular en todos los huesos para evitar cualquier chasquido.
         /// </summary>
         public void StandUp()
         {
             if (!IsRagdolled) return;
-            IsRagdolled = false;
 
-            Vector3 settlePos = hipsTransform != null ? hipsTransform.position : transform.position;
-            Vector3 groundPoint = settlePos;
+            Vector3 hipsWorldPos = hipsTransform != null ? hipsTransform.position : transform.position;
+            Quaternion hipsWorldRot = hipsTransform != null ? hipsTransform.rotation : transform.rotation;
 
-            // Find ground point below hips
-            int hits = Physics.RaycastNonAlloc(settlePos + Vector3.up * 1.5f, Vector3.down, groundHits, 4.5f, ~0, QueryTriggerInteraction.Ignore);
-            float highest = float.NegativeInfinity;
-            for (int i = 0; i < hits; i++)
+            // Congela y captura instantáneamente la pose física de todos los huesos
+            if (allBones != null)
             {
-                var h = groundHits[i];
-                if (h.collider.transform.IsChildOf(transform)) continue;
-                if (h.point.y > highest)
+                for (int i = 0; i < allBones.Length; i++)
                 {
-                    highest = h.point.y;
-                    groundPoint = h.point;
+                    Transform b = allBones[i];
+                    if (b != null)
+                    {
+                        snapshotPositions[i] = b.localPosition;
+                        snapshotRotations[i] = b.localRotation;
+                    }
                 }
             }
 
@@ -268,48 +307,138 @@ namespace GameJam.PhysicsControl
             }
             foreach (var col in colliders) if (col != null) col.enabled = false;
 
+            // Busca el punto de suelo justo debajo de las caderas
+            Vector3 groundPoint = hipsWorldPos;
+            int hits = Physics.RaycastNonAlloc(hipsWorldPos + Vector3.up * 1.5f, Vector3.down, groundHits, 4.5f, ~0, QueryTriggerInteraction.Ignore);
+            float highest = float.NegativeInfinity;
+            for (int i = 0; i < hits; i++)
+            {
+                var h = groundHits[i];
+                if (h.collider.transform.IsChildOf(transform)) continue;
+                if (h.point.y > highest)
+                {
+                    highest = h.point.y;
+                    groundPoint = h.point;
+                }
+            }
+
+            // Orientación horizontal biomecánica basada en el torso/cabeza
+            Transform spine = animator != null ? animator.GetBoneTransform(HumanBodyBones.Spine) : null;
+            Vector3 spineDir = (spine != null && hipsTransform != null) ? (spine.position - hipsWorldPos) : (hipsTransform != null ? hipsTransform.up : transform.forward);
+            Vector3 headDir = Vector3.ProjectOnPlane(spineDir, Vector3.up);
+
+            Vector3 facing = transform.forward;
+            if (headDir.sqrMagnitude > 0.04f && hipsTransform != null)
+            {
+                bool onBack = Vector3.Dot(hipsTransform.forward, Vector3.up) > 0.1f;
+                facing = (onBack ? -headDir : headDir).normalized;
+            }
+            else if (facing.sqrMagnitude < 0.04f)
+            {
+                facing = Vector3.forward;
+            }
+
             if (kcc != null)
             {
                 kcc.enabled = true;
                 kcc.SetPosition(groundPoint + Vector3.up * 0.05f);
-                if (hipsTransform != null)
-                {
-                    Vector3 facing = Vector3.ProjectOnPlane(hipsTransform.forward, Vector3.up).normalized;
-                    if (facing.sqrMagnitude > 0.01f)
-                        kcc.SetLookRotation(Quaternion.LookRotation(facing).eulerAngles);
-                }
-                
+                kcc.SetLookRotation(Quaternion.LookRotation(facing).eulerAngles);
             }
+
+            // Recalcula el snapshot local de las caderas respecto a su nuevo padre para eliminar cualquier salto visual
+            if (hipsBoneIndex >= 0 && hipsTransform != null && hipsTransform.parent != null)
+            {
+                snapshotPositions[hipsBoneIndex] = hipsTransform.parent.InverseTransformPoint(hipsWorldPos);
+                snapshotRotations[hipsBoneIndex] = Quaternion.Inverse(hipsTransform.parent.rotation) * hipsWorldRot;
+            }
+
+            if (cameraPivot != null)
+            {
+                Vector3 cameraPivotWorldPos = cameraPivot.position;
+                snapshotCameraPivotLocalPos = cameraPivot.parent != null
+                    ? cameraPivot.parent.InverseTransformPoint(cameraPivotWorldPos)
+                    : cameraPivot.localPosition;
+            }
+
+            IsRagdolled = false;
+            IsRecovering = true;
+            recoveryStartTime = Time.time;
+
+            if (rigBuilder != null) rigBuilder.enabled = false;
+            if (player != null) player.CancelCombatState();
 
             if (animator != null)
             {
                 animator.enabled = true;
                 animator.Play("Locomotion", 0, 0f);
-            }
-
-            if (cameraPivot != null)
-            {
-                cameraPivot.localPosition = cameraPivotLocalRest;
+                animator.Update(0f);
             }
         }
 
         private void LateUpdate()
         {
-            if (!IsRagdolled || hipsTransform == null || cameraPivot == null) return;
+            if (IsRagdolled)
+            {
+                if (hipsTransform != null && cameraPivot != null)
+                {
+                    Vector3 targetPivot = hipsTransform.position + Vector3.up * 0.75f;
+                    cameraPivot.position = Vector3.Lerp(cameraPivot.position, targetPivot, Time.deltaTime * 14f);
+                }
+                return;
+            }
 
-            // Camera smoothly follows tumbling hips
-            Vector3 targetPivot = hipsTransform.position + Vector3.up * 0.75f;
-            cameraPivot.position = Vector3.Lerp(cameraPivot.position, targetPivot, Time.deltaTime * 14f);
+            if (IsRecovering)
+            {
+                float elapsed = Time.time - recoveryStartTime;
+                float t = Mathf.Clamp01(elapsed / RecoveryDuration);
+                // Transición s-curve de rigidez muscular progresiva
+                float blend = Mathf.SmoothStep(0f, 1f, t);
+
+                if (allBones != null)
+                {
+                    for (int i = 0; i < allBones.Length; i++)
+                    {
+                        Transform b = allBones[i];
+                        if (b == null) continue;
+
+                        Vector3 animLocalPos = b.localPosition;
+                        Quaternion animLocalRot = b.localRotation;
+
+                        b.localPosition = Vector3.Lerp(snapshotPositions[i], animLocalPos, blend);
+                        b.localRotation = Quaternion.Slerp(snapshotRotations[i], animLocalRot, blend);
+                    }
+                }
+
+                if (cameraPivot != null)
+                {
+                    cameraPivot.localPosition = Vector3.Lerp(snapshotCameraPivotLocalPos, cameraPivotLocalRest, blend);
+                }
+
+                if (t >= 1f)
+                {
+                    IsRecovering = false;
+                    if (rigBuilder != null)
+                    {
+                        rigBuilder.enabled = true;
+                    }
+                    if (cameraPivot != null)
+                    {
+                        cameraPivot.localPosition = cameraPivotLocalRest;
+                    }
+                }
+            }
         }
 
         private void OnDisable()
         {
             if (IsRagdolled) StandUp();
+            IsRecovering = false;
         }
 
         private void OnDestroy()
         {
             if (IsRagdolled) StandUp();
+            IsRecovering = false;
         }
     }
 }

@@ -68,6 +68,11 @@ namespace GameJam.Combat
             {
                 return;
             }
+            if (avatar.IsRagdoll || (avatar.Ragdoll != null && (avatar.Ragdoll.IsRagdolled || avatar.Ragdoll.IsRecovering)))
+            {
+                playing = false;
+                return;
+            }
 
             IPlayerHealth health = avatar.HealthSource;
             float? current = health != null ? health.CurrentHealth : (float?)null;

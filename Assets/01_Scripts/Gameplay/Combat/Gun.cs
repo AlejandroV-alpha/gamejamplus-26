@@ -97,7 +97,7 @@ namespace GameJam.Combat
         public override void FixedUpdateNetwork()
         {
             if (!HasStateAuthority || !reloadTimer.IsRunning) return;
-            if (avatar == null || !avatar.IsAlive || !IsEquipped)
+            if (avatar == null || !avatar.IsAlive || !IsEquipped || avatar.IsRagdoll || (avatar.Ragdoll != null && (avatar.Ragdoll.IsRagdolled || avatar.Ragdoll.IsRecovering)))
             {
                 reloadTimer = TickTimer.None;
                 return;
@@ -767,6 +767,10 @@ namespace GameJam.Combat
             }
             if (avatar == null || !avatar.IsAlive || (avatar.GetComponent<PlayerHurtReaction>()?.IsReacting ?? false)
                 || (avatar.GetComponent<PlayerInteractionAction>()?.IsBusy ?? false))
+            {
+                return false;
+            }
+            if (avatar.IsRagdoll || (avatar.Ragdoll != null && (avatar.Ragdoll.IsRagdolled || avatar.Ragdoll.IsRecovering)))
             {
                 return false;
             }

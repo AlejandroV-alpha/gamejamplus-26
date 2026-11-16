@@ -73,7 +73,8 @@ namespace GameJam.Survival
         private void LateUpdate()
         {
             if (revive == null || revive.Object == null || !revive.Object.IsValid || avatar == null || !avatar.IsAlive
-                || model == null || (GetComponent<GameJam.Environment.Mars.PlayerSandstorm>()?.IsDowned ?? false))
+                || model == null || (GetComponent<GameJam.Environment.Mars.PlayerSandstorm>()?.IsDowned ?? false)
+                || avatar.IsRagdoll || (avatar.Ragdoll != null && (avatar.Ragdoll.IsRagdolled || avatar.Ragdoll.IsRecovering)))
             { StopPose(); return; }
             var target = revive.RescueTarget;
             AnimationClip clip = null;

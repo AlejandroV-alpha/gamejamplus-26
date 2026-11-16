@@ -78,7 +78,7 @@ namespace GameJam.Multiplayer
         private PlayerRagdoll ragdoll;
         public PlayerRagdoll Ragdoll => ragdoll;
         private float punchStartTime = -10f;
-        public bool IsPunching => Time.time - punchStartTime < 0.28f;
+        public bool IsPunching => Time.time - punchStartTime < 0.28f && !IsRagdoll && (ragdoll == null || (!ragdoll.IsRagdolled && !ragdoll.IsRecovering));
         private Transform punchSpine, punchRightUpperArm, punchRightForeArm;
         private readonly Collider[] nearbyScanBuffer = new Collider[24];
         private AudioSource trollAudioSource;
@@ -223,7 +223,7 @@ namespace GameJam.Multiplayer
 
         public void RequestMeleeBoop()
         {
-            if (!IsNetworkReady || !HasStateAuthority || !IsAlive || Time.unscaledTime < nextTrollActionAt) return;
+            if (!IsNetworkReady || !HasStateAuthority || !IsAlive || IsRagdoll || (ragdoll != null && (ragdoll.IsRagdolled || ragdoll.IsRecovering)) || Time.unscaledTime < nextTrollActionAt) return;
             nextTrollActionAt = Time.unscaledTime + .45f;
             punchStartTime = Time.time;
             Vector3 center = transform.position + transform.forward * 1.6f + Vector3.up * .9f;
@@ -608,10 +608,14 @@ namespace GameJam.Multiplayer
                 if (keyboard.tabKey.wasPressedThisFrame) ToggleTablet();
                 if (input != null && input.ControlsEnabled)
                 {
-                    if (keyboard.fKey.wasPressedThisFrame) RequestMeleeBoop();
-                    if (keyboard.hKey.wasPressedThisFrame) TriggerSkillIssueSiren();
-                    if (keyboard.tKey.wasPressedThisFrame) GetComponent<GameJam.Survival.SurvivalRevive>()?.TriggerEmote(1);
-                    if (keyboard.yKey.wasPressedThisFrame)
+                    bool isRecovering = ragdoll != null && ragdoll.IsRecovering;
+                    if (!isRecovering)
+                    {
+                        if (keyboard.fKey.wasPressedThisFrame) RequestMeleeBoop();
+                        if (keyboard.hKey.wasPressedThisFrame) TriggerSkillIssueSiren();
+                        if (keyboard.tKey.wasPressedThisFrame) GetComponent<GameJam.Survival.SurvivalRevive>()?.TriggerEmote(1);
+                    }
+                    if (keyboard.yKey.wasPressedThisFrame && !isRecovering)
                     {
                         if (!IsRagdoll)
                         {
@@ -628,7 +632,7 @@ namespace GameJam.Multiplayer
                             RPC_SyncRagdoll(false, Vector3.zero);
                         }
                     }
-                    if (keyboard.eKey.isPressed && !IsRagdoll && ragdoll != null)
+                    if (keyboard.eKey.isPressed && !IsRagdoll && !isRecovering && ragdoll != null)
                     {
                         int count = Physics.OverlapSphereNonAlloc(transform.position + transform.forward * 1.2f, 2.4f, nearbyScanBuffer, ~0, QueryTriggerInteraction.Ignore);
                         for (int i = 0; i < count; i++)

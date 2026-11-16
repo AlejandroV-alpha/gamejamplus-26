@@ -29,6 +29,7 @@ namespace GameJam.Inventory
         public bool IsRadioEquipped => Ready && inventory.SelectedItem != null && inventory.SelectedItem.kind == CarriedItemKind.Radio;
         public bool HasRadio => Ready && inventory.HasItem(CarriedItemKind.Radio);
         public bool CanPresentItem => Ready && avatar != null && avatar.IsAlive && !avatar.TabletOpen
+            && !avatar.IsRagdoll && (avatar.Ragdoll == null || (!avatar.Ragdoll.IsRagdolled && !avatar.Ragdoll.IsRecovering))
             && !(action != null && action.IsBusy) && !(revive != null && revive.IsAnimating)
             && !(hurt != null && hurt.IsReacting)
             && !(GetComponent<GameJam.Environment.Mars.PlayerSandstorm>()?.IsDowned ?? false);

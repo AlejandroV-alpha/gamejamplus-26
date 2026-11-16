@@ -95,7 +95,12 @@ namespace Starter.ThirdPersonCharacter
         public override void FixedUpdateNetwork()
         {
             if (!HasStateAuthority) return;
-            if (_avatar != null && _avatar.IsRagdoll) return;
+            bool isRagdollOrRecovering = _avatar != null && (_avatar.IsRagdoll || (_avatar.Ragdoll != null && (_avatar.Ragdoll.IsRagdolled || _avatar.Ragdoll.IsRecovering)));
+            if (isRagdollOrRecovering)
+            {
+                CancelCombatState();
+                return;
+            }
             var movementInput = PrepareMovementInput(PlayerInput.CurrentInput);
             if ((_sandstorm != null && _sandstorm.IsTumbling) || (GetComponent<GameJam.Survival.SurvivalRevive>()?.IsAnimating ?? false))
             {
@@ -121,9 +126,35 @@ namespace Starter.ThirdPersonCharacter
             PlayerInput.ResetInput();
         }
 
+        /// <summary>
+        /// Cancela y apaga inmediatamente todo estado de combate, posturas de apuntado, rigs de IK
+        /// y cámara de hombro para evitar cualquier interferencia o torsión esquelética durante el ragdoll o su recuperación.
+        /// </summary>
+        public void CancelCombatState()
+        {
+            _isAiming = false;
+            _aimBlend = 0f;
+            _aimBlendVelocity = 0f;
+            if (AimHand != null) AimHand.weight = 0f;
+            if (AimBody != null) AimBody.weight = 0f;
+            if (LeftHandGrabPistol != null) LeftHandGrabPistol.weight = 0f;
+            if (RightHandGrabPistol != null) RightHandGrabPistol.weight = 0f;
+            if (Animator != null && _handsLayer >= 0) Animator.SetLayerWeight(_handsLayer, 0f);
+            if (_shoulderCamera != null) _shoulderCamera.Priority = 0;
+            if (_crosshair != null) _crosshair.SetActive(false);
+        }
+
         public override void Render()
         {
-            if (_avatar != null && _avatar.IsRagdoll) return;
+            bool isRagdoll = _avatar != null && _avatar.IsRagdoll;
+            bool isRecovering = _avatar != null && _avatar.Ragdoll != null && _avatar.Ragdoll.IsRecovering;
+
+            if (isRagdoll || isRecovering)
+            {
+                CancelCombatState();
+                if (isRagdoll) return;
+            }
+
             Animator.SetFloat(AnimatorId.Speed, KCC.RealSpeed, 0.15f, Time.deltaTime);
             Animator.SetFloat(AnimatorId.MotionSpeed, 1f);
             Animator.SetBool(AnimatorId.Jump, _isJumping);
@@ -375,11 +406,19 @@ namespace Starter.ThirdPersonCharacter
 
         private bool IsAimingPose()
         {
-            return HasEquippedGun && !(GetComponent<GameJam.Survival.SurvivalRevive>()?.IsAnimating ?? false) && (_avatar==null || (_avatar.IsAlive && !_avatar.IsRagdoll)) && !(GetComponent<GameJam.Combat.PlayerHurtReaction>()?.IsReacting ?? false) && _isAiming && !_isSprinting && KCC.IsGrounded && !_isJumping && !(GetComponent<GameJam.Multiplayer.PlayerInteractionAction>()?.IsBusy ?? false);
+            bool isRagdollOrRecovering = _avatar != null && (_avatar.IsRagdoll || (_avatar.Ragdoll != null && (_avatar.Ragdoll.IsRagdolled || _avatar.Ragdoll.IsRecovering)));
+            return HasEquippedGun && !isRagdollOrRecovering && !(GetComponent<GameJam.Survival.SurvivalRevive>()?.IsAnimating ?? false) && (_avatar == null || _avatar.IsAlive) && !(GetComponent<GameJam.Combat.PlayerHurtReaction>()?.IsReacting ?? false) && _isAiming && !_isSprinting && KCC.IsGrounded && !_isJumping && !(GetComponent<GameJam.Multiplayer.PlayerInteractionAction>()?.IsBusy ?? false);
         }
 
         private void UpdateAimRig()
         {
+            bool isRagdollOrRecovering = _avatar != null && (_avatar.IsRagdoll || (_avatar.Ragdoll != null && (_avatar.Ragdoll.IsRagdolled || _avatar.Ragdoll.IsRecovering)));
+            if (isRagdollOrRecovering)
+            {
+                CancelCombatState();
+                return;
+            }
+
             bool aimingPose = IsAimingPose();
             if (!HasEquippedGun) { _aimBlend = 0; _aimBlendVelocity = 0; }
             float duration = Mathf.Max(0.01f, AimWeightBlendDuration);
