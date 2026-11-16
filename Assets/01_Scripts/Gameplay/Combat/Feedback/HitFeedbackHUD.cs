@@ -53,8 +53,6 @@ namespace GameJam.Combat
         {
             var h = Get();
             h.killAt = Time.unscaledTime;
-            h.bannerAt = Time.unscaledTime;
-            h.banner = enemyName + " ELIMINADO";
             h.audioSource.PlayOneShot(h.killClip, .9f);
         }
 
