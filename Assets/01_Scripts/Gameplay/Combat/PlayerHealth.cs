@@ -171,6 +171,15 @@ namespace GameJam.Combat
             return true;
         }
 
+        public void RestoreFullHealth()
+        {
+            if (!IsReady() || !HasStateAuthority) return;
+            MaxHealth = Mathf.Max(1f, startingHealth);
+            CurrentHealth = MaxHealth;
+            IsAlive = true;
+            deathAnnounced = false;
+        }
+
         /// <summary>
         /// Comprueba que Fusion haya asignado el estado del objeto.
         /// </summary>

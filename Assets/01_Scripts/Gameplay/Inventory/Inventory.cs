@@ -38,6 +38,41 @@ namespace GameJam.Inventory
             return true;
         }
         public int SlotCount => IsReady() && ActiveSlotCount > 0 ? Mathf.Clamp(ActiveSlotCount, 1, MaximumSlots) : Mathf.Clamp(slotCount, 1, MaximumSlots);
+        public IReadOnlyList<MaterialData> RegisteredMaterials => materials;
+
+        public void GrantExhibitionKit()
+        {
+            if (!CanModify(1) || materials == null) return;
+            for (int i = 0; i < SlotCount; i++) SlotMaterials.Set(i, 0);
+
+            int slotIndex = 0;
+            // First place PrimaryWeapon and Radio if present in materials
+            for (int i = 0; i < materials.Length && slotIndex < SlotCount; i++)
+            {
+                if (materials[i] != null && materials[i].kind == CarriedItemKind.PrimaryWeapon)
+                {
+                    SlotMaterials.Set(slotIndex++, i + 1);
+                    break;
+                }
+            }
+            for (int i = 0; i < materials.Length && slotIndex < SlotCount; i++)
+            {
+                if (materials[i] != null && materials[i].kind == CarriedItemKind.Radio)
+                {
+                    SlotMaterials.Set(slotIndex++, i + 1);
+                    break;
+                }
+            }
+            // Fill remaining slots with distinct crafting materials
+            for (int i = 0; i < materials.Length && slotIndex < SlotCount; i++)
+            {
+                if (materials[i] != null && materials[i].kind == CarriedItemKind.Material)
+                {
+                    SlotMaterials.Set(slotIndex++, i + 1);
+                }
+            }
+            SelectedSlot = 0;
+        }
         public int UsedSlots
         {
             get { int count=0; if(IsReady()) for(int i=0;i<SlotCount;i++) if(SlotMaterials.Get(i)!=0) count++; return count; }

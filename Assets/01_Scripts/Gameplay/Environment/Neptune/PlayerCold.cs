@@ -144,6 +144,13 @@ namespace GameJam.Environment.Neptune
             return GetCurrentCold() * 100f / Mathf.Max(1f, maxCold);
         }
 
+        public void ResetCold()
+        {
+            if (!IsReady() || !HasStateAuthority) return;
+            currentCold = 0f;
+            damageElapsed = 0f;
+        }
+
         /// <summary>
         /// Indica si el jugador vivo se encuentra en el umbral de dano periodico.
         /// </summary>

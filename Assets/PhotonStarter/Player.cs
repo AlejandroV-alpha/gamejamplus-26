@@ -291,19 +291,24 @@ namespace Starter.ThirdPersonCharacter
             if (input.AimToggle)
                 _isAiming = !_isAiming;
 
+            bool lowGrav = _avatar != null && _avatar.LowGravityMode;
+            bool turbo = _avatar != null && _avatar.TurboOverdriveMode;
+
             if (KCC.IsGrounded && input.Jump)
             {
                 // Set world space jump vector
-                jumpImpulse = JumpImpulse;
+                jumpImpulse = lowGrav ? JumpImpulse * 1.55f : JumpImpulse;
                 _isJumping = true;
             }
 
             // It feels better when the player falls quicker
-            KCC.SetGravity(-Mathf.Abs(KCC.RealVelocity.y >= 0f ? UpGravity : DownGravity));
+            float upG = lowGrav ? UpGravity * 0.36f : UpGravity;
+            float downG = lowGrav ? DownGravity * 0.32f : DownGravity;
+            KCC.SetGravity(-Mathf.Abs(KCC.RealVelocity.y >= 0f ? upG : downG));
 
             bool sprinting = ResolveSprint(input);
             _isSprinting = sprinting;
-            float speed = sprinting ? SprintSpeed : WalkSpeed;
+            float speed = (sprinting ? SprintSpeed : WalkSpeed) * (turbo ? 1.85f : 1f);
 
             var lookRotation = Quaternion.Euler(0f, input.LookRotation.y, 0f);
             // Calculate correct move direction from input (rotated based on camera look)
@@ -347,7 +352,16 @@ namespace Starter.ThirdPersonCharacter
             }
 
             var finalVelocity = _sandstorm != null ? _sandstorm.ModifyMovementVelocity(_moveVelocity) : _moveVelocity;
-            if (_avatar != null) finalVelocity = _avatar.ApplyFriendlyPush(finalVelocity);
+            if (_avatar != null)
+            {
+                finalVelocity = _avatar.ApplyFriendlyPush(finalVelocity);
+                float extraHop = _avatar.ConsumePendingJumpImpulse();
+                if (extraHop > jumpImpulse)
+                {
+                    jumpImpulse = extraHop;
+                    _isJumping = true;
+                }
+            }
             KCC.Move(finalVelocity, jumpImpulse);
         }
 

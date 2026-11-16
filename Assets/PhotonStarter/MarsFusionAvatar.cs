@@ -37,8 +37,8 @@ namespace GameJam.Multiplayer
         [Networked] private TickTimer friendlyPushTimer { get; set; }
         [Networked] private TickTimer friendlyPushProtection { get; set; }
         [Networked] private Vector3 friendlyPushVelocity { get; set; }
-        private const float FriendlyPushDuration = .8f;
-        private const float FriendlyPushImmunity = 4f;
+        private const float FriendlyPushDuration = .85f;
+        private const float FriendlyPushImmunity = 1.1f;
         private const float FriendlyPushRange = 25f;
         [Networked] public float Stamina { get; protected set; }
         [Networked] public NetworkBool TabletOpen { get; private set; }
@@ -70,6 +70,11 @@ namespace GameJam.Multiplayer
         private GameObject heldTablet;
         private float? previousHealth;
         private float hurtUntil, blinkUntil, nextBlink, voiceUntil, nextVoiceSend;
+        private float fakeDeadUntil, nextTrollActionAt;
+        private float pendingHopImpulse;
+        private readonly Collider[] nearbyScanBuffer = new Collider[24];
+        private AudioSource trollAudioSource;
+        private static AudioClip boopClip, jetpackClip, sirenClip, fakeDeadClip, baitedClip;
         private bool warnedMissingHealth;
         private uint previousHurt;
         private byte requestedVoice;
@@ -77,6 +82,9 @@ namespace GameJam.Multiplayer
         public string Expression { get; private set; }
         public TabletGuideUI LocalUI => ui;
         public GameJam.UI.PlayerHUD LocalHud { get; private set; }
+        public bool LowGravityMode { get; set; }
+        public bool TurboOverdriveMode { get; set; }
+        public bool IsFakeDead => Time.unscaledTime < fakeDeadUntil;
 
         public override void Spawned()
         {
@@ -154,15 +162,33 @@ namespace GameJam.Multiplayer
                 || shooterObject.StateAuthority != info.Source) return;
             var shooter = shooterObject.GetComponent<MarsFusionAvatar>();
             var kcc = GetComponent<Fusion.Addons.SimpleKCC.SimpleKCC>();
-            if (shooter == null || !shooter.IsAlive || kcc == null || !kcc.IsGrounded) return;
+            if (shooter == null || !shooter.IsAlive || kcc == null) return;
             Vector3 direction = transform.position - shooter.transform.position;
             if (direction.sqrMagnitude > FriendlyPushRange * FriendlyPushRange) return;
             direction.y = 0f;
-            if (direction.sqrMagnitude < .01f) return;
-            friendlyPushVelocity = direction.normalized * 11f;
+            if (direction.sqrMagnitude < .01f) direction = shooter.transform.forward;
+            friendlyPushVelocity = direction.normalized * 12.5f;
+            pendingHopImpulse = Mathf.Max(pendingHopImpulse, 5.8f);
             friendlyPushTimer = TickTimer.CreateFromSeconds(Runner, FriendlyPushDuration);
             friendlyPushProtection = TickTimer.CreateFromSeconds(Runner, FriendlyPushImmunity);
-            Debug.Log("[Player push] Empujon recibido; protegido durante 4 segundos.", this);
+            HurtSequence++;
+            RPC_BroadcastTrollEvent(1, transform.position + Vector3.up * 1.4f);
+            Debug.Log("[Player push] Empujon recibido.", this);
+        }
+
+        public void ApplyLocalShowcaseImpulse(Vector3 horizontalVelocity, float verticalHop = 5.5f)
+        {
+            if (!IsNetworkReady || !HasStateAuthority || !IsAlive) return;
+            friendlyPushVelocity = horizontalVelocity;
+            pendingHopImpulse = Mathf.Max(pendingHopImpulse, verticalHop);
+            friendlyPushTimer = TickTimer.CreateFromSeconds(Runner, FriendlyPushDuration);
+        }
+
+        public float ConsumePendingJumpImpulse()
+        {
+            float val = pendingHopImpulse;
+            pendingHopImpulse = 0f;
+            return val;
         }
 
         // Add to the existing single KCC.Move; never teleport, stack impulses or disable controls.
@@ -172,6 +198,183 @@ namespace GameJam.Multiplayer
                 return velocity;
             float weight = Mathf.Clamp01(friendlyPushTimer.RemainingTime(Runner).GetValueOrDefault() / FriendlyPushDuration);
             return (GetComponent<GameJam.Environment.Mars.PlayerSandstorm>()?.IsDowned ?? false) ? Vector3.zero : velocity + friendlyPushVelocity * weight;
+        }
+
+        public void RequestMeleeBoop()
+        {
+            if (!IsNetworkReady || !HasStateAuthority || !IsAlive || Time.unscaledTime < nextTrollActionAt) return;
+            nextTrollActionAt = Time.unscaledTime + .45f;
+            Vector3 center = transform.position + transform.forward * 1.6f + Vector3.up * .9f;
+            int hitCount = Physics.OverlapSphereNonAlloc(center, 2.8f, nearbyScanBuffer, ~0, QueryTriggerInteraction.Collide);
+            bool hitTarget = false;
+            for (int i = 0; i < hitCount; i++)
+            {
+                Collider col = nearbyScanBuffer[i];
+                if (col == null || col.transform.IsChildOf(transform)) continue;
+
+                MarsFusionAvatar otherAvatar = col.GetComponentInParent<MarsFusionAvatar>();
+                if (otherAvatar != null && otherAvatar != this && otherAvatar.Runner == Runner)
+                {
+                    otherAvatar.RequestFriendlyPush(this);
+                    HitFeedbackHUD.Hit();
+                    hitTarget = true;
+                    break;
+                }
+
+                var dummy = col.GetComponentInParent<GameJam.Showcase.HologramCombatDummy>();
+                if (dummy != null)
+                {
+                    dummy.TakeDamage(3);
+                    hitTarget = true;
+                    break;
+                }
+            }
+            RPC_BroadcastTrollEvent((byte)(hitTarget ? 1 : 6), transform.position + transform.forward * 1.4f + Vector3.up * 1.2f);
+        }
+
+        public void TriggerJetpackDash()
+        {
+            if (!IsNetworkReady || !HasStateAuthority || !IsAlive || Time.unscaledTime < nextTrollActionAt) return;
+            nextTrollActionAt = Time.unscaledTime + .75f;
+            fakeDeadUntil = 0f;
+            Vector3 forward = Vector3.ProjectOnPlane(transform.forward, Vector3.up).normalized;
+            if (forward.sqrMagnitude < .01f) forward = Vector3.forward;
+            ApplyLocalShowcaseImpulse(forward * 14f, LowGravityMode ? 12.5f : 8.8f);
+            Stamina = Mathf.Min(100f, Stamina + 35f);
+
+            int hitCount = Physics.OverlapSphereNonAlloc(transform.position + forward * 1.5f, 3.2f, nearbyScanBuffer, ~0, QueryTriggerInteraction.Ignore);
+            for (int i = 0; i < hitCount; i++)
+            {
+                Collider col = nearbyScanBuffer[i];
+                if (col == null || col.transform.IsChildOf(transform)) continue;
+                MarsFusionAvatar other = col.GetComponentInParent<MarsFusionAvatar>();
+                if (other != null && other != this && other.Runner == Runner)
+                    other.RequestFriendlyPush(this);
+            }
+            RPC_BroadcastTrollEvent(2, transform.position + Vector3.up * 1.1f);
+        }
+
+        public void TriggerSkillIssueSiren()
+        {
+            if (!IsNetworkReady || !HasStateAuthority || !IsAlive || Time.unscaledTime < nextTrollActionAt) return;
+            nextTrollActionAt = Time.unscaledTime + .55f;
+            HurtSequence++;
+            RPC_BroadcastTrollEvent(3, transform.position + Vector3.up * 1.85f);
+        }
+
+        public void ToggleFakeDeath()
+        {
+            if (!IsNetworkReady || !HasStateAuthority || !IsAlive || Time.unscaledTime < nextTrollActionAt) return;
+            nextTrollActionAt = Time.unscaledTime + .4f;
+            if (IsFakeDead)
+            {
+                fakeDeadUntil = 0f;
+                ApplyLocalShowcaseImpulse(Vector3.zero, 6.2f);
+                RPC_BroadcastTrollEvent(5, transform.position + Vector3.up * 1.8f);
+            }
+            else
+            {
+                fakeDeadUntil = Time.unscaledTime + 8f;
+                RPC_BroadcastTrollEvent(4, transform.position + Vector3.up * 1.6f);
+            }
+        }
+
+        [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+        public void RPC_BroadcastTrollEvent(byte eventKind, Vector3 worldPos)
+        {
+            if (!IsNetworkReady) return;
+            EnsureTrollAudio();
+            switch (eventKind)
+            {
+                case 1: // Boop / Push Hit
+                    trollAudioSource.pitch = Random.Range(.95f, 1.15f);
+                    trollAudioSource.PlayOneShot(boopClip, .8f);
+                    identityView?.ShowCalloutBanner("¡EMPUJÓN ESPACIAL!", new Color32(255, 196, 45, 255), 2.2f);
+                    EnemyDamagePopup.ShowCallout(worldPos, "¡BOOP!", "TRAICIÓN", new Color(1f, .72f, .18f), 1.35f);
+                    SpawnQuickRingBurst(worldPos, new Color(.25f, .95f, 1f));
+                    break;
+                case 2: // Jetpack Dash
+                    trollAudioSource.pitch = Random.Range(.95f, 1.1f);
+                    trollAudioSource.PlayOneShot(jetpackClip, .75f);
+                    identityView?.ShowCalloutBanner("⚡ PROPULSOR FUERA DE CONTROL", new Color32(89, 225, 255, 255), 2.4f);
+                    EnemyDamagePopup.ShowCallout(worldPos, "¡TURBO CAOS!", "JETPACK", new Color(.35f, .9f, 1f), 1.25f);
+                    SpawnQuickRingBurst(transform.position + Vector3.up * .4f, new Color(1f, .55f, .15f));
+                    break;
+                case 3: // Skill Issue Siren
+                    hurtUntil = Time.time + 1.2f;
+                    trollAudioSource.pitch = 1f;
+                    trollAudioSource.PlayOneShot(sirenClip, .85f);
+                    identityView?.ShowCalloutBanner("⚠ ALERTA: SKILL ISSUE DETECTADO", new Color32(255, 82, 82, 255), 3.4f);
+                    EnemyDamagePopup.ShowCallout(worldPos, "SKILL ISSUE!", "0% IQ", new Color(1f, .3f, .3f), 1.45f);
+                    break;
+                case 4: // Fake Death Start
+                    fakeDeadUntil = Time.unscaledTime + 8f;
+                    trollAudioSource.pitch = 1f;
+                    trollAudioSource.PlayOneShot(fakeDeadClip, .8f);
+                    identityView?.ShowCalloutBanner("💀 [F] REVIVIR (100% REAL NO FAKE)", new Color32(255, 110, 95, 255), 7.8f);
+                    EnemyDamagePopup.ShowCallout(worldPos, "SISTEMA CAÍDO...", "¿SEGURO?", new Color(.95f, .4f, .4f), 1.2f);
+                    break;
+                case 5: // Fake Death Baited Pop!
+                    fakeDeadUntil = 0f;
+                    trollAudioSource.pitch = 1.08f;
+                    trollAudioSource.PlayOneShot(baitedClip, .9f);
+                    identityView?.ShowCalloutBanner("😂 ¡CAÍSTE! +999 TROLLEO", new Color32(81, 229, 45, 255), 3.0f);
+                    EnemyDamagePopup.ShowCallout(worldPos, "+999 ¡TROLEADO!", "BAITED!", new Color(.35f, 1f, .45f), 1.5f);
+                    SpawnQuickRingBurst(transform.position + Vector3.up * 1f, new Color(.35f, 1f, .45f));
+                    break;
+                case 6: // Boop Whiff / Wave
+                    trollAudioSource.pitch = 1.2f;
+                    trollAudioSource.PlayOneShot(boopClip, .55f);
+                    SpawnQuickRingBurst(worldPos, new Color(.35f, .95f, .85f));
+                    break;
+            }
+        }
+
+        private void EnsureTrollAudio()
+        {
+            if (trollAudioSource == null)
+            {
+                trollAudioSource = gameObject.AddComponent<AudioSource>();
+                trollAudioSource.playOnAwake = false;
+                trollAudioSource.spatialBlend = HasStateAuthority ? 0.15f : 0.75f;
+                trollAudioSource.minDistance = 2.5f;
+                trollAudioSource.maxDistance = 28f;
+            }
+            if (boopClip == null) boopClip = SynthesizeProceduralClip("TrollBoop", .16f, 260f, 880f, .7f, true);
+            if (jetpackClip == null) jetpackClip = SynthesizeProceduralClip("TrollJetpack", .28f, 180f, 620f, .65f, false);
+            if (sirenClip == null) sirenClip = SynthesizeProceduralClip("TrollSiren", .42f, 840f, 420f, .75f, true);
+            if (fakeDeadClip == null) fakeDeadClip = SynthesizeProceduralClip("TrollFakeDead", .36f, 620f, 130f, .7f, false);
+            if (baitedClip == null) baitedClip = SynthesizeProceduralClip("TrollBaited", .32f, 440f, 1180f, .8f, true);
+        }
+
+        private static AudioClip SynthesizeProceduralClip(string clipName, float duration, float fStart, float fEnd, float vol, bool vibrato)
+        {
+            int rate = 44100;
+            int count = Mathf.CeilToInt(duration * rate);
+            float[] samples = new float[count];
+            float phase = 0f;
+            for (int i = 0; i < count; i++)
+            {
+                float t = i / (float)count;
+                float freq = Mathf.Lerp(fStart, fEnd, t);
+                if (vibrato) freq += Mathf.Sin(t * Mathf.PI * 12f) * 95f;
+                phase += 2f * Mathf.PI * freq / rate;
+                float env = Mathf.Exp(-t * 4.2f) * Mathf.Clamp01(i / 64f);
+                samples[i] = (Mathf.Sin(phase) * .72f + Mathf.Sin(phase * 2f) * .28f) * env * vol;
+            }
+            AudioClip clip = AudioClip.Create(clipName, count, 1, rate, false);
+            clip.SetData(samples, 0);
+            return clip;
+        }
+
+        private static void SpawnQuickRingBurst(Vector3 pos, Color color)
+        {
+            for (int i = 0; i < 6; i++)
+            {
+                float ang = i * 60f * Mathf.Deg2Rad;
+                Vector3 dir = new Vector3(Mathf.Cos(ang), .35f, Mathf.Sin(ang)).normalized;
+                LootOrb.Spawn(pos, dir * 5.2f, null, null, null, color, .35f);
+            }
         }
 
         public void ToggleTablet()
@@ -272,6 +475,11 @@ namespace GameJam.Multiplayer
         /// </summary>
         protected virtual void UpdateStamina()
         {
+            if (TurboOverdriveMode)
+            {
+                Stamina = 100f;
+                return;
+            }
             bool sprint = input.CurrentInput.Sprint && input.CurrentInput.MoveDirection.sqrMagnitude > .01f && Stamina > 0 && IsAlive;
             float staminaChange = 10f;
             if (sprint)
@@ -292,6 +500,23 @@ namespace GameJam.Multiplayer
                 if (Application.isEditor || Debug.isDebugBuild)
                 {
                     if (keyboard.hKey.wasPressedThisFrame) PreviewHurt();
+                }
+            }
+            // Auto-pop fake death bait if a teammate walks right up to "revive" us!
+            if (IsFakeDead)
+            {
+                int count = Physics.OverlapSphereNonAlloc(transform.position, 2.3f, nearbyScanBuffer, ~0, QueryTriggerInteraction.Ignore);
+                for (int i = 0; i < count; i++)
+                {
+                    Collider c = nearbyScanBuffer[i];
+                    if (c == null || c.transform.IsChildOf(transform)) continue;
+                    MarsFusionAvatar other = c.GetComponentInParent<MarsFusionAvatar>();
+                    if (other != null && other != this && other.Runner == Runner && other.IsAlive)
+                    {
+                        ToggleFakeDeath();
+                        other.RequestFriendlyPush(this);
+                        break;
+                    }
                 }
             }
             if (Time.unscaledTime >= nextVoiceSend)
@@ -326,7 +551,7 @@ namespace GameJam.Multiplayer
             previousHealth = currentHealth; previousHurt = HurtSequence;
             Sprite eye = neutralEyes, lip = smileMouth;
             Expression = "Idle";
-            if (!IsAlive) { eye = deadEyes; lip = deadMouth; Expression = "Eliminated"; }
+            if (!IsAlive || IsFakeDead) { eye = deadEyes; lip = deadMouth; Expression = "Eliminated"; }
             else if (Time.time < hurtUntil) { eye = hurtEyes; lip = hurtMouth; Expression = "Hurt"; }
             else
             {

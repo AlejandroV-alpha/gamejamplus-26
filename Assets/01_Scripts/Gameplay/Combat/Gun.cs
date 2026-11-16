@@ -204,6 +204,13 @@ namespace GameJam.Combat
             return currentAmmo;
         }
 
+        public void RefillMagazineImmediate()
+        {
+            if (!IsReady() || !HasStateAuthority) return;
+            reloadTimer = TickTimer.None;
+            currentAmmo = Mathf.Max(1, magazineSize);
+        }
+
         // Margen para que el rayo de la boca alcance la superficie que ya toco la mira.
         private const float ShotSurfaceSkin = 0.2f;
 
@@ -415,6 +422,8 @@ namespace GameJam.Combat
             {
                 if (targetAvatar.Runner != Runner || targetAvatar == avatar) return;
                 // The victim's authority validates protection and applies its own KCC push.
+                HitFeedbackHUD.Hit();
+                EnemyDamagePopup.ShowCallout(targetAvatar.transform.position + Vector3.up * 1.75f, "¡FUEGO AMIGO!", "-0 IQ", new Color(1f, .62f, .18f), 1.25f);
                 targetAvatar.RequestFriendlyPush(avatar);
                 if (!allowFriendlyFire) return;
                 if (targetAvatar.Object == null || !targetAvatar.Object.IsValid)
@@ -430,6 +439,13 @@ namespace GameJam.Combat
                 // El avatar existente envia el dano a la autoridad del objetivo.
                 ITakeDamage damageReceiver = targetAvatar;
                 damageReceiver.TakeDamage(damage);
+                return;
+            }
+
+            var holoDummy = target.GetComponentInParent<GameJam.Showcase.HologramCombatDummy>();
+            if (holoDummy != null)
+            {
+                holoDummy.TakeDamage(damage);
                 return;
             }
 

@@ -261,6 +261,57 @@ namespace GameJam.Combat
             popup.Build(owner, amount, position, kind, critical, root);
         }
 
+        public static void ShowCallout(Vector3 position, string calloutText, string badgeText, Color tint, float customScale = 1.25f)
+        {
+            if (!Application.isPlaying || string.IsNullOrEmpty(calloutText) || GameJam.Multiplayer.SceneTransitionVideo.IsPresent) return;
+
+            while (live.Count >= MaxOnScreen)
+            {
+                var oldest = live[0];
+                live.RemoveAt(0);
+                if (oldest != null) Destroy(oldest.gameObject);
+            }
+
+            var root = EnemyCombatUI.PopupRoot();
+            var container = EnemyCombatUI.PopupRect("TrollCalloutPopup", root, new Vector2(380, 140), Vector2.zero);
+            var popup = container.gameObject.AddComponent<EnemyDamagePopup>();
+            popup.BuildCallout(position, calloutText, badgeText, tint, customScale, root);
+        }
+
+        private void BuildCallout(Vector3 position, string calloutText, string badgeText, Color tint, float customScale, RectTransform root)
+        {
+            owner = null; total = 0f; origin = position; kind = DamageKind.Normal; critical = true;
+            canvas = root; rect = (RectTransform)transform;
+            born = Time.unscaledTime;
+            side = (sideToggle++ & 1) == 0 ? -1f : 1f;
+            fade = gameObject.AddComponent<CanvasGroup>();
+            fade.blocksRaycasts = fade.interactable = false;
+
+            label = EnemyCombatUI.PopupText("Callout", transform, new Vector2(420, 110), Vector2.zero, 30);
+            StyleNumber(label);
+            label.text = calloutText;
+            label.color = Color.white;
+            label.enableVertexGradient = true;
+            label.colorGradient = baseGradient = Gradient(Color.Lerp(tint, Color.white, .45f), tint * .85f);
+
+            critLabel = EnemyCombatUI.PopupText("Badge", transform, new Vector2(280, 60), new Vector2(-8, 34), 20);
+            StyleNumber(critLabel);
+            critLabel.text = string.IsNullOrEmpty(badgeText) ? "TROLL!" : badgeText;
+            critLabel.fontStyle = FontStyles.UpperCase;
+            critLabel.characterSpacing = 3f;
+            critLabel.color = Color.white;
+            critLabel.enableVertexGradient = true;
+            critLabel.colorGradient = Gradient(new Color(1f, .97f, .6f), new Color(1f, .62f, .08f));
+            critLabel.transform.localRotation = Quaternion.Euler(0, 0, 7);
+            critLabel.gameObject.SetActive(!string.IsNullOrEmpty(badgeText));
+
+            flash = 1f;
+            size = Mathf.Clamp(customScale, .85f, 1.85f);
+            live.Add(this);
+            transform.SetAsLastSibling();
+            LateUpdate();
+        }
+
         private void Build(object who, float amount, Vector3 position, DamageKind type, bool crit, RectTransform root)
         {
             owner = who; total = amount; origin = position; kind = type; critical = crit;

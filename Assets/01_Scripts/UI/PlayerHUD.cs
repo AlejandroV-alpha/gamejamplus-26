@@ -107,6 +107,7 @@ namespace GameJam.UI
             RefreshLanguage();
             if (SciFiGameMenuManager.IsLobbyScene)
                 gameObject.AddComponent<LobbyGameplayTutorial>().Build(avatar, safeRoot, font);
+            gameObject.AddComponent<GameJam.Showcase.ExhibitionDemoDirector>().Build(avatar, safeRoot, font);
         }
 
         private void BuildHUD()
