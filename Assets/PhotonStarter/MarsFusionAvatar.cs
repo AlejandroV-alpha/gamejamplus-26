@@ -547,10 +547,12 @@ namespace GameJam.Multiplayer
                 var health = HealthSource;
                 float before = health.CurrentHealth;
                 health.TakeDamage(damage);
+                // Solo la autoridad de la victima recibe este RPC: feedback 2D una vez.
                 if (health.CurrentHealth < before)
                 {
                     HurtSequence++;
                     PlayMonsterHurtSound();
+                    if (fromMonster) MarsCombatMusic.ReportHit();
                 }
             }
             else if (!warnedMissingHealth)

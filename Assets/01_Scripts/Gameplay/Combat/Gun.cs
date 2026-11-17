@@ -169,10 +169,8 @@ namespace GameJam.Combat
             currentAmmo--;
             nextShotTime = Time.time + Mathf.Max(0.02f, fireInterval);
             RpcShotEffects(origin, endpoint, normal, target != null);
-            if (target != null)
-            {
-                ApplyHitDamage(target);
-            }
+            if (target != null && ApplyHitDamage(target))
+                MarsCombatMusic.ReportHit();
 
             Debug.Log("[Gun] Municion: " + currentAmmo + " / " + magazineSize, this);
         }
@@ -398,49 +396,49 @@ namespace GameJam.Combat
         /// <summary>
         /// Usa rutas de dano conocidas y evita modificar enemigos remotos sin Fusion.
         /// </summary>
-        private void ApplyHitDamage(Collider target)
+        private bool ApplyHitDamage(Collider target)
         {
             var enemy = target.GetComponentInParent<ReksaiFusionEnemy>();
             if (enemy != null && enemy.Runner == Runner)
             {
                 enemy.TakeDamage(damage);
-                return;
+                return true;
             }
             var worm = target.GetComponentInParent<GusanoExcavadorFusion>();
             if (worm != null && worm.Runner == Runner)
             {
                 worm.TakeDamage(damage);
-                return;
+                return true;
             }
             var jungle = target.GetComponentInParent<JungleNightmareFusionEnemy>();
             if (jungle != null && jungle.Runner == Runner)
             {
                 jungle.TakeDamage(damage);
-                return;
+                return true;
             }
             MarsFusionAvatar targetAvatar = target.GetComponentInParent<MarsFusionAvatar>();
             if (targetAvatar != null)
             {
-                if (targetAvatar.Runner != Runner || targetAvatar == avatar) return;
+                if (targetAvatar.Runner != Runner || targetAvatar == avatar) return false;
                 // The victim's authority validates protection and applies its own KCC push.
                 HitFeedbackHUD.Hit();
                 EnemyDamagePopup.ShowCallout(targetAvatar.transform.position + Vector3.up * 1.75f, "¡FUEGO AMIGO!", $"-{damage} HP", new Color(1f, .45f, .15f), 1.35f);
                 targetAvatar.RequestFriendlyPush(avatar);
-                if (!allowFriendlyFire) return;
+                if (!allowFriendlyFire) return false;
                 if (targetAvatar.Object == null || !targetAvatar.Object.IsValid)
                 {
-                    return;
+                    return false;
                 }
                 if (!targetAvatar.HasHealthSource)
                 {
                     Debug.LogWarning("[Gun] Objetivo sin componente de vida.", targetAvatar);
-                    return;
+                    return false;
                 }
 
                 // El avatar existente envia el dano a la autoridad del objetivo.
                 ITakeDamage damageReceiver = targetAvatar;
                 damageReceiver.TakeDamage(damage);
-                return;
+                return false;
             }
 
             foreach (MonoBehaviour component in target.GetComponentsInParent<MonoBehaviour>())
@@ -456,7 +454,7 @@ namespace GameJam.Combat
                     && golem.Runner == Runner)
                 {
                     damageReceiver.TakeDamage(damage);
-                    return;
+                    return true;
                 }
                 // Enemigos de Fusion que reciben daño por RPC hacia su autoridad (El Cuernudo, Venomwing...).
                 if (component is NetworkBehaviour networked
@@ -465,18 +463,19 @@ namespace GameJam.Combat
                     && networked.Runner == Runner)
                 {
                     damageReceiver.TakeDamage(damage);
-                    return;
+                    return true;
                 }
                 if (Runner.GameMode == GameMode.Single)
                 {
                     damageReceiver.TakeDamage(damage);
+                    return true;
                 }
-                else
-                {
-                    Debug.LogWarning("[Gun] Dano Shared pendiente: el objetivo no tiene una ruta de autoridad Fusion verificada.", component);
-                }
-                return;
+
+                Debug.LogWarning("[Gun] Dano Shared pendiente: el objetivo no tiene una ruta de autoridad Fusion verificada.", component);
+                return false;
             }
+
+            return false;
         }
 
         /// <summary>
