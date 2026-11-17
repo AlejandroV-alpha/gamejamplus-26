@@ -58,12 +58,34 @@ namespace GameJam.Collectibles
 
         private void SnapToGround()
         {
-            // Raycast downward to ensure the item rests cleanly on the ground surface
+            // El rayo anterior chocaba con el propio collider y dejaba la muestra flotando.
+            // Se ignoran colliders propios, otros recolectables, jugadores y enemigos.
             Vector3 origin = transform.position + Vector3.up * 2.5f;
-            if (Physics.Raycast(origin, Vector3.down, out RaycastHit hit, 25f, ~0, QueryTriggerInteraction.Ignore))
+            RaycastHit[] hits = Physics.RaycastAll(origin, Vector3.down, 60f, ~0, QueryTriggerInteraction.Ignore);
+            float bestDistance = float.PositiveInfinity;
+            Vector3 ground = Vector3.zero;
+            foreach (RaycastHit hit in hits)
             {
-                transform.position = hit.point + Vector3.up * 0.12f;
+                Transform other = hit.collider.transform;
+                if (other.IsChildOf(transform) || hit.collider.attachedRigidbody != null
+                    || other.GetComponentInParent<MaterialPickup>() != null
+                    || other.GetComponentInParent<NetworkObject>() != null)
+                    continue;
+                if (hit.distance < bestDistance) { bestDistance = hit.distance; ground = hit.point; }
             }
+            if (float.IsPositiveInfinity(bestDistance)) return;
+
+            // Apoya la base visible (no el pivote) sobre el suelo.
+            float bottom = transform.position.y;
+            bool found = false;
+            foreach (Renderer r in GetComponentsInChildren<Renderer>())
+            {
+                if (r is ParticleSystemRenderer || !r.enabled) continue;
+                bottom = found ? Mathf.Min(bottom, r.bounds.min.y) : r.bounds.min.y;
+                found = true;
+            }
+            float pivotOffset = transform.position.y - bottom;
+            transform.position = new Vector3(transform.position.x, ground.y + pivotOffset + 0.02f, transform.position.z);
         }
 
         private void ApplyPlacedPose()

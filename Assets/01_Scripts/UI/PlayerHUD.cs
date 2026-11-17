@@ -159,7 +159,7 @@ namespace GameJam.UI
             title.fontStyle = FontStyles.Bold;
             var row1 = Label(box, "[F] Empujón Físico (Ragdoll)  ·  [Y] Flop / Buceo", new Vector2(0, 2), new Vector2(390, 18), 12);
             row1.color = Cream;
-            var row2 = Label(box, "[H] Bocina Marciana  ·  [T] Saludo  ·  [E] Arrastrar Amigo", new Vector2(0, -18), new Vector2(390, 18), 12);
+            var row2 = Label(box, "[E] Reanimar  ·  [Clic] Arrastrar (manos vacías)  ·  [T] Saludo", new Vector2(0, -18), new Vector2(390, 18), 12);
             row2.color = Cream;
         }
 

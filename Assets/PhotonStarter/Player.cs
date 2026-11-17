@@ -388,6 +388,8 @@ namespace Starter.ThirdPersonCharacter
             if (_avatar != null)
             {
                 finalVelocity = _avatar.ApplyFriendlyPush(finalVelocity);
+                var reviveDrag = GetComponent<GameJam.Survival.SurvivalRevive>();
+                if (reviveDrag != null) finalVelocity = reviveDrag.ApplyDrag(finalVelocity);
                 float extraHop = _avatar.ConsumePendingJumpImpulse();
                 if (extraHop > jumpImpulse)
                 {

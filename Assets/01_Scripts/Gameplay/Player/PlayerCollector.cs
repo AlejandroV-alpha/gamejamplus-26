@@ -47,6 +47,9 @@ namespace GameJam.Gameplay
             {
                 // Only the locally owned avatar reports an attempted interaction.
                 if (Object == null || !Object.IsValid || !HasStateAuthority) return;
+                // E cerca de un companero caido sirve para reanimar, no para recoger.
+                var revive = GetComponent<GameJam.Survival.SurvivalRevive>();
+                if (revive != null && revive.HasReviveTargetNearby) return;
                 TryCollectNearest();
             }
         }

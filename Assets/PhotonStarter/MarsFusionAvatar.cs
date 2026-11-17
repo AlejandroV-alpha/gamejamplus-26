@@ -632,23 +632,7 @@ namespace GameJam.Multiplayer
                             RPC_SyncRagdoll(false, Vector3.zero);
                         }
                     }
-                    if (keyboard.eKey.isPressed && !IsRagdoll && !isRecovering && ragdoll != null)
-                    {
-                        int count = Physics.OverlapSphereNonAlloc(transform.position + transform.forward * 1.2f, 2.4f, nearbyScanBuffer, ~0, QueryTriggerInteraction.Ignore);
-                        for (int i = 0; i < count; i++)
-                        {
-                            var c = nearbyScanBuffer[i];
-                            if (c == null || c.transform.IsChildOf(transform)) continue;
-                            var other = c.GetComponentInParent<MarsFusionAvatar>();
-                            if (other != null && other != this && other.IsRagdoll && other.ragdoll != null && other.ragdoll.HipsRigidbody != null)
-                            {
-                                Vector3 targetPos = transform.position + transform.forward * 1.1f + Vector3.up * 0.35f;
-                                Vector3 pull = (targetPos - other.ragdoll.HipsRigidbody.position) * 14f;
-                                other.ragdoll.HipsRigidbody.AddForce(pull, ForceMode.Acceleration);
-                                break;
-                            }
-                        }
-                    }
+                    // El arrastre de companeros vive en SurvivalRevive (clic izquierdo con manos vacias).
                 }
             }
             // Auto-pop fake death bait if a teammate walks right up to "revive" us!

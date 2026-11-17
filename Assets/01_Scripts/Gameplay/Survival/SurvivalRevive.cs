@@ -31,6 +31,15 @@ namespace GameJam.Survival
         [Networked] public TickTimer EmoteDeadline { get; private set; }
         [Networked] public TickTimer GetUpDeadline { get; private set; }
         [Networked] public TickTimer RescueExitDeadline { get; private set; }
+        // Arrastre: el que arrastra publica su objetivo; la autoridad del objetivo acepta al arrastrador.
+        [Networked] public NetworkObject DragTarget { get; private set; }
+        [Networked] public NetworkObject Dragger { get; private set; }
+        [SerializeField, Min(0.5f)] private float dragGrabRange = 2.6f;
+        [SerializeField, Min(1f)] private float dragBreakRange = 6f;
+        [SerializeField, Min(0.1f)] private float dragSpeedMultiplier = 0.65f;
+        private bool dragHeld;
+        private float nextHintLookup;
+        private SurvivalRevive hintTarget;
         private float nextSocialLookup;
         private SurvivalRevive rescueTarget;
         public bool IsRecovering => Object != null && Object.IsValid && health != null && health.IsAlive
@@ -107,7 +116,8 @@ namespace GameJam.Survival
                 return;
             }
             ReadEmotes();
-            bool nowHeld = Application.isFocused && Keyboard.current != null && Keyboard.current.fKey.isPressed;
+            ReadDrag();
+            bool nowHeld = Application.isFocused && Keyboard.current != null && Keyboard.current.eKey.isPressed;
             if (nowHeld && !held)
             {
                 if (CanInteractLocally())
@@ -135,6 +145,7 @@ namespace GameJam.Survival
             {
                 return;
             }
+            ValidateDrag();
             if (Emote != 0 && (EmoteDeadline.ExpiredOrNotRunning(Runner) || avatar == null || !avatar.IsAlive
                 || avatar.TabletOpen || (GetComponent<PlayerHurtReaction>()?.IsReacting ?? false)
                 || (GetComponent<GameJam.Environment.Mars.PlayerSandstorm>()?.IsDowned ?? false))) Emote = 0;
@@ -190,7 +201,7 @@ namespace GameJam.Survival
             if (IsEmoting)
             {
                 bool cancel = keyboard.wKey.isPressed || keyboard.aKey.isPressed || keyboard.sKey.isPressed
-                    || keyboard.dKey.isPressed || keyboard.spaceKey.isPressed || keyboard.fKey.isPressed
+                    || keyboard.dKey.isPressed || keyboard.spaceKey.isPressed || keyboard.eKey.isPressed
                     || (Mouse.current != null && (Mouse.current.leftButton.isPressed || Mouse.current.rightButton.isPressed));
                 if (cancel) Emote = 0;
                 return;
@@ -217,6 +228,184 @@ namespace GameJam.Survival
             if (!HasStateAuthority) return;
             var clip = PlayerSocialAnimation.ReviveGetUpClip;
             GetUpDeadline = TickTimer.CreateFromSeconds(Runner, clip != null ? clip.length : 8.267f);
+        }
+
+        // ───────────── Arrastre de companeros ─────────────
+
+        public bool IsDragging => Object != null && Object.IsValid && DragTarget != null && DragTarget.IsValid;
+        public bool IsBeingDragged => Object != null && Object.IsValid && Dragger != null && Dragger.IsValid;
+        public bool CanBeRevived => health != null && !health.IsAlive && health.CurrentHealth <= 0f;
+
+        /// <summary>Companero caido o en ragdoll mas cercano (para el letrero de interaccion).</summary>
+        public SurvivalRevive NearbyTeammate
+        {
+            get
+            {
+                if (Time.unscaledTime < nextHintLookup) return hintTarget;
+                nextHintLookup = Time.unscaledTime + .15f;
+                hintTarget = null;
+                if (Object == null || !Object.IsValid || health == null || !health.IsAlive || kcc == null) return null;
+                float best = float.PositiveInfinity;
+                foreach (var candidate in FindObjectsByType<SurvivalRevive>(FindObjectsSortMode.None))
+                {
+                    if (!Draggable(candidate) && !TargetValid(candidate)) continue;
+                    float d = (BodyPosition - candidate.BodyPosition).sqrMagnitude;
+                    float range = Mathf.Max(dragGrabRange, candidate.reviveRange);
+                    if (d <= range * range && d < best) { best = d; hintTarget = candidate; }
+                }
+                return hintTarget;
+            }
+        }
+
+        /// <summary>Hay alguien a quien reanimar al alcance (E queda reservada para reanimar).</summary>
+        public bool HasReviveTargetNearby => CanInteractLocally() && FindTarget() != null;
+
+        public bool HandsEmpty
+        {
+            get
+            {
+                var inventory = GetComponent<GameJam.Inventory.Inventory>();
+                return inventory == null || inventory.SelectedItem == null;
+            }
+        }
+
+        /// <summary>Posicion real del cuerpo: la cadera si esta en ragdoll.</summary>
+        public Vector3 BodyPosition
+        {
+            get
+            {
+                if (avatar != null && avatar.Ragdoll != null && avatar.Ragdoll.IsRagdolled && avatar.Ragdoll.HipsRigidbody != null)
+                    return avatar.Ragdoll.HipsRigidbody.position;
+                return kcc != null && kcc.enabled ? kcc.Position : transform.position;
+            }
+        }
+
+        private bool IsDownedOrRagdolled => (health != null && !health.IsAlive)
+            || (avatar != null && (avatar.IsRagdoll || (avatar.Ragdoll != null && avatar.Ragdoll.IsRagdolled)));
+
+        private bool Draggable(SurvivalRevive target)
+        {
+            return target != null && target != this && target.Object != null && target.Object.IsValid
+                && target.Runner == Runner && target.IsDownedOrRagdolled && target.Rescuer == null
+                && (target.Dragger == null || target.Dragger == Object);
+        }
+
+        private bool CanDragLocally()
+        {
+            return CanInteractLocally() && !IsRescuing && HandsEmpty && avatar != null && !avatar.IsRagdoll
+                && (avatar.Ragdoll == null || (!avatar.Ragdoll.IsRagdolled && !avatar.Ragdoll.IsRecovering));
+        }
+
+        private void ReadDrag()
+        {
+            bool nowHeld = Application.isFocused && Mouse.current != null && Mouse.current.leftButton.isPressed;
+            if (nowHeld && !dragHeld && CanDragLocally())
+            {
+                SurvivalRevive best = null;
+                float bestDistance = dragGrabRange * dragGrabRange;
+                foreach (var candidate in FindObjectsByType<SurvivalRevive>(FindObjectsSortMode.None))
+                {
+                    if (!Draggable(candidate)) continue;
+                    float d = (BodyPosition - candidate.BodyPosition).sqrMagnitude;
+                    if (d <= bestDistance) { bestDistance = d; best = candidate; }
+                }
+                if (best != null)
+                {
+                    DragTarget = best.Object;
+                    best.RPC_BeginDrag(Object);
+                }
+            }
+            if (!nowHeld && dragHeld) StopDragging();
+            dragHeld = nowHeld;
+        }
+
+        private void StopDragging()
+        {
+            if (DragTarget != null && DragTarget.IsValid)
+            {
+                var target = DragTarget.GetComponent<SurvivalRevive>();
+                if (target != null) target.RPC_EndDrag(Object);
+            }
+            DragTarget = null;
+        }
+
+        /// <summary>Corta arrastres invalidos en ambos extremos.</summary>
+        private void ValidateDrag()
+        {
+            if (DragTarget != null)
+            {
+                var target = DragTarget.IsValid ? DragTarget.GetComponent<SurvivalRevive>() : null;
+                if (target == null || !target.IsDownedOrRagdolled || target.Rescuer != null || !CanDragLocally()
+                    || (BodyPosition - target.BodyPosition).sqrMagnitude > dragBreakRange * dragBreakRange)
+                    StopDragging();
+            }
+            if (Dragger != null)
+            {
+                var dragger = Dragger.IsValid ? Dragger.GetComponent<SurvivalRevive>() : null;
+                if (dragger == null || dragger.DragTarget != Object || !IsDownedOrRagdolled || Rescuer != null
+                    || dragger.health == null || !dragger.health.IsAlive
+                    || (dragger.BodyPosition - BodyPosition).sqrMagnitude > dragBreakRange * dragBreakRange)
+                    Dragger = null;
+            }
+        }
+
+        [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
+        private void RPC_BeginDrag(NetworkObject actor, RpcInfo info = default)
+        {
+            if (!SenderValid(actor, info) || !IsDownedOrRagdolled || Rescuer != null) return;
+            if (Dragger != null && Dragger != actor && Dragger.IsValid) return;
+            Dragger = actor;
+        }
+
+        [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
+        private void RPC_EndDrag(NetworkObject actor, RpcInfo info = default)
+        {
+            if (!SenderValid(actor, info)) return;
+            if (Dragger == actor) Dragger = null;
+        }
+
+        private Vector3 DragAnchor(SurvivalRevive dragger)
+        {
+            Vector3 back = dragger.transform.forward;
+            back.y = 0f;
+            if (back.sqrMagnitude < .01f) back = Vector3.forward;
+            return dragger.BodyPosition - back.normalized * 1.25f;
+        }
+
+        /// <summary>
+        /// Llamado por el movimiento del astronauta: frena al que arrastra y mueve al caido.
+        /// </summary>
+        public Vector3 ApplyDrag(Vector3 velocity)
+        {
+            if (IsDragging) velocity *= dragSpeedMultiplier;
+            if (IsBeingDragged && kcc != null && kcc.enabled)
+            {
+                var dragger = Dragger.GetComponent<SurvivalRevive>();
+                if (dragger != null)
+                {
+                    Vector3 delta = DragAnchor(dragger) - kcc.Position;
+                    delta.y = 0f;
+                    velocity = delta.magnitude > .2f ? Vector3.ClampMagnitude(delta * 6f, 7f) : Vector3.zero;
+                }
+            }
+            return velocity;
+        }
+
+        /// <summary>
+        /// El ragdoll se simula en cada cliente, asi que todos tiran de la cadera hacia el arrastrador.
+        /// </summary>
+        private void FixedUpdate()
+        {
+            if (Object == null || !Object.IsValid || !IsBeingDragged || avatar == null || avatar.Ragdoll == null
+                || !avatar.Ragdoll.IsRagdolled || avatar.Ragdoll.HipsRigidbody == null) return;
+            var dragger = Dragger.GetComponent<SurvivalRevive>();
+            if (dragger == null) return;
+            Rigidbody hips = avatar.Ragdoll.HipsRigidbody;
+            Vector3 target = DragAnchor(dragger) + Vector3.up * .35f;
+            Vector3 offset = target - hips.position;
+            if (offset.magnitude < .25f) return;
+            Vector3 velocity = hips.GetPointVelocity(hips.worldCenterOfMass);
+            hips.AddForce(offset * 16f - velocity * 3f, ForceMode.Acceleration);
         }
 
         /// <summary>
@@ -459,6 +648,7 @@ namespace GameJam.Survival
         {
             selected = null;
             pendingTarget = null;
+            dragHeld = false;
             held = false;
             pressed = false;
             released = false;
@@ -467,6 +657,8 @@ namespace GameJam.Survival
             {
                 AuthorityGeneration++;
                 RescueExitDeadline = TickTimer.None;
+                DragTarget = null;
+                Dragger = null;
                 ClearReservation();
             }
         }
