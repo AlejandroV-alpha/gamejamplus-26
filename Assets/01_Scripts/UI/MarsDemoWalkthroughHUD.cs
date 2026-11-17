@@ -1,11 +1,8 @@
 using System;
-using System.Collections.Generic;
 using GameJam.Combat;
 using GameJam.Environment.Mars;
 using GameJam.Inventory;
-using GameJam.Localization;
 using GameJam.Multiplayer;
-using GameJam.Ship;
 using GameJam.Tablet;
 using TMPro;
 using UnityEngine;
@@ -15,8 +12,8 @@ using UnityEngine.UI;
 namespace GameJam.UI
 {
     /// <summary>
-    /// Dynamic, interactive ~5-minute walkthrough HUD for the Mars Gameplay Demo & Exhibition.
-    /// Tracks live co-op troll mechanics, dune mining, craft & ship repair, swarm defense, and victory.
+    /// Walkthrough dinámico e interactivo para la demo y exposición de Marte (~5 min).
+    /// Mantiene la estética idéntica a PlayerHUD (Ink, Accent, Cream) y guía al jugador paso a paso.
     /// </summary>
     public sealed class MarsDemoWalkthroughHUD : MonoBehaviour
     {
@@ -28,6 +25,13 @@ namespace GameJam.UI
             SwarmDefense = 3,
             EvacuationVictory = 4
         }
+
+        private static readonly Color32 Ink = new Color32(13, 23, 29, 235);
+        private static readonly Color32 Accent = new Color32(104, 224, 198, 255);
+        private static readonly Color32 Cream = new Color32(239, 228, 200, 255);
+        private static readonly Color32 Orange = new Color32(255, 178, 102, 255);
+        private static readonly Color32 Muted = new Color32(150, 190, 210, 255);
+        private static readonly Color32 Green = new Color32(64, 255, 173, 255);
 
         private MarsFusionAvatar avatar;
         private MarsFusionSession session;
@@ -51,7 +55,6 @@ namespace GameJam.UI
         private bool didMove, didShove, didFlop, didHonk, didTablet;
         private bool expanded = true;
         private float nextTick;
-        private int previousInventoryCount = -1;
 
         public void Build(MarsFusionAvatar source, RectTransform parent, TMP_FontAsset font)
         {
@@ -65,25 +68,37 @@ namespace GameJam.UI
             panel.SetParent(parent, false);
             panel.anchorMin = panel.anchorMax = panel.pivot = new Vector2(0, 1);
             panel.anchoredPosition = new Vector2(24, -24);
-            panel.sizeDelta = new Vector2(495, 345);
+            panel.sizeDelta = new Vector2(440, 280);
 
             background = panel.gameObject.AddComponent<Image>();
-            background.color = new Color32(9, 17, 27, 245);
+            background.color = Ink;
             background.raycastTarget = false;
 
             outline = panel.gameObject.AddComponent<Outline>();
-            outline.effectColor = new Color32(104, 224, 198, 210);
-            outline.effectDistance = new Vector2(1.5f, -1.5f);
+            outline.effectColor = new Color32(104, 224, 198, 140);
+            outline.effectDistance = new Vector2(1, -1);
 
             group = panel.gameObject.AddComponent<CanvasGroup>();
             group.blocksRaycasts = false;
             group.interactable = false;
             group.alpha = 1f;
 
-            titleText = CreateText("Title", 14, 28, 17, font, FontStyles.Bold, new Color32(104, 224, 198, 255));
-            badgeText = CreateText("Badge", 42, 24, 13, font, FontStyles.Normal, new Color32(255, 185, 110, 255));
-            bodyText = CreateText("Body", 70, 225, 13, font, FontStyles.Normal, new Color32(235, 244, 250, 255));
-            footerText = CreateText("Footer", 305, 26, 12, font, FontStyles.Italic, new Color32(150, 190, 210, 255));
+            // Accent line on top
+            var topBar = new GameObject("TopAccent", typeof(RectTransform)).GetComponent<RectTransform>();
+            topBar.SetParent(panel, false);
+            topBar.anchorMin = new Vector2(0, 1);
+            topBar.anchorMax = new Vector2(1, 1);
+            topBar.pivot = new Vector2(0.5f, 1f);
+            topBar.anchoredPosition = Vector2.zero;
+            topBar.sizeDelta = new Vector2(0, 3);
+            var barImg = topBar.gameObject.AddComponent<Image>();
+            barImg.color = Accent;
+            barImg.raycastTarget = false;
+
+            titleText = CreateText("Title", 10, 24, 15, font, FontStyles.Bold, Accent);
+            badgeText = CreateText("Badge", 34, 20, 12, font, FontStyles.Normal, Orange);
+            bodyText = CreateText("Body", 58, 185, 12, font, FontStyles.Normal, Cream);
+            footerText = CreateText("Footer", 252, 22, 11, font, FontStyles.Normal, Muted);
 
             LocateTracker();
             UpdateUI();
@@ -97,7 +112,7 @@ namespace GameJam.UI
             rect.anchorMax = new Vector2(1, 1);
             rect.pivot = new Vector2(0.5f, 1f);
             rect.anchoredPosition = new Vector2(0, -top);
-            rect.sizeDelta = new Vector2(-36, height);
+            rect.sizeDelta = new Vector2(-28, height);
 
             var text = rect.gameObject.AddComponent<TextMeshProUGUI>();
             text.font = font != null ? font : TMP_Settings.defaultFontAsset;
@@ -118,7 +133,7 @@ namespace GameJam.UI
             {
                 tracker = avatar.LocalUI.Mission;
             }
-            else
+            if (tracker == null)
             {
                 tracker = FindAnyObjectByType<TabletMissionTracker>();
             }
@@ -134,7 +149,7 @@ namespace GameJam.UI
 
             if (Time.time >= nextTick)
             {
-                nextTick = Time.time + 0.15f;
+                nextTick = Time.time + 0.12f;
                 UpdateUI();
             }
         }
@@ -150,7 +165,6 @@ namespace GameJam.UI
                 UpdateUI();
             }
 
-            // Phase 1 interaction monitors
             if (currentPhase == DemoPhase.TrollAndControls)
             {
                 if (kb.wKey.isPressed || kb.aKey.isPressed || kb.sKey.isPressed || kb.dKey.isPressed)
@@ -170,14 +184,11 @@ namespace GameJam.UI
         {
             if (inventory == null) return 0;
             int total = 0;
-            var list = inventory.GetItemList();
-            if (list != null)
+            for (int i = 0; i < inventory.SlotCount; i++)
             {
-                for (int i = 0; i < list.Count; i++)
-                {
-                    if (list[i] != null && list[i].material != null)
-                        total += list[i].amount;
-                }
+                var item = inventory.GetSlotMaterial(i);
+                if (item != null && item.kind == CarriedItemKind.Material)
+                    total++;
             }
             return total;
         }
@@ -193,7 +204,7 @@ namespace GameJam.UI
             if (currentPhase == DemoPhase.TrollAndControls)
             {
                 bool allTrollDone = didMove && didShove && didFlop && didHonk && didTablet;
-                if (allTrollDone || elapsed > 50f || carriedOre > 0 || crafted > 0)
+                if (allTrollDone || elapsed > 45f || carriedOre > 0 || crafted > 0)
                 {
                     SetPhase(DemoPhase.DuneMining);
                 }
@@ -201,7 +212,7 @@ namespace GameJam.UI
             // Phase 2 -> Phase 3
             else if (currentPhase == DemoPhase.DuneMining)
             {
-                if (carriedOre >= 3 || crafted > 0 || installed > 0 || elapsed > 130f)
+                if (carriedOre >= 3 || crafted > 0 || installed > 0 || elapsed > 120f)
                 {
                     SetPhase(DemoPhase.CraftAndRepair);
                 }
@@ -209,7 +220,7 @@ namespace GameJam.UI
             // Phase 3 -> Phase 4
             else if (currentPhase == DemoPhase.CraftAndRepair)
             {
-                if (installed >= 2 || (crafted >= 3 && installed >= 1) || elapsed > 210f)
+                if (installed >= 2 || (crafted >= 3 && installed >= 1) || elapsed > 200f)
                 {
                     SetPhase(DemoPhase.SwarmDefense);
                     swarmStartTime = Time.time;
@@ -247,16 +258,16 @@ namespace GameJam.UI
             switch (phase)
             {
                 case DemoPhase.DuneMining:
-                    EnemyDamagePopup.ShowCallout(pos, "¡FASE 2: MINERÍA EN LAS DUNAS!", "RECOLECCIÓN", new Color(0.4f, 0.9f, 1f), 1.35f);
+                    EnemyDamagePopup.ShowCallout(pos, "¡FASE 2: MINERÍA EN LAS DUNAS!", "RECOLECCIÓN", new Color(0.4f, 0.9f, 1f), 1.25f);
                     break;
                 case DemoPhase.CraftAndRepair:
-                    EnemyDamagePopup.ShowCallout(pos, "¡FASE 3: FABRICACIÓN & REPARACIÓN!", "BASE NAVE", new Color(1f, 0.75f, 0.2f), 1.35f);
+                    EnemyDamagePopup.ShowCallout(pos, "¡FASE 3: FABRICACIÓN & REPARACIÓN!", "BASE NAVE", new Color(1f, 0.75f, 0.2f), 1.25f);
                     break;
                 case DemoPhase.SwarmDefense:
-                    EnemyDamagePopup.ShowCallout(pos, "¡ALERTA ROJA: ENJAMBRE ALFA DESPERTÓ!", "SUPERVIVENCIA", new Color(1f, 0.25f, 0.25f), 1.45f);
+                    EnemyDamagePopup.ShowCallout(pos, "¡ALERTA ROJA: ENJAMBRE ALFA DESPERTÓ!", "SUPERVIVENCIA", new Color(1f, 0.25f, 0.25f), 1.35f);
                     break;
                 case DemoPhase.EvacuationVictory:
-                    EnemyDamagePopup.ShowCallout(pos, "¡REACTOR ONLINE! ¡MISIÓN DEMO SUPERADA!", "VICTORIA", new Color(0.2f, 1f, 0.5f), 1.55f);
+                    EnemyDamagePopup.ShowCallout(pos, "¡REACTOR ONLINE! ¡MISIÓN DEMO SUPERADA!", "VICTORIA", new Color(0.2f, 1f, 0.5f), 1.45f);
                     break;
             }
         }
@@ -282,20 +293,20 @@ namespace GameJam.UI
 
             if (!expanded)
             {
-                panel.sizeDelta = new Vector2(495, 76);
-                titleText.text = "DEMO GAMEPLAY MARTE [5 MIN]";
+                panel.sizeDelta = new Vector2(440, 68);
+                titleText.text = "OBJETIVOS DE MISIÓN · MARTE [DEMO]";
                 badgeText.text = $"<color=#68e0c6>Fase {(int)currentPhase + 1}/5 activa</color> · [F1] Expandir";
                 bodyText.gameObject.SetActive(false);
                 footerText.gameObject.SetActive(false);
                 return;
             }
 
-            panel.sizeDelta = new Vector2(495, 345);
+            panel.sizeDelta = new Vector2(440, 280);
             bodyText.gameObject.SetActive(true);
             footerText.gameObject.SetActive(true);
 
-            titleText.text = "MISIÓN DEMO: ESCAPE DE MARTE · EXPOSICIÓN";
-            footerText.text = "[F1] Ocultar / Expandir  ·  [Tab] Tableta de Planos  ·  [H] Bocina";
+            titleText.text = "OBJETIVOS DE MISIÓN · MARTE [DEMO]";
+            footerText.text = "[F1] Minimizar  ·  [Tab] Tableta  ·  [H] Bocina";
 
             int carriedOre = GetTotalCarriedMinerals();
             int crafted = tracker != null ? tracker.CraftedCount : 0;
@@ -304,65 +315,64 @@ namespace GameJam.UI
             switch (currentPhase)
             {
                 case DemoPhase.TrollAndControls:
-                    badgeText.text = "<color=#68e0c6>FASE 1/5: FAMILIARIZACIÓN & FÍSICAS TROLL (0:00 - 0:45)</color>";
-                    outline.effectColor = new Color32(104, 224, 198, 220);
+                    badgeText.text = "FASE 1/5: FAMILIARIZACIÓN & FÍSICAS CO-OP";
+                    outline.effectColor = new Color32(104, 224, 198, 140);
                     bodyText.text =
-                        "¡Aterrizaje forzoso en Marte! Domina tus controles y mecánicas co-op:\n" +
-                        FormatCheck(didMove, "Movimiento y Carrera", "[W,A,S,D] + [Shift]") + "\n" +
-                        FormatCheck(didShove, "Empujón Físico Troll", "[F] (Derriba amigos con ragdoll)") + "\n" +
-                        FormatCheck(didFlop, "Buceo / Flop Táctico", "[Y] (Ragdoll instantáneo para esquivar)") + "\n" +
-                        FormatCheck(didHonk, "Bocina Marciana", "[H] (Atrae a Rek'Sai bajo tierra)") + "\n" +
-                        FormatCheck(didTablet, "Consultar Tableta", "[Tab] (Planos de piezas de la nave)");
+                        "Aterrizaje en campamento base. Conoce tus mecánicas:\n" +
+                        FormatCheck(didMove, "Movimiento y carrera", "[W,A,S,D] / [Shift]") + "\n" +
+                        FormatCheck(didShove, "Empujón físico ragdoll", "[F] (Derriba a amigos)") + "\n" +
+                        FormatCheck(didFlop, "Buceo / Flop táctico", "[Y] (Ragdoll instantáneo)") + "\n" +
+                        FormatCheck(didHonk, "Bocina marciana", "[H] (Atrae a Rek'Sai)") + "\n" +
+                        FormatCheck(didTablet, "Consultar planos", "[Tab] (Tableta de nave)");
                     break;
 
                 case DemoPhase.DuneMining:
-                    badgeText.text = "<color=#ffa659>FASE 2/5: MINERÍA EN LAS DUNAS MARCIANAS (0:45 - 2:00)</color>";
-                    outline.effectColor = new Color32(255, 166, 89, 220);
-                    string oreState = carriedOre >= 3 ? "<color=#68e0c6>¡Listo para fabricar!</color>" : $"Recolectados: {carriedOre}/3";
+                    badgeText.text = "FASE 2/5: MINERÍA EN LAS DUNAS";
+                    outline.effectColor = new Color32(255, 178, 102, 140);
+                    string oreState = carriedOre >= 3 ? "<color=#40ffad>¡3/3 Listos!</color>" : $"Recolectados: {carriedOre}/3";
                     bodyText.text =
                         "Explora las dunas de arena roja y reúne minerales para el reactor:\n" +
-                        FormatCheck(carriedOre >= 3, "Extraer Minerales Marcianos", oreState) + "\n" +
-                        "<color=#ffd166>• Duna Scrap:</color> Nodos de menas abundantes alrededor del cráter.\n" +
-                        "<color=#ff6b6b>• ¡Alerta Tormenta!</color> Si arrecia el viento, tírate al suelo o sufrirás ragdoll.\n" +
-                        "<color=#ff9f43>• Depredadores:</color> Avispa Venomwing patrulla el cielo; Rek'Sai oye tus pasos.";
+                        FormatCheck(carriedOre >= 3, "Extraer 3 Minerales", oreState) + "\n\n" +
+                        "<color=#68e0c6>• Menas seguras:</color> Esparcidas en las dunas cercanas.\n" +
+                        "<color=#ffb266>• Tormenta:</color> Si arrecia la arena, tírate al suelo con [Y].\n" +
+                        "<color=#96bed2>• Perímetro:</color> Los monstruos merodean en el desierto exterior.";
                     break;
 
                 case DemoPhase.CraftAndRepair:
-                    badgeText.text = "<color=#ffd166>FASE 3/5: FABRICACIÓN & REPARACIÓN (2:00 - 3:30)</color>";
-                    outline.effectColor = new Color32(255, 209, 102, 220);
+                    badgeText.text = "FASE 3/5: FABRICACIÓN & REPARACIÓN";
+                    outline.effectColor = new Color32(255, 209, 102, 140);
                     bodyText.text =
-                        "Lleva los materiales a la base central de la nave espacial (0, 14, -19):\n" +
-                        FormatCheck(crafted >= 3, "Fabricar 3 Componentes", $"Mesa de Crafteo ({crafted}/3 fabricados)") + "\n" +
-                        FormatCheck(installed >= 3, "Instalar en la Nave", $"Mantén [E] en el casco ({installed}/3 instalados)") + "\n" +
-                        "<color=#68e0c6>• Co-op:</color> Los compañeros pueden coordinarse para llevar piezas.\n" +
-                        "<color=#ff6b6b>• ¡Atención!</color> Activar el reactor emitirá un pulso que atraerá al Enjambre Alfa.";
+                        "Lleva los materiales a la base central de la nave (0, 14, -19):\n" +
+                        FormatCheck(crafted >= 3, "Fabricar 3 componentes", $"Mesa de crafteo ({crafted}/3)") + "\n" +
+                        FormatCheck(installed >= 3, "Instalar en la nave", $"Mantén [E] en el casco ({installed}/3)") + "\n\n" +
+                        "<color=#68e0c6>• Cooperación:</color> Lleven piezas juntos para acelerar el trabajo.\n" +
+                        "<color=#ff6b6b>• ¡Atención!</color> El reactor atraerá al Enjambre Alfa.";
                     break;
 
                 case DemoPhase.SwarmDefense:
-                    badgeText.text = "<color=#ff5252>FASE 4/5: ¡DEFENSA ANTE EL ENJAMBRE ALFA! (3:30 - 5:00)</color>";
-                    outline.effectColor = new Color32(255, 82, 82, 240);
+                    badgeText.text = "<color=#ff5252>FASE 4/5: ¡DEFENSA ANTE EL ENJAMBRE ALFA!</color>";
+                    outline.effectColor = new Color32(255, 82, 82, 180);
                     float remain = swarmStartTime > 0 ? Mathf.Max(0f, SwarmDefenseDuration - (Time.time - swarmStartTime)) : SwarmDefenseDuration;
                     int mins = Mathf.FloorToInt(remain / 60f);
                     int secs = Mathf.FloorToInt(remain % 60f);
-                    string timerStr = $"{mins:00}:{secs:00}";
 
                     bodyText.text =
-                        $"<color=#ff5252><b>¡ALARMA ROJA! ENJAMBRE ENFURECIDO · REACTOR CARGANDO: {timerStr}</b></color>\n" +
-                        "<color=#ffd166>Defiendan la nave contra los 6 titanes marcianos:</color>\n" +
-                        "• <b>El Cuernudo:</b> Se vuelve invisible. ¡Dispárale para romper su camuflaje!\n" +
-                        "• <b>Frost Nightmare:</b> Titán de hielo con golpe demoledor ragdoll.\n" +
-                        "• <b>Gusanos Excavadores:</b> ¡Si atrapan a un amigo entre sus dientes, disparen en equipo!\n" +
-                        "• <b>Venomwing & Rek'Sai:</b> Ácido aéreo y emboscadas desde la arena.";
+                        $"<color=#ff5252><b>¡REACTOR CARGANDO HIPERIMPULSO: {mins:00}:{secs:00}!</b></color>\n" +
+                        "<color=#ffd166>Defiendan el campamento de los titanes:</color>\n" +
+                        "• <b>El Cuernudo:</b> Acechador invisible. ¡Dispárale para revelarlo!\n" +
+                        "• <b>Frost Nightmare:</b> Titán con azote físico demoledor.\n" +
+                        "• <b>Gusanos:</b> Si atrapan a un amigo entre sus dientes, ¡disparen en equipo!\n" +
+                        "• <b>Venomwing & Rek'Sai:</b> Ácido aéreo y embestida subterránea.";
                     break;
 
                 case DemoPhase.EvacuationVictory:
-                    badgeText.text = "<color=#2ecc71>FASE 5/5: ¡MISIÓN CUMPLIDA! EVACUACIÓN EXITOSA (5:00+)</color>";
-                    outline.effectColor = new Color32(46, 204, 113, 240);
+                    badgeText.text = "<color=#40ffad>FASE 5/5: ¡EVACUACIÓN EXITOSA!</color>";
+                    outline.effectColor = new Color32(64, 255, 173, 180);
                     bodyText.text =
-                        "<color=#2ecc71><b>★ REACTOR AL 100% · HIPERIMPULSOR EN LÍNEA ★</b></color>\n\n" +
-                        "¡Todos los componentes están instalados y el enjambre ha sido repelido!\n" +
-                        "• <b>Suban a la nave</b> para iniciar el salto a Neptuno.\n" +
-                        "• <b>Excelente trabajo en equipo:</b> Físicas, co-op troll, combate y supervivencia completados.\n\n" +
+                        "<color=#40ffad><b>★ REACTOR AL 100% · SALTO HIPERESPACIAL LISTO ★</b></color>\n\n" +
+                        "¡Todos los componentes reparados y enjambre repelido!\n" +
+                        "• <b>Suban a la nave</b> para el despegue inmediato.\n" +
+                        "• Físicas, co-op troll, combate y supervivencia completados.\n\n" +
                         "<color=#68e0c6>★ DEMO SHOWCASE LISTA PARA LA EXPOSICIÓN ★</color>";
                     break;
             }
@@ -370,8 +380,8 @@ namespace GameJam.UI
 
         private static string FormatCheck(bool done, string label, string detail)
         {
-            string check = done ? "<color=#2ecc71><b>[✓]</b></color>" : "<color=#8fa3b0><b>[ ]</b></color>";
-            string text = done ? $"<color=#a8dfc8><s>{label}</s></color>" : $"<color=#ebf4fa><b>{label}</b></color>";
+            string check = done ? "<color=#40ffad><b>[✓]</b></color>" : "<color=#8fa3b0><b>[ ]</b></color>";
+            string text = done ? $"<color=#a8dfc8><s>{label}</s></color>" : $"<color=#efe4c8><b>{label}</b></color>";
             return $"{check} {text} · <color=#96bed2>{detail}</color>";
         }
     }

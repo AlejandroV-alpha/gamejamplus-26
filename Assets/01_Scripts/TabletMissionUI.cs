@@ -11,6 +11,7 @@ namespace GameJam.Tablet
     public sealed partial class TabletGuideUI
     {
         private TabletMissionTracker mission;
+        public TabletMissionTracker Mission => mission;
         private readonly System.Collections.Generic.List<Action> missionBindings = new System.Collections.Generic.List<Action>();
         private CanvasGroup missionToast;
         private TextMeshProUGUI missionToastText;
