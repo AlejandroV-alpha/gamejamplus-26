@@ -30,6 +30,7 @@ namespace GameJam.Gameplay
             inventory = GetComponent<PlayerInventory>();
             avatar = GetComponent<MarsFusionAvatar>();
             characterInput = GetComponent<CharacterInput>();
+            if (GetComponent<PickupPromptFeedback>() == null) gameObject.AddComponent<PickupPromptFeedback>();
         }
 
         /// <summary>

@@ -60,20 +60,20 @@ namespace GameJam.Survival
             bool empty = revive.HandsEmpty;
             var drag = new GameJam.UI.InteractionPromptCard.Row
             {
-                Key = "CLIC IZQ.",
-                Action = empty ? "Mantener para arrastrar" : "Guarda tu objeto para arrastrar",
+                Key = GameJam.UI.InteractionPromptCard.MouseLeft, Tag = empty ? "MANTENER" : null,
+                Action = empty ? "Arrastrar" : "Guarda tu objeto para arrastrar",
                 Enabled = empty
             };
             if (promptTarget.CanBeRevived)
             {
-                reviveRows[0] = new GameJam.UI.InteractionPromptCard.Row { Key = "E", Action = "Mantener para reanimar", Enabled = true };
+                reviveRows[0] = new GameJam.UI.InteractionPromptCard.Row { Key = "E", Action = "Reanimar", Tag = "MANTENER", Enabled = true };
                 reviveRows[1] = drag;
-                GameJam.UI.InteractionPromptCard.Draw(screen, "COMPAÑERO CAÍDO", name, new Color(.25f, 1f, .75f), reviveRows, promptAlpha);
+                GameJam.UI.InteractionPromptCard.Draw(screen, "COMPAÑERO CAÍDO", name, new Color(.25f, 1f, .75f), reviveRows, promptAlpha, "revive");
             }
             else
             {
                 dragRows[0] = drag;
-                GameJam.UI.InteractionPromptCard.Draw(screen, "COMPAÑERO NOQUEADO", name, new Color(.45f, .8f, 1f), dragRows, promptAlpha);
+                GameJam.UI.InteractionPromptCard.Draw(screen, "COMPAÑERO NOQUEADO", name, new Color(.45f, .8f, 1f), dragRows, promptAlpha, "crew");
             }
         }
 
@@ -89,7 +89,7 @@ namespace GameJam.Survival
             {
                 progress = target.ReviveProgress;
                 title = "Reanimando compañero";
-                hint = "Mantén E · Suelta para cancelar";
+                hint = "Mantén [E]  ·  suelta para cancelar";
             }
             else if (!avatar.IsAlive && revive.Rescuer != null && revive.ActiveAttempt != 0)
             {
@@ -107,7 +107,7 @@ namespace GameJam.Survival
             {
                 progress = -1f;
                 title = "Arrastrando compañero";
-                hint = "Suelta clic izquierdo para soltarlo";
+                hint = "Suelta [@LMB] para soltarlo";
                 color = new Color(.45f, .8f, 1f);
             }
             else if (!avatar.IsAlive && revive.IsBeingDragged)
@@ -121,7 +121,7 @@ namespace GameJam.Survival
             {
                 progress = completed ? 1f : 0f;
                 title = notice;
-                hint = completed ? "Tu compañero vuelve a la acción" : "Mantén E para volver a intentarlo";
+                hint = completed ? "Tu compañero vuelve a la acción" : "Mantén [E] para volver a intentarlo";
                 if (!completed) color = new Color(1f, .65f, .25f);
             }
             else return;

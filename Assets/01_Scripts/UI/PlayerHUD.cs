@@ -345,7 +345,8 @@ namespace GameJam.UI
         {
             if(!CanInteract() || avatar.TabletOpen || materialDrop==null || inventory==null)return;
             if(inventory.GetSlotMaterial(selectedSlot)==null)return;
-            if(materialDrop.TryDropSlot(selectedSlot))RefreshInventory();
+            var dropping=inventory.GetSlotMaterial(selectedSlot);
+            if(materialDrop.TryDropSlot(selectedSlot)){RefreshInventory();GameJam.Gameplay.PickupPromptFeedback.NotifyDropped(dropping, MaterialName(dropping));}
             else { carryFeedback.text=GameLocalization.Get("hud.carry_drop_blocked");carryFeedbackUntil=Time.unscaledTime+3; }
         }
 

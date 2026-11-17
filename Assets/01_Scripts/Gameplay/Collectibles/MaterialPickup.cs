@@ -27,6 +27,8 @@ namespace GameJam.Collectibles
         [Networked] private NetworkBool HasPlacedPose { get; set; }
         public bool FitsInventory(PlayerInventory inventory) => inventory != null && inventory.CanAddMaterial(material, Quantity);
         private int Quantity => DroppedAmount > 0 ? DroppedAmount : amount;
+        public MaterialData PickupMaterial => material;
+        public int Amount => Quantity;
 
         [Networked] private NetworkBool IsClaimed { get; set; }
         [Networked] private PlayerRef Claimant { get; set; }
