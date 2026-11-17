@@ -100,6 +100,7 @@ namespace GameJam.Survival
             input = GetComponent<CharacterInput>();
             if (GetComponent<PlayerSocialAnimation>() == null) gameObject.AddComponent<PlayerSocialAnimation>();
             if (GetComponent<SurvivalReviveFeedback>() == null) gameObject.AddComponent<SurvivalReviveFeedback>();
+            if (GetComponent<PlayerDragArm>() == null) gameObject.AddComponent<PlayerDragArm>();
             if (health == null || avatar == null || kcc == null || input == null)
             {
                 Debug.LogError("[SurvivalRevive] Faltan dependencias del astronauta.", this);
@@ -512,10 +513,22 @@ namespace GameJam.Survival
         /// <summary>
         /// Verifica la identidad real del emisor y su astronauta registrado.
         /// </summary>
+        /// <summary>
+        /// En modo Shared el PlayerObject de otro cliente puede no estar registrado en este peer
+        /// (SetPlayerObject solo se llama localmente), lo que rechazaba toda reanimacion remota.
+        /// Se acepta si es un astronauta propiedad de ese jugador y no contradice un registro existente.
+        /// </summary>
+        private bool IsRegisteredAvatar(NetworkObject actor, PlayerRef owner)
+        {
+            if (actor == null || actor.GetComponent<SurvivalRevive>() == null) return false;
+            NetworkObject registered = Runner.GetPlayerObject(owner);
+            return registered == null || registered == actor;
+        }
+
         private bool SenderValid(NetworkObject actor, RpcInfo info)
         {
             return HasStateAuthority && actor != null && actor.IsValid && actor != Object && actor.Runner == Runner
-                && actor.StateAuthority == info.Source && Runner.GetPlayerObject(info.Source) == actor;
+                && actor.StateAuthority == info.Source && IsRegisteredAvatar(actor, info.Source);
         }
 
         /// <summary>
@@ -617,7 +630,7 @@ namespace GameJam.Survival
         private bool ReservationValid()
         {
             return ParticipantsValid(Rescuer) && Rescuer.StateAuthority == rescuerAuthority
-                && Runner.GetPlayerObject(rescuerAuthority) == Rescuer && health.DeathSequence == reservedDeath;
+                && IsRegisteredAvatar(Rescuer, rescuerAuthority) && health.DeathSequence == reservedDeath;
         }
 
         /// <summary>
