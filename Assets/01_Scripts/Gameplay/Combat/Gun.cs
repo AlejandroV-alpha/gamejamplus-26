@@ -42,6 +42,12 @@ namespace GameJam.Combat
         [SerializeField, Min(.2f)] private float reloadDuration = 1.6f;
         [Networked] private TickTimer reloadTimer { get; set; }
         public bool IsReloading => IsReady() && reloadTimer.IsRunning && !reloadTimer.Expired(Runner);
+        public int MagazineSize => Mathf.Max(1, magazineSize);
+        public float ReloadDuration => Mathf.Max(.2f, reloadDuration);
+        public float ReloadRemaining => IsReloading ? reloadTimer.RemainingTime(Runner).GetValueOrDefault() : 0f;
+        public float ReloadProgress => IsReloading ? Mathf.Clamp01(1f - ReloadRemaining / ReloadDuration) : 0f;
+        /// <summary>Momento (local) del ultimo disparo sin balas: el HUD lo usa para avisar.</summary>
+        public float LastDryFireTime { get; private set; } = -10f;
 
         // Fusion conserva la municion individual dentro del objeto del astronauta.
         [Networked] private int currentAmmo { get; set; }
@@ -88,6 +94,7 @@ namespace GameJam.Combat
             if (HasStateAuthority)
             {
                 currentAmmo = Mathf.Max(1, magazineSize);
+                if (GetComponent<GunAmmoHud>() == null) gameObject.AddComponent<GunAmmoHud>();
             }
         }
 
@@ -148,6 +155,7 @@ namespace GameJam.Combat
 
             if (currentAmmo <= 0)
             {
+                LastDryFireTime = Time.unscaledTime;
                 Debug.Log("[Gun] Sin municion. Pulsa R para recargar.", this);
                 return;
             }

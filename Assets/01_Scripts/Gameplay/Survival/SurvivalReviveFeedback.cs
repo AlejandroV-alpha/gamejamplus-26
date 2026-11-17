@@ -77,9 +77,106 @@ namespace GameJam.Survival
             }
         }
 
+        // ───────────── Marcadores de compañeros caídos ─────────────
+
+        private SurvivalRevive[] allRevives = new SurvivalRevive[0];
+        private float nextReviveScan;
+        private GUIStyle markerStyle, markerNameStyle;
+
+        /// <summary>
+        /// Marca en pantalla a cada compañero caído con su distancia. Si está fuera de la vista,
+        /// el marcador se pega al borde con una flecha que apunta hacia él.
+        /// </summary>
+        private void DrawDownedMarkers()
+        {
+            if (!avatar.IsAlive) return;
+            var cam = Camera.main;
+            if (cam == null) return;
+            if (Time.unscaledTime >= nextReviveScan)
+            {
+                nextReviveScan = Time.unscaledTime + .4f;
+                allRevives = FindObjectsByType<SurvivalRevive>(FindObjectsSortMode.None);
+            }
+            float s = GameJam.UI.InteractionPromptCard.Scale;
+            if (markerStyle == null)
+            {
+                markerStyle = new GUIStyle(GUI.skin.label) { alignment = TextAnchor.MiddleCenter, fontStyle = FontStyle.Bold, padding = new RectOffset() };
+                markerNameStyle = new GUIStyle(markerStyle) { fontStyle = FontStyle.Normal };
+            }
+            markerStyle.fontSize = Mathf.RoundToInt(13 * s);
+            markerNameStyle.fontSize = Mathf.RoundToInt(11 * s);
+            var accent = new Color(.25f, 1f, .75f);
+            var icon = GameJam.UI.ExpeditionSprites.Get("revive");
+            Vector3 me = revive.BodyPosition;
+            foreach (var other in allRevives)
+            {
+                if (other == null || other == revive || other.Object == null || !other.Object.IsValid || !other.CanBeRevived) continue;
+                Vector3 world = other.BodyPosition + Vector3.up * .9f;
+                float distance = Vector3.Distance(me, other.BodyPosition);
+                if (distance < 3.2f) continue; // de cerca ya se ve la tarjeta de reanimar
+
+                Vector3 sp = cam.WorldToScreenPoint(world);
+                bool behind = sp.z < 0f;
+                if (behind) { sp.x = Screen.width - sp.x; sp.y = Screen.height - sp.y; }
+                Vector2 gui = new Vector2(sp.x, Screen.height - sp.y);
+                float margin = 56 * s;
+                bool off = behind || gui.x < margin || gui.x > Screen.width - margin || gui.y < margin || gui.y > Screen.height - margin;
+                Vector2 center = new Vector2(Screen.width * .5f, Screen.height * .5f);
+                Vector2 dir = (gui - center);
+                if (dir.sqrMagnitude < 1f) dir = Vector2.up;
+                if (off)
+                {
+                    // Proyecta sobre el rectangulo interior de la pantalla.
+                    float hw = Screen.width * .5f - margin, hh = Screen.height * .5f - margin;
+                    float k = Mathf.Min(hw / Mathf.Max(.001f, Mathf.Abs(dir.x)), hh / Mathf.Max(.001f, Mathf.Abs(dir.y)));
+                    gui = center + dir * k;
+                }
+
+                float pulse = .5f + .5f * Mathf.Sin(Time.unscaledTime * 4f);
+                float size = 34 * s;
+                var circle = new Rect(gui.x - size * .5f, gui.y - size * .5f, size, size);
+                // Halo que late para llamar la atención.
+                float halo = size * (1.25f + .35f * pulse);
+                GameJam.UI.InteractionPromptCard.Fill(new Rect(gui.x - halo * .5f, gui.y - halo * .5f, halo, halo), GameJam.UI.InteractionPromptCard.Fade(accent, .25f * (1f - pulse)), 1f, halo * .5f);
+                GameJam.UI.InteractionPromptCard.Fill(circle, GameJam.UI.InteractionPromptCard.Panel, 1f, size * .5f);
+                GameJam.UI.InteractionPromptCard.Fill(new Rect(circle.x + 2 * s, circle.y + 2 * s, size - 4 * s, size - 4 * s), GameJam.UI.InteractionPromptCard.Fade(accent, .18f), 1f, size * .5f);
+                if (icon != null)
+                {
+                    GUI.color = Color.white;
+                    GUI.DrawTexture(new Rect(circle.x + 6 * s, circle.y + 6 * s, size - 12 * s, size - 12 * s), icon.texture, ScaleMode.ScaleToFit, true);
+                }
+                if (off)
+                {
+                    // Flecha hacia el compañero.
+                    float angle = Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg;
+                    Matrix4x4 m = GUI.matrix;
+                    GUIUtility.RotateAroundPivot(angle, gui);
+                    var tip = new Rect(gui.x + size * .5f + 3 * s, gui.y - 5 * s, 10 * s, 10 * s);
+                    GUIUtility.RotateAroundPivot(45f, tip.center);
+                    GameJam.UI.InteractionPromptCard.Fill(tip, accent, 1f, 2 * s);
+                    GUI.matrix = m;
+                }
+
+                // Distancia y nombre debajo (o encima si está pegado abajo).
+                var teammate = other.GetComponent<MarsFusionAvatar>();
+                string name = teammate != null ? teammate.PlayerName.ToString() : "";
+                string dist = Mathf.RoundToInt(distance) + " m";
+                bool above = gui.y > Screen.height - 110 * s;
+                float ty = above ? circle.y - 34 * s : circle.yMax + 4 * s;
+                float tw = Mathf.Max(markerStyle.CalcSize(new GUIContent(dist)).x, markerNameStyle.CalcSize(new GUIContent(name)).x) + 16 * s;
+                var label = new Rect(gui.x - tw * .5f, ty, tw, 30 * s);
+                GameJam.UI.InteractionPromptCard.Fill(label, GameJam.UI.InteractionPromptCard.Fade(GameJam.UI.InteractionPromptCard.Panel, .85f), 1f, 6 * s);
+                markerStyle.normal.textColor = accent;
+                GUI.Label(new Rect(label.x, label.y + 1 * s, label.width, 15 * s), dist, markerStyle);
+                markerNameStyle.normal.textColor = GameJam.UI.InteractionPromptCard.TextSoft;
+                GUI.Label(new Rect(label.x, label.y + 15 * s, label.width, 13 * s), name, markerNameStyle);
+            }
+        }
+
         private void OnGUI()
         {
             if (!IsLocal || avatar == null) return;
+            DrawDownedMarkers();
             DrawWorldPrompt();
             string title, hint;
             float progress;
