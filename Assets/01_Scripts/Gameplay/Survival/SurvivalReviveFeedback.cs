@@ -38,42 +38,43 @@ namespace GameJam.Survival
             wasRescuing = target != null;
         }
 
-        private GUIStyle promptStyle;
-        private Texture2D promptBack;
+        private float promptAlpha;
+        private SurvivalRevive promptTarget;
+        private readonly GameJam.UI.InteractionPromptCard.Row[] reviveRows = new GameJam.UI.InteractionPromptCard.Row[2];
+        private readonly GameJam.UI.InteractionPromptCard.Row[] dragRows = new GameJam.UI.InteractionPromptCard.Row[1];
 
-        /// <summary>Letrero flotante sobre el compañero caido cercano: [E] reanimar, [Clic] arrastrar.</summary>
+        /// <summary>Tarjeta flotante sobre el compañero caido cercano: [E] reanimar, [Clic izq.] arrastrar.</summary>
         private void DrawWorldPrompt()
         {
-            if (!avatar.IsAlive || revive.IsRescuing || revive.IsDragging) return;
-            var target = revive.NearbyTeammate;
+            bool show = avatar.IsAlive && !revive.IsRescuing && !revive.IsDragging;
+            var target = show ? revive.NearbyTeammate : null;
+            if (target != null) promptTarget = target;
+            if (Event.current.type == EventType.Repaint)
+                promptAlpha = Mathf.MoveTowards(promptAlpha, target != null ? 1f : 0f, Time.unscaledDeltaTime * 6f);
             var cam = Camera.main;
-            if (target == null || cam == null) return;
-            Vector3 screen = cam.WorldToScreenPoint(target.BodyPosition + Vector3.up * 1.1f);
-            if (screen.z <= 0f) return;
-            if (promptBack == null)
-            {
-                promptBack = new Texture2D(1, 1);
-                promptBack.SetPixel(0, 0, new Color(0f, 0f, 0f, .62f));
-                promptBack.Apply();
-            }
-            if (promptStyle == null)
-            {
-                promptStyle = new GUIStyle(GUI.skin.label) { alignment = TextAnchor.MiddleCenter, fontSize = 15, richText = true };
-                promptStyle.normal.textColor = Color.white;
-                promptStyle.normal.background = promptBack;
-                promptStyle.padding = new RectOffset(12, 12, 6, 6);
-            }
-            string line = "";
-            if (target.CanBeRevived) line = "<color=#3fffc0><b>[E]</b></color> Mantén para reanimar";
+            if (promptAlpha <= .01f || promptTarget == null || promptTarget.Object == null || !promptTarget.Object.IsValid || cam == null) return;
+
+            Vector3 screen = cam.WorldToScreenPoint(promptTarget.BodyPosition + Vector3.up * 1.2f);
+            var teammate = promptTarget.GetComponent<MarsFusionAvatar>();
+            string name = teammate != null ? teammate.PlayerName.ToString() : "";
             bool empty = revive.HandsEmpty;
-            string drag = empty ? "<color=#73ccff><b>[Clic izq.]</b></color> Arrastrar"
-                : "<color=#888888>Manos vacías para arrastrar</color>";
-            line = line.Length > 0 ? line + "\n" + drag : drag;
-            float pulse = 1f + Mathf.Sin(Time.unscaledTime * 4f) * .04f;
-            var content = new GUIContent(line);
-            Vector2 size = promptStyle.CalcSize(content) * pulse;
-            var rect = new Rect(screen.x - size.x * .5f, Screen.height - screen.y - size.y, size.x, size.y);
-            GUI.Label(rect, content, promptStyle);
+            var drag = new GameJam.UI.InteractionPromptCard.Row
+            {
+                Key = "CLIC IZQ.",
+                Action = empty ? "Mantener para arrastrar" : "Guarda tu objeto para arrastrar",
+                Enabled = empty
+            };
+            if (promptTarget.CanBeRevived)
+            {
+                reviveRows[0] = new GameJam.UI.InteractionPromptCard.Row { Key = "E", Action = "Mantener para reanimar", Enabled = true };
+                reviveRows[1] = drag;
+                GameJam.UI.InteractionPromptCard.Draw(screen, "COMPAÑERO CAÍDO", name, new Color(.25f, 1f, .75f), reviveRows, promptAlpha);
+            }
+            else
+            {
+                dragRows[0] = drag;
+                GameJam.UI.InteractionPromptCard.Draw(screen, "COMPAÑERO NOQUEADO", name, new Color(.45f, .8f, 1f), dragRows, promptAlpha);
+            }
         }
 
         private void OnGUI()

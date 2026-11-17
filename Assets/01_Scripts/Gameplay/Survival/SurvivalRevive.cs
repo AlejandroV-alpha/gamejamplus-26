@@ -34,6 +34,11 @@ namespace GameJam.Survival
         // Arrastre: el que arrastra publica su objetivo; la autoridad del objetivo acepta al arrastrador.
         [Networked] public NetworkObject DragTarget { get; private set; }
         [Networked] public NetworkObject Dragger { get; private set; }
+        // Posicion compartida del cuerpo caido: cada cliente simula su propio ragdoll y la KCC
+        // queda congelada donde murio. Esta posicion sigue al arrastre y es donde se revive.
+        [Networked] public Vector3 DownedPosition { get; private set; }
+        [Networked] public NetworkBool HasDownedPosition { get; private set; }
+        [Networked] private byte revivePlacementTicks { get; set; }
         [SerializeField, Min(0.5f)] private float dragGrabRange = 2.6f;
         [SerializeField, Min(1f)] private float dragBreakRange = 9f;
         [SerializeField, Min(0.1f)] private float dragSpeedMultiplier = 0.65f;
@@ -147,6 +152,7 @@ namespace GameJam.Survival
                 return;
             }
             ValidateDrag();
+            TrackDownedBody();
             if (Emote != 0 && (EmoteDeadline.ExpiredOrNotRunning(Runner) || avatar == null || !avatar.IsAlive
                 || avatar.TabletOpen || (GetComponent<PlayerHurtReaction>()?.IsReacting ?? false)
                 || (GetComponent<GameJam.Environment.Mars.PlayerSandstorm>()?.IsDowned ?? false))) Emote = 0;
@@ -224,6 +230,55 @@ namespace GameJam.Survival
             EmoteDeadline = TickTimer.CreateFromSeconds(Runner, clip.length);
         }
 
+        /// <summary>
+        /// Autoridad del caido: fija el punto de muerte, lo mueve con el arrastre y,
+        /// al revivir, coloca la KCC ahi durante unos ticks (StandUp corre en LateUpdate).
+        /// </summary>
+        private void TrackDownedBody()
+        {
+            if (health == null || kcc == null) return;
+            if (!health.IsAlive)
+            {
+                if (!HasDownedPosition)
+                {
+                    DownedPosition = kcc.Position;
+                    HasDownedPosition = true;
+                }
+                if (IsBeingDragged)
+                {
+                    var dragger = Dragger.GetComponent<SurvivalRevive>();
+                    if (dragger != null)
+                    {
+                        Vector3 delta = DragAnchor(dragger) - DownedPosition;
+                        delta.y = 0f;
+                        if (delta.magnitude > .2f)
+                            DownedPosition = Ground(DownedPosition + Vector3.ClampMagnitude(delta * 5f, 8f) * Runner.DeltaTime);
+                    }
+                }
+                revivePlacementTicks = 0;
+                return;
+            }
+            if (!HasDownedPosition) return;
+            if (kcc.enabled)
+            {
+                kcc.SetPosition(DownedPosition + Vector3.up * .05f);
+                revivePlacementTicks++;
+            }
+            if (revivePlacementTicks >= 12) HasDownedPosition = false;
+        }
+
+        private Vector3 Ground(Vector3 point)
+        {
+            var hits = Physics.RaycastAll(point + Vector3.up * 2f, Vector3.down, 6f, ~0, QueryTriggerInteraction.Ignore);
+            float best = float.PositiveInfinity;
+            foreach (var hit in hits)
+            {
+                if (hit.collider.attachedRigidbody != null || hit.collider.GetComponentInParent<NetworkObject>() != null) continue;
+                if (hit.distance < best) { best = hit.distance; point.y = hit.point.y; }
+            }
+            return point;
+        }
+
         internal void BeginGetUp()
         {
             if (!HasStateAuthority) return;
@@ -275,6 +330,8 @@ namespace GameJam.Survival
         {
             get
             {
+                if (Object != null && Object.IsValid && HasDownedPosition && health != null && !health.IsAlive)
+                    return DownedPosition;
                 if (avatar != null && avatar.Ragdoll != null && avatar.Ragdoll.IsRagdolled && avatar.Ragdoll.HipsRigidbody != null)
                     return avatar.Ragdoll.HipsRigidbody.position;
                 return kcc != null && kcc.enabled ? kcc.Position : transform.position;
@@ -406,7 +463,7 @@ namespace GameJam.Survival
             // Antes solo se empujaba la cadera con una fuerza suave: el resto del cuerpo frenaba,
             // el companero se quedaba atras y el arrastre se cortaba. Ahora se guia la velocidad
             // horizontal de todo el cuerpo hacia el punto detras del que arrastra.
-            Vector3 offset = DragAnchor(dragger) - hips.position;
+            Vector3 offset = (HasDownedPosition ? DownedPosition : DragAnchor(dragger)) - hips.position;
             offset.y = 0f;
             Vector3 desired = offset.magnitude > .2f ? Vector3.ClampMagnitude(offset * 5f, 8f) : Vector3.zero;
             foreach (Rigidbody body in ragdollBodies)
