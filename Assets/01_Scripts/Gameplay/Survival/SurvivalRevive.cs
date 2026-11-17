@@ -35,7 +35,7 @@ namespace GameJam.Survival
         [Networked] public NetworkObject DragTarget { get; private set; }
         [Networked] public NetworkObject Dragger { get; private set; }
         [SerializeField, Min(0.5f)] private float dragGrabRange = 2.6f;
-        [SerializeField, Min(1f)] private float dragBreakRange = 6f;
+        [SerializeField, Min(1f)] private float dragBreakRange = 9f;
         [SerializeField, Min(0.1f)] private float dragSpeedMultiplier = 0.65f;
         private bool dragHeld;
         private float nextHintLookup;
@@ -402,12 +402,27 @@ namespace GameJam.Survival
             var dragger = Dragger.GetComponent<SurvivalRevive>();
             if (dragger == null) return;
             Rigidbody hips = avatar.Ragdoll.HipsRigidbody;
-            Vector3 target = DragAnchor(dragger) + Vector3.up * .35f;
-            Vector3 offset = target - hips.position;
-            if (offset.magnitude < .25f) return;
-            Vector3 velocity = hips.GetPointVelocity(hips.worldCenterOfMass);
-            hips.AddForce(offset * 16f - velocity * 3f, ForceMode.Acceleration);
+            if (ragdollBodies == null) ragdollBodies = GetComponentsInChildren<Rigidbody>(true);
+            // Antes solo se empujaba la cadera con una fuerza suave: el resto del cuerpo frenaba,
+            // el companero se quedaba atras y el arrastre se cortaba. Ahora se guia la velocidad
+            // horizontal de todo el cuerpo hacia el punto detras del que arrastra.
+            Vector3 offset = DragAnchor(dragger) - hips.position;
+            offset.y = 0f;
+            Vector3 desired = offset.magnitude > .2f ? Vector3.ClampMagnitude(offset * 5f, 8f) : Vector3.zero;
+            foreach (Rigidbody body in ragdollBodies)
+            {
+                if (body == null || body.isKinematic) continue;
+                float grip = body == hips ? .6f : .35f;
+                Vector3 current = body.linearVelocity;
+                Vector3 change = new Vector3(desired.x - current.x, 0f, desired.z - current.z) * grip;
+                // Levanta un poco la cadera para que no se atasque con el suelo.
+                if (body == hips && hips.position.y < dragger.BodyPosition.y + .25f) change.y = Mathf.Max(0f, 1.2f - current.y) * .3f;
+                body.AddForce(change, ForceMode.VelocityChange);
+                body.WakeUp();
+            }
         }
+
+        private Rigidbody[] ragdollBodies;
 
         /// <summary>
         /// Comprueba controles y vida del propietario antes de leer una accion.
@@ -435,7 +450,7 @@ namespace GameJam.Survival
                 {
                     continue;
                 }
-                float distance = (kcc.Position - candidate.kcc.Position).sqrMagnitude;
+                float distance = (BodyPosition - candidate.BodyPosition).sqrMagnitude;
                 if (distance < best || (distance == best && nearest != null && candidate.Object.Id.Raw < nearest.Object.Id.Raw))
                 {
                     nearest = candidate;
@@ -459,7 +474,7 @@ namespace GameJam.Survival
                 return false;
             }
             // El rango del objetivo es el que validara su autoridad.
-            return (kcc.Position - target.kcc.Position).sqrMagnitude <= target.reviveRange * target.reviveRange;
+            return (BodyPosition - target.BodyPosition).sqrMagnitude <= target.reviveRange * target.reviveRange;
         }
 
         /// <summary>
@@ -621,7 +636,7 @@ namespace GameJam.Survival
             {
                 return false;
             }
-            return (actorKcc.Position - kcc.Position).sqrMagnitude <= reviveRange * reviveRange;
+            return (actor.GetComponent<SurvivalRevive>().BodyPosition - BodyPosition).sqrMagnitude <= reviveRange * reviveRange;
         }
 
         /// <summary>

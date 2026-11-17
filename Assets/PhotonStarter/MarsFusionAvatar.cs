@@ -794,7 +794,8 @@ namespace GameJam.Multiplayer
                 Vector3 deathTumble = friendlyPushVelocity.sqrMagnitude > 1f ? (friendlyPushVelocity + Vector3.up * 2.5f) : (Vector3.down * 2.5f);
                 ragdoll.GoRagdoll(deathTumble, 99999f);
             }
-            else if (IsAlive && !IsRagdoll && ragdoll != null && ragdoll.IsRagdolled && !(GetComponent<GameJam.Environment.Mars.PlayerSandstorm>()?.IsDowned ?? false))
+            // Al revivir se levanta tambien en la pantalla propia (IsDowned contaba el propio ragdoll de muerte).
+            else if (IsAlive && !IsRagdoll && ragdoll != null && ragdoll.IsRagdolled)
             {
                 ragdoll.StandUp();
             }
