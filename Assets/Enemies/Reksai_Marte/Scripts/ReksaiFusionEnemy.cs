@@ -110,7 +110,16 @@ public sealed class ReksaiFusionEnemy : NetworkBehaviour, ITakeDamage
         StateStarted = CurrentTime;
         ModeState = (int)value;
         hitApplied = false;
+        if (value == Mode.Burrow) RPC_ActionSound(EnemyActionAudio.Cue.ReksaiBurrow, transform.position);
     }
+
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All, Channel = RpcChannel.Unreliable)]
+    private void RPC_ActionSound(EnemyActionAudio.Cue cue, Vector3 point)
+        => EnemyActionAudio.Play(cue, point, gameObject.scene);
+
+    MarsFusionAvatar aggroTarget;
+    float aggroUntil;
+    bool shipMode;          // objetivo = punto del casco de la nave (bicho de oleada)
 
     bool HasAliveTarget()
     {
@@ -161,6 +170,7 @@ public sealed class ReksaiFusionEnemy : NetworkBehaviour, ITakeDamage
             if (!hitApplied && Elapsed >= ClipLength("spell2knockup") * .48f)
             {
                 hitApplied = true;
+                RPC_ActionSound(EnemyActionAudio.Cue.ReksaiEmerge, transform.position);
                 Strike(damage * .7f, attackRange + .7f);
             }
             if (Elapsed >= ClipLength("spell2knockup"))
@@ -178,6 +188,8 @@ public sealed class ReksaiFusionEnemy : NetworkBehaviour, ITakeDamage
             if (!hitApplied && Elapsed >= duration * .42f)
             {
                 hitApplied = true;
+                var cue = state == Mode.Attack1 ? EnemyActionAudio.Cue.ReksaiSwipe : EnemyActionAudio.Cue.ReksaiHeavySwipe;
+                RPC_ActionSound(cue, transform.position + transform.forward);
                 Strike(damage, attackRange + .2f);
             }
             if (Elapsed >= duration)
@@ -188,7 +200,8 @@ public sealed class ReksaiFusionEnemy : NetworkBehaviour, ITakeDamage
             return;
         }
 
-        if (!HasAliveTarget() || Vector3.Distance(transform.position, targetTransform.position) > detectionRange)
+        if (!HasAliveTarget() || (!shipMode && !(targetFusion == aggroTarget && CurrentTime < aggroUntil)
+            && Vector3.Distance(transform.position, targetTransform.position) > detectionRange))
         {
             if (Vector3.Distance(transform.position, home) > 1)
             {
@@ -200,7 +213,7 @@ public sealed class ReksaiFusionEnemy : NetworkBehaviour, ITakeDamage
         }
 
         float distance = Vector3.Distance(transform.position, targetTransform.position);
-        if (CurrentTime >= burrowAt && distance > 5 && distance < 22)
+        if (CurrentTime >= burrowAt && distance > 5 && distance < (shipMode ? 60 : 22))
         {
             burrowAt = CurrentTime + burrowCooldown;
             SetMode(Mode.Burrow);
@@ -225,6 +238,21 @@ public sealed class ReksaiFusionEnemy : NetworkBehaviour, ITakeDamage
 
     void ScanForTargets()
     {
+        shipMode = false;
+        if (aggroTarget != null && aggroTarget.Object != null && aggroTarget.Object.IsValid && aggroTarget.IsAlive && CurrentTime < aggroUntil)
+        {
+            targetFusion = aggroTarget; targetTransform = aggroTarget.transform; return;
+        }
+        aggroTarget = null;
+        if (GameJam.Waves.EnemyAggro.WantsShip(Object))
+        {
+            // Oleada: solo un jugador muy cerca lo distrae; si no, va a por el casco de la nave.
+            targetFusion = GameJam.Waves.EnemyAggro.NearestPlayer(Runner, transform.position, GameJam.Waves.EnemyAggro.ShipDistraction);
+            if (targetFusion != null) { targetTransform = targetFusion.transform; return; }
+            targetTransform = GameJam.Waves.EnemyAggro.ShipAnchor(Object, transform.position);
+            shipMode = targetTransform != null;
+            return;
+        }
         targetFusion = FindObjectsByType<MarsFusionAvatar>(FindObjectsSortMode.None)
             .Where(a => a.Object != null && a.Object.IsValid && a.Runner == Runner && a.IsAlive
                 && Vector3.Distance(home,a.transform.position) < leashRange)
@@ -287,6 +315,13 @@ public sealed class ReksaiFusionEnemy : NetworkBehaviour, ITakeDamage
     void Strike(float amount, float range)
     {
         if (!HasAliveTarget()) return;
+        if (shipMode && targetFusion == null)
+        {
+            var ship = GameJam.Waves.EnemyAggro.Ship;
+            var d = targetTransform.position - transform.position; d.y = 0;
+            if (ship != null && d.magnitude <= range + 1.5f) ship.Damage(amount, targetTransform.position);
+            return;
+        }
         var delta = targetTransform.position - transform.position; delta.y = 0;
         if (delta.magnitude > range || Vector3.Angle(transform.forward, delta) > 85) return;
         var from = transform.position + Vector3.up; var to = targetTransform.position + Vector3.up;
@@ -340,9 +375,16 @@ public sealed class ReksaiFusionEnemy : NetworkBehaviour, ITakeDamage
     }
 
     [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
-    private void RPC_TakeDamage(int amount)
+    private void RPC_TakeDamage(int amount, RpcInfo info = default)
     {
         if (amount <= 0 || CurrentMode == Mode.Death || CurrentMode == Mode.Hidden || CurrentMode == Mode.Burrow) return;
+        // Quien le disparo pasa a ser su presa.
+        var shooter = GameJam.Waves.EnemyAggro.FindShooter(Runner, info.Source, transform.position);
+        if (shooter != null)
+        {
+            aggroTarget = shooter; targetFusion = shooter; targetTransform = shooter.transform; shipMode = false;
+            aggroUntil = CurrentTime + GameJam.Waves.EnemyAggro.AggroSeconds;
+        }
         float previousHealth = Health;
         Health = Mathf.Max(0, Health-Mathf.Min(amount,maxHealth));
         RPC_DamageFeedback(Health<=0, previousHealth - Health);

@@ -429,7 +429,7 @@ namespace GameJam.Multiplayer
                 case 6: // Boop Whiff / Swing
                     trollAudioSource.pitch = 1.25f;
                     trollAudioSource.PlayOneShot(boopClip, .45f);
-                    SpawnQuickRingBurst(worldPos, new Color(.35f, .95f, .85f));
+                    GameJam.Combat.ImpactBurstFx.Spawn(worldPos, new Color(.35f, .95f, .85f), .55f);   // golpe al aire: mas pequeño
                     break;
                 case 7: // Panic Scream
                     hurtUntil = Time.time + 1.2f;
@@ -479,12 +479,7 @@ namespace GameJam.Multiplayer
 
         private static void SpawnQuickRingBurst(Vector3 pos, Color color)
         {
-            for (int i = 0; i < 6; i++)
-            {
-                float ang = i * 60f * Mathf.Deg2Rad;
-                Vector3 dir = new Vector3(Mathf.Cos(ang), .35f, Mathf.Sin(ang)).normalized;
-                LootOrb.Spawn(pos, dir * 5.2f, null, null, null, color, .35f);
-            }
+            GameJam.Combat.ImpactBurstFx.Spawn(pos, color);
         }
 
         public void ToggleTablet()
@@ -614,7 +609,8 @@ namespace GameJam.Multiplayer
             ragdoll.StandUp();
             var kcc = GetComponent<Fusion.Addons.SimpleKCC.SimpleKCC>();
             if (kcc == null) return;
-            landedPosition = kcc.Position;
+            landedPosition = ragdoll.LastStandPosition;   // donde quedo el cuerpo, no la ultima posicion de red
+            kcc.SetPosition(landedPosition);
             landedHoldTicks = 10;
         }
 

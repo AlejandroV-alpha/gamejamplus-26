@@ -120,6 +120,7 @@ namespace GameJam.Combat
         /// </summary>
         public override void Render()
         {
+            RenderHealFx();
             if (!IsReady())
             {
                 return;
@@ -276,6 +277,28 @@ namespace GameJam.Combat
             {
                 receiptHealed = HealAlive(pickup.GetHealAmount());
             }
+        }
+
+        // Efecto de curacion en todos los clientes: se dispara cuando cambia el recibo replicado
+        // de la estacion medica y este dice que curo.
+        private NetworkObject seenReceiptPickup;
+        private uint seenReceiptVersion;
+        private bool receiptSeenInit;
+
+        private void RenderHealFx()
+        {
+            if (Object == null || !Object.IsValid || !StateBufferIsValid) return;
+            if (!receiptSeenInit)
+            {
+                receiptSeenInit = true;
+                seenReceiptPickup = receiptPickup;
+                seenReceiptVersion = receiptVersion;
+                return;
+            }
+            if (receiptPickup == seenReceiptPickup && receiptVersion == seenReceiptVersion) return;
+            seenReceiptPickup = receiptPickup;
+            seenReceiptVersion = receiptVersion;
+            if (receiptHealed) PlayerHealFx.Play(transform, HasStateAuthority);
         }
 
         /// <summary>

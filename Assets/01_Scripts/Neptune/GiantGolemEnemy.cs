@@ -413,10 +413,12 @@ public sealed class GiantGolemEnemy : NetworkBehaviour, ITakeDamage, IStateAutho
     }
 
     [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
-    void RPC_TakeDamage(int damage)
+    void RPC_TakeDamage(int damage, RpcInfo info = default)
     {
         if (damage <= 0 || CurrentMode == Mode.Death)
             return;
+        var shooter = GameJam.Waves.EnemyAggro.FindShooter(Runner, info.Source, transform.position);
+        if (shooter != null) { aggroTarget = shooter; target = shooter; aggroUntil = Runner.SimulationTime + GameJam.Waves.EnemyAggro.AggroSeconds; }
         int previousHealth = Health;
         Health = Mathf.Max(0, Health - damage);
         RPC_CombatDamage(previousHealth - Health);
@@ -494,11 +496,18 @@ public sealed class GiantGolemEnemy : NetworkBehaviour, ITakeDamage, IStateAutho
     bool HasDetectedPlayer()
     {
         if (target == null || !target.IsAlive) return false;
+        if (target == aggroTarget && Runner.SimulationTime < aggroUntil) return true;   // persigue a quien le disparo
         return (target.transform.position - DetectionCenter).sqrMagnitude <= DetectionRadius * DetectionRadius;
     }
 
+    MarsFusionAvatar aggroTarget;
+    float aggroUntil;
+
     void ScanForPlayer()
     {
+        if (aggroTarget != null && aggroTarget.Object != null && aggroTarget.Object.IsValid && aggroTarget.IsAlive
+            && Runner.SimulationTime < aggroUntil) { target = aggroTarget; return; }
+        aggroTarget = null;
         Vector3 center = DetectionCenter;
         float radiusSqr = DetectionRadius * DetectionRadius;
         target = FindObjectsByType<MarsFusionAvatar>(FindObjectsSortMode.None)

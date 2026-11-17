@@ -195,7 +195,11 @@ public sealed class VenomwingFusionEnemy : NetworkBehaviour, ITakeDamage
 
         bool hasTarget = target != null && target.IsAlive
             && (Distance(target.transform.position) <= detectionRange || (target == aggroTarget && Aggro));
-        if (!hasTarget) { Patrol(); return; }
+        if (!hasTarget)
+        {
+            if (GameJam.Waves.EnemyAggro.WantsShip(Object)) { AssaultShip(); return; }
+            Patrol(); return;
+        }
 
         float dist = Distance(target.transform.position);
         Face(target.transform.position);
@@ -216,6 +220,25 @@ public sealed class VenomwingFusionEnemy : NetworkBehaviour, ITakeDamage
         float step = Mathf.Min(currentSpeed * Runner.DeltaTime, Mathf.Max(0f, dist - stingRange * Size * .7f));
         transform.position += to.normalized * step;
         Hover(target.transform.position.y);
+    }
+
+    // Oleada: vuela hasta el casco de la nave y lo pica una y otra vez.
+    void AssaultShip()
+    {
+        var ship = GameJam.Waves.EnemyAggro.Ship;
+        Vector3 hull = ship.HullPoint(transform.position);
+        float dist = Distance(hull);
+        Face(hull);
+        if (dist <= stingRange * Size * 1.1f)
+        {
+            if (Now >= nextStingAt) { target = null; SetMode(Mode.Sting); return; }
+            Hover(hull.y + 1.5f);
+            return;
+        }
+        currentSpeed = Mathf.MoveTowards(currentSpeed, chaseSpeed, chaseSpeed * 2f * Runner.DeltaTime);
+        SetMode(Mode.Chase);
+        transform.position += Flat(hull - transform.position).normalized * Mathf.Min(currentSpeed * Runner.DeltaTime, dist);
+        Hover(hull.y + 1.5f);
     }
 
     void Patrol()
@@ -259,7 +282,12 @@ public sealed class VenomwingFusionEnemy : NetworkBehaviour, ITakeDamage
         if (!hitApplied && t >= stingHitTime)
         {
             hitApplied = true;
-            if (target != null && target.IsAlive)
+            RPC_StingSound(transform.position + transform.forward);
+            var ship = GameJam.Waves.EnemyAggro.Ship;
+            if (target == null && ship != null && GameJam.Waves.EnemyAggro.IsWave(Object)
+                && Distance(ship.HullPoint(transform.position)) <= stingHitRange * Size + 1.5f)
+                ship.Damage(stingDamage, transform.position + transform.forward * 1.5f);
+            else if (target != null && target.IsAlive)
             {
                 Vector3 d = target.transform.position - transform.position;
                 bool inFront = Vector3.Angle(transform.forward, Flat(d)) < 70f;
@@ -301,11 +329,16 @@ public sealed class VenomwingFusionEnemy : NetworkBehaviour, ITakeDamage
     [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
     private void RPC_Spit(Vector3 from, Vector3 to, float flight)
     {
+        EnemyActionAudio.Play(EnemyActionAudio.Cue.VenomwingSpit, from, gameObject.scene);
         var mats = new VenomAcid.Mats { glow = acidGlowMaterial, puddle = acidPuddleMaterial, blob = acidBlobMaterial };
         System.Action<Vector3> onImpact = null;
         if (HasStateAuthority) onImpact = AcidLanded;
         VenomAcid.Launch(from, to, flight, mats, transform, puddleRadius, puddleLifetime, onImpact);
     }
+
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All, Channel = RpcChannel.Unreliable)]
+    private void RPC_StingSound(Vector3 point)
+        => EnemyActionAudio.Play(EnemyActionAudio.Cue.VenomwingSting, point, gameObject.scene);
 
     void AcidLanded(Vector3 point)
     {
@@ -352,6 +385,11 @@ public sealed class VenomwingFusionEnemy : NetworkBehaviour, ITakeDamage
     {
         if (Aggro) { target = aggroTarget; return; }
         aggroTarget = null;
+        if (GameJam.Waves.EnemyAggro.WantsShip(Object))
+        {
+            target = GameJam.Waves.EnemyAggro.NearestPlayer(Runner, transform.position, GameJam.Waves.EnemyAggro.ShipDistraction);
+            return;
+        }
         target = Avatars().Where(a => Vector3.Distance(home, a.transform.position) < leashRange)
             .OrderBy(a => (a.transform.position - transform.position).sqrMagnitude).FirstOrDefault();
     }

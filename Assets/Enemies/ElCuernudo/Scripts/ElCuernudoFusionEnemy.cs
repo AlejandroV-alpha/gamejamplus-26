@@ -66,7 +66,7 @@ public sealed class ElCuernudoFusionEnemy : NetworkBehaviour, ITakeDamage
     Collider bodyCollider;
     MarsFusionAvatar target;
     float scanAt, nextAttackAt, nextLeapAt, currentSpeed, visualSpeed;
-    bool hitApplied;
+    bool hitApplied, leapTakeoffPlayed;
     MarsFusionAvatar aggroTarget;
     float aggroUntil;
     ElCuernudoCloakFX cloakFx;
@@ -151,6 +151,7 @@ public sealed class ElCuernudoFusionEnemy : NetworkBehaviour, ITakeDamage
         ModeState = (int)value;
         StateStarted = Now;
         hitApplied = false;
+        leapTakeoffPlayed = false;
     }
 
     void Tick()
@@ -174,7 +175,11 @@ public sealed class ElCuernudoFusionEnemy : NetworkBehaviour, ITakeDamage
         bool hasTarget = target != null && target.IsAlive
             && (Distance(target.transform.position) <= detectionRange || (target == aggroTarget && Aggro));
         if (Cloaked && (!hasTarget || Now - CloakStarted > cloakMaxDuration)) Reveal();
-        if (!hasTarget) { Wander(); return; }
+        if (!hasTarget)
+        {
+            if (GameJam.Waves.EnemyAggro.WantsShip(Object)) { AssaultShip(); return; }
+            Wander(); return;
+        }
         if (!Cloaked && Now >= cloakReadyAt && Distance(target.transform.position) > cloakMinDistance * Size)
         {
             Cloaked = true;
@@ -217,6 +222,26 @@ public sealed class ElCuernudoFusionEnemy : NetworkBehaviour, ITakeDamage
         // Nunca avanza más de lo que falta para quedar a distancia de zarpazo.
         float maxStep = Mathf.Max(0f, distance - r * .9f) / Mathf.Max(.0001f, Runner.DeltaTime);
         MoveTowards(target.transform.position, Mathf.Min(currentSpeed, maxStep));
+    }
+
+    // Oleada: corre hasta el casco de la nave y lo golpea con zarpazos.
+    void AssaultShip()
+    {
+        var ship = GameJam.Waves.EnemyAggro.Ship;
+        Vector3 hull = ship.HullPoint(transform.position);
+        float distance = Distance(hull);
+        Face(hull);
+        float r = swipeRange * Size;
+        if (distance <= r + 1f)
+        {
+            currentSpeed = 0f;
+            if (Now >= nextAttackAt) { target = null; StartSwipe(); }
+            else SetMode(Mode.Idle);
+            return;
+        }
+        currentSpeed = Mathf.MoveTowards(currentSpeed, chaseSpeed * Size, acceleration * Size * Runner.DeltaTime);
+        SetMode(Mode.Run);
+        MoveTowards(hull, Mathf.Min(currentSpeed, Mathf.Max(0f, distance - r * .9f) / Mathf.Max(.0001f, Runner.DeltaTime)));
     }
 
     void Reveal()
@@ -273,7 +298,14 @@ public sealed class ElCuernudoFusionEnemy : NetworkBehaviour, ITakeDamage
         if (!hitApplied && Elapsed >= swipeHitTime / speed)
         {
             hitApplied = true;
-            if (InFrontAndClose(swipeRange * Size + .8f, 85f))
+            RPC_ActionSound(EnemyActionAudio.Cue.CuernudoSwipe, transform.position + transform.forward * Size);
+            var ship = GameJam.Waves.EnemyAggro.Ship;
+            if (target == null && ship != null && GameJam.Waves.EnemyAggro.IsWave(Object))
+            {
+                if (Distance(ship.HullPoint(transform.position)) <= swipeRange * Size + 2f)
+                    ship.Damage(swipeDamage, transform.position + transform.forward * Size * 1.5f);
+            }
+            else if (target != null && InFrontAndClose(swipeRange * Size + .8f, 85f))
             {
                 target.TakeMonsterDamage(Mathf.CeilToInt(swipeDamage));
                 Vector3 slapImpulse = (nextSwipeLeft ? -transform.right : transform.right) * 10f + transform.forward * 8f + Vector3.up * 3.5f;
@@ -287,6 +319,10 @@ public sealed class ElCuernudoFusionEnemy : NetworkBehaviour, ITakeDamage
             SetMode(Mode.Idle);
         }
     }
+
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All, Channel = RpcChannel.Unreliable)]
+    private void RPC_ActionSound(EnemyActionAudio.Cue cue, Vector3 point)
+        => EnemyActionAudio.Play(cue, point, gameObject.scene);
 
     void TickLeap()
     {
@@ -306,6 +342,11 @@ public sealed class ElCuernudoFusionEnemy : NetworkBehaviour, ITakeDamage
         }
         else if (t < leapLand)
         {
+            if (!leapTakeoffPlayed)
+            {
+                leapTakeoffPlayed = true;
+                RPC_ActionSound(EnemyActionAudio.Cue.CuernudoTakeoff, transform.position);
+            }
             float k = Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(leapTakeoff, leapLand, t));
             var p = Vector3.Lerp(leapStart, leapEnd, k);
             p.y = Mathf.Lerp(leapStart.y, leapEnd.y, k);
@@ -316,6 +357,7 @@ public sealed class ElCuernudoFusionEnemy : NetworkBehaviour, ITakeDamage
             hitApplied = true;
             transform.position = leapEnd;
             var impact = transform.position + transform.forward * .9f * Size;
+            RPC_ActionSound(EnemyActionAudio.Cue.CuernudoLanding, impact);
             if (target != null && target.IsAlive)
             {
                 var d = target.transform.position - impact; d.y = 0;
@@ -350,6 +392,11 @@ public sealed class ElCuernudoFusionEnemy : NetworkBehaviour, ITakeDamage
     {
         if (Aggro) { target = aggroTarget; return; }
         aggroTarget = null;
+        if (GameJam.Waves.EnemyAggro.WantsShip(Object))
+        {
+            target = GameJam.Waves.EnemyAggro.NearestPlayer(Runner, transform.position, GameJam.Waves.EnemyAggro.ShipDistraction);
+            return;
+        }
         target = FindObjectsByType<MarsFusionAvatar>(FindObjectsSortMode.None)
             .Where(a => a.Object != null && a.Object.IsValid && a.Runner == Runner && a.IsAlive
                 && Vector3.Distance(home, a.transform.position) < leashRange)

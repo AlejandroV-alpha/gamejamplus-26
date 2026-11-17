@@ -31,6 +31,9 @@ public sealed class JungleNightmareFusionEnemy : NetworkBehaviour, ITakeDamage
     Collider bodyCollider;
     Vector3 home;
     MarsFusionAvatar target;
+    MarsFusionAvatar aggroTarget;
+    float aggroUntil;
+    bool shipMode;          // bicho de oleada sin jugador cerca: va a por la nave
     float scanAt, nextAttackAt, impactAt = -1;
     int shownAttacks, shownHits;
     bool shownDead;
@@ -103,6 +106,7 @@ public sealed class JungleNightmareFusionEnemy : NetworkBehaviour, ITakeDamage
         if (impactAt > 0 && now >= impactAt)
         {
             impactAt = -1;
+            RPC_SwipeSound(transform.position + transform.forward);
             Strike();
         }
 
@@ -110,7 +114,28 @@ public sealed class JungleNightmareFusionEnemy : NetworkBehaviour, ITakeDamage
         float size = Mathf.Max(.1f, transform.localScale.x);
         Vector3? destination = null;
         float desiredSpeed = 0f;
-        if (target == null || !target.IsAlive || Distance(target.transform.position) > detectionRange)
+        bool chasing = target != null && target.IsAlive
+            && (Distance(target.transform.position) <= detectionRange || (target == aggroTarget && now < aggroUntil));
+        shipMode = !chasing && GameJam.Waves.EnemyAggro.WantsShip(Object);
+        if (shipMode)
+        {
+            // Oleada: corre al casco de la nave y lo golpea.
+            var ship = GameJam.Waves.EnemyAggro.Ship;
+            Vector3 hull = ship.HullPoint(transform.position);
+            float distance = Distance(hull);
+            Face(hull);
+            if (distance <= attackRange * 1.2f)
+            {
+                if (!busy && now >= nextAttackAt)
+                {
+                    nextAttackAt = now + attackCooldown;
+                    impactAt = now + attackImpactDelay;
+                    AttackCount++;
+                }
+            }
+            else if (!busy) { destination = hull; desiredSpeed = chaseSpeed * size; }
+        }
+        else if (!chasing)
         {
             if (!busy && Distance(home) > 1f) { destination = home; desiredSpeed = patrolSpeed * size; }
         }
@@ -262,6 +287,16 @@ public sealed class JungleNightmareFusionEnemy : NetworkBehaviour, ITakeDamage
 
     void ScanForTarget()
     {
+        // Quien le disparo manda: lo persigue sin importar la distancia.
+        if (aggroTarget != null && aggroTarget.Object != null && aggroTarget.Object.IsValid && aggroTarget.IsAlive
+            && Runner.SimulationTime < aggroUntil) { target = aggroTarget; return; }
+        aggroTarget = null;
+        // Bicho de oleada: solo se distrae con jugadores cercanos.
+        if (GameJam.Waves.EnemyAggro.WantsShip(Object))
+        {
+            target = GameJam.Waves.EnemyAggro.NearestPlayer(Runner, transform.position, GameJam.Waves.EnemyAggro.ShipDistraction);
+            return;
+        }
         target = FindObjectsByType<MarsFusionAvatar>(FindObjectsSortMode.None)
             .Where(a => a.Object != null && a.Object.IsValid && a.Runner == Runner && a.IsAlive
                 && Vector3.Distance(home, a.transform.position) < leashRange)
@@ -271,6 +306,13 @@ public sealed class JungleNightmareFusionEnemy : NetworkBehaviour, ITakeDamage
 
     void Strike()
     {
+        if (shipMode && (target == null || !target.IsAlive))
+        {
+            var ship = GameJam.Waves.EnemyAggro.Ship;
+            if (ship != null && Distance(ship.HullPoint(transform.position)) <= attackRange * 1.5f)
+                ship.Damage(damage, transform.position + transform.forward * attackRange);
+            return;
+        }
         if (target == null || !target.IsAlive) return;
         var delta = target.transform.position - transform.position; delta.y = 0;
         if (delta.magnitude > attackRange + .5f || Vector3.Angle(transform.forward, delta) > 80) return;
@@ -281,14 +323,19 @@ public sealed class JungleNightmareFusionEnemy : NetworkBehaviour, ITakeDamage
         if (transform.localScale.x >= freezeMinScale) RPC_FrostHit(target.Object);
     }
 
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All, Channel = RpcChannel.Unreliable)]
+    private void RPC_SwipeSound(Vector3 point)
+        => EnemyActionAudio.Play(EnemyActionAudio.Cue.JungleSwipe, point, gameObject.scene);
+
     // Todos los clientes ven el estallido de frio sobre el jugador golpeado.
     [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
     private void RPC_FrostHit(NetworkObject victim)
     {
         if (victim == null) return;
+        var chest = victim.transform.position + Vector3.up * 1.1f;
+        EnemyActionAudio.Play(EnemyActionAudio.Cue.JungleFrost, chest, gameObject.scene, .5f);
         var fx = GetComponentInChildren<FrostGroundFX>();
         if (fx == null) return;
-        var chest = victim.transform.position + Vector3.up * 1.1f;
         FrostHitBurst.Spawn(chest, victim.transform, fx.dustMaterial, fx.shardMaterial, Mathf.Clamp(transform.localScale.x, 1f, 1.6f));
     }
 
@@ -347,8 +394,10 @@ public sealed class JungleNightmareFusionEnemy : NetworkBehaviour, ITakeDamage
     }
 
     [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
-    private void RPC_TakeDamage(int amount)
+    private void RPC_TakeDamage(int amount, RpcInfo info = default)
     {
+        var shooter = GameJam.Waves.EnemyAggro.FindShooter(Runner, info.Source, transform.position);
+        if (shooter != null) { aggroTarget = shooter; target = shooter; aggroUntil = Runner.SimulationTime + GameJam.Waves.EnemyAggro.AggroSeconds; }
         if (amount <= 0 || Dead) return;
         float previousHealth = Health;
         Health = Mathf.Max(0, Health - Mathf.Min(amount, maxHealth));

@@ -111,15 +111,14 @@ public class VenomAcid : MonoBehaviour
         var player = col != null ? col.GetComponentInParent<GameJam.Multiplayer.MarsFusionAvatar>() : null;
 
         Splash(point, normal);
-        // El charco va siempre al suelo (si pegó en el jugador, cae debajo de él).
+        EnemyActionAudio.Play(EnemyActionAudio.Cue.VenomwingSplash, point, owner ? owner.gameObject.scene : gameObject.scene, .55f);
+        // El charco va siempre al suelo y plano. Antes, si el acido pegaba en el jugador, el rayo
+        // chocaba con su propio cuerpo, no encontraba suelo y el charco quedaba de pie en el aire.
         Vector3 ground = point;
-        Vector3 up = normal;
-        if (player || normal.y < .5f)
-        {
-            if (Physics.Raycast(point + Vector3.up * .5f, Vector3.down, out var g, 6f, ~0, QueryTriggerInteraction.Ignore)
-                && !g.collider.GetComponentInParent<GameJam.Multiplayer.MarsFusionAvatar>())
-            { ground = g.point; up = g.normal; }
-        }
+        Vector3 up = Vector3.up;
+        bool onGround = col != null && !player && normal.y >= .5f && col.attachedRigidbody == null;
+        if (onGround) up = normal;
+        else if (FindGround(point, out var gp, out var gn)) { ground = gp; up = gn; }
         VenomAcidPuddle.Create(ground, up, mats, puddleRadius, puddleTime);
         onImpact?.Invoke(ground);
 
@@ -129,6 +128,22 @@ public class VenomAcid : MonoBehaviour
         var l = GetComponentInChildren<Light>(); if (l) l.enabled = false;
         enabled = false;
         Destroy(gameObject, .7f);
+    }
+
+    // Suelo bajo el punto, saltandose jugadores, enemigos, cuerpos con fisica y triggers.
+    bool FindGround(Vector3 point, out Vector3 ground, out Vector3 up)
+    {
+        ground = point; up = Vector3.up;
+        float best = float.MaxValue; bool found = false;
+        foreach (var h in Physics.RaycastAll(point + Vector3.up * 1.5f, Vector3.down, 12f, ~0, QueryTriggerInteraction.Ignore))
+        {
+            if (h.collider.attachedRigidbody != null || h.normal.y < .35f) continue;
+            if (h.collider.GetComponentInParent<GameJam.Multiplayer.MarsFusionAvatar>()) continue;
+            if (owner && h.collider.transform.IsChildOf(owner)) continue;
+            if (h.collider.GetComponentInParent<GameJam.Combat.EnemyCombatUI>()) continue;
+            if (h.distance < best) { best = h.distance; ground = h.point; up = h.normal; found = true; }
+        }
+        return found;
     }
 
     void Splash(Vector3 point, Vector3 normal)

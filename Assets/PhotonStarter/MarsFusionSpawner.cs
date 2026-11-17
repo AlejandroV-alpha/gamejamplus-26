@@ -54,7 +54,11 @@ namespace GameJam.Multiplayer
                 var health = actor.GetComponent<PlayerHealth>();
                 if (health == null || health.MaxHealth <= 0f || health.IsAlive) { allDead = false; break; }
             }
-            if (allDead && participants > 0)
+            // Nave destruida por las oleadas: se pierde la partida igual que si cayera todo el equipo.
+            var shipObjective = GameJam.Waves.ShipObjective.Instance;
+            bool shipLost = shipObjective != null && shipObjective.Runner == Runner && shipObjective.Destroyed;
+            if (shipLost && participants > 0) allDead = true;
+            else if (allDead && participants > 0)
                 foreach (var station in FindObjectsByType<ShipRepairStation>(FindObjectsSortMode.None))
                     if (station.Runner == Runner && station.IsRepaired()) allDead = false;
             if (!allDead || participants == 0)
@@ -98,6 +102,9 @@ namespace GameJam.Multiplayer
             if (Object == null || !Object.IsValid || RestartPhase != 1) { wipeShownAt = -1f; return; }
             if (wipeShownAt < 0f) wipeShownAt = Time.unscaledTime;
             GUI.depth = -100;
+            // Si fue la nave, la pantalla de derrota la dibuja el HUD de oleadas.
+            var ship = GameJam.Waves.ShipObjective.Instance;
+            if (ship != null && ship.Destroyed) return;
             GameJam.UI.TeamWipeScreen.Draw(RestartDeadline.RemainingTime(Runner).GetValueOrDefault(), RestartSeconds,
                 Time.unscaledTime - wipeShownAt);
         }

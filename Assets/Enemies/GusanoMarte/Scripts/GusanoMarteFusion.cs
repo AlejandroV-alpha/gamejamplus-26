@@ -5,7 +5,7 @@ using UnityEngine;
 using UnityEngine.Rendering;
 
 /// <summary>
-/// Gusano de Marte (version de "Pruebas de Animacion" adaptada a red). La autoridad de Fusion decide; todos lo ven igual.
+/// "Fauces de Óxido", el gusano de Marte (version de "Pruebas de Animacion" adaptada a red). La autoridad de Fusion decide; todos lo ven igual.
 ///  Reposo (alzado) -> al detectar a un jugador se ENTIERRA -> avanza bajo tierra (monticulo de polvo)
 ///  -> EMERGE a su lado -> lo PERSIGUE reptando -> lo MUERDE y lo atrapa en la boca (lo mastica)
 ///  -> con 10 balazos de los compañeros lo SUELTA -> se vuelve a enterrar.
@@ -17,13 +17,13 @@ public sealed class GusanoMarteFusion : NetworkBehaviour, ITakeDamage
     [Header("Territorio y detección")]
     [SerializeField, Min(5f)] float territoryRadius = 55f;
     [SerializeField, Min(5f)] float detectionRange = 30f;
-    [SerializeField, Tooltip("Segundos minimos en reposo antes de volver a atacar.")] Vector2 hiddenSeconds = new Vector2(3f, 6f);
+    [SerializeField, Tooltip("Segundos minimos en reposo antes de volver a atacar.")] Vector2 hiddenSeconds = new Vector2(1.2f, 2.5f);
 
     [Header("Movimiento")]
-    [SerializeField, Min(1f)] float tunnelSpeed = 12f;
-    [SerializeField, Min(1f), Tooltip("Sale a esta distancia del jugador.")] float emergeDistance = 5f;
-    [SerializeField, Min(.5f)] float chaseSpeed = 6f;
-    [SerializeField, Min(10f)] float turnDegreesPerSecond = 130f;
+    [SerializeField, Min(1f)] float tunnelSpeed = 16f;
+    [SerializeField, Min(1f), Tooltip("Sale a esta distancia del jugador.")] float emergeDistance = 3.5f;
+    [SerializeField, Min(.5f)] float chaseSpeed = 9f;
+    [SerializeField, Min(10f)] float turnDegreesPerSecond = 240f;
     [SerializeField, Tooltip("Ya no se usa: persigue mientras el jugador siga cerca.")] Vector2 chaseSeconds = new Vector2(7f, 11f);
 
     [Header("Mordida y agarre")]
@@ -34,7 +34,7 @@ public sealed class GusanoMarteFusion : NetworkBehaviour, ITakeDamage
     [SerializeField, Min(1f), Tooltip("Segundos máximos que retiene al jugador.")] float holdSeconds = 15f;
     [SerializeField, Min(0)] int holdDamage = 4;
     [SerializeField, Min(.2f)] float holdDamageInterval = 1f;
-    [SerializeField, Min(0f), Tooltip("Pausa tras soltar a alguien antes de poder morder otra vez.")] float regrabCooldown = 5f;
+    [SerializeField, Min(0f), Tooltip("Pausa tras soltar a alguien antes de poder morder otra vez.")] float regrabCooldown = 3f;
 
     [Header("Vida")]
     [SerializeField, Min(1)] int maxHealth = 260;
@@ -106,7 +106,7 @@ public sealed class GusanoMarteFusion : NetworkBehaviour, ITakeDamage
             transform.position = OnGround(transform.position);
             Enter(State.Idle, Random.Range(hiddenSeconds.x, hiddenSeconds.y));
         }
-        GameJam.Combat.EnemyCombatUI.Attach(gameObject, "GUSANO DE MARTE", () => Health, maxHealth,
+        GameJam.Combat.EnemyCombatUI.Attach(gameObject, "FAUCES DE ÓXIDO", () => Health, maxHealth,
             () => Object != null && Object.IsValid && StateBufferIsValid
                 && Current != State.Tunnel && Current != State.Death);
     }
@@ -138,15 +138,22 @@ public sealed class GusanoMarteFusion : NetworkBehaviour, ITakeDamage
             if (Elapsed >= StateLength) Runner.Despawn(Object);
             return;
         }
-        MarsFusionAvatar target = NearestPlayer();
-        Vector3 to = target != null ? Flat(target.transform.position - transform.position) : Vector3.zero;
+        MarsFusionAvatar target = PickTarget();
+        // Bicho de oleada sin jugador cerca: su presa es el casco de la nave.
+        bool wave = GameJam.Waves.EnemyAggro.IsWave(Object);
+        bool shipMode = target == null && GameJam.Waves.EnemyAggro.WantsShip(Object);
+        bool hasGoal = target != null || shipMode;
+        Vector3 goal = target != null ? target.transform.position
+            : shipMode ? GameJam.Waves.EnemyAggro.Ship.HullPoint(transform.position) : transform.position;
+        bool hunting = shipMode || (target != null && target == aggroTarget && Runner.SimulationTime < aggroUntil);
+        Vector3 to = hasGoal ? Flat(goal - transform.position) : Vector3.zero;
         float dist = to.magnitude;
 
         switch (Current)
         {
             case State.Idle:
                 // Alzado esperando. Al detectar a un jugador se entierra para ir a por él.
-                if (Elapsed >= StateLength && target != null && dist <= detectionRange) Enter(State.Burrow, BurrowTime);
+                if (Elapsed >= StateLength && hasGoal && (hunting || dist <= detectionRange)) Enter(State.Burrow, BurrowTime);
                 break;
 
             case State.Burrow:
@@ -155,56 +162,65 @@ public sealed class GusanoMarteFusion : NetworkBehaviour, ITakeDamage
 
             case State.Tunnel:
                 // Bajo tierra: avanza hacia el jugador; solo se ve el montículo de polvo.
-                if (target == null)
+                if (!hasGoal)
                 {
                     if (Elapsed > 2f) Enter(State.Emerge, EmergeTime);
                     break;
                 }
-                Face(target.transform.position, 400f);
+                Face(goal, 400f);
                 float step = Mathf.Min(tunnelSpeed * Runner.DeltaTime, Mathf.Max(0f, dist - emergeDistance * .8f));
                 Vector3 next = OnGround(transform.position + to.normalized * step);
-                if (Flat(next - home).magnitude < territoryRadius) transform.position = next;
+                if (wave || Flat(next - home).magnitude < territoryRadius) transform.position = next;
                 if ((dist <= emergeDistance && Elapsed > .6f) || Elapsed >= StateLength)
                 {
-                    Face(target.transform.position, 9999f);
+                    Face(goal, 9999f);
                     Enter(State.Emerge, EmergeTime);
                 }
                 break;
 
             case State.Emerge:
-                if (target != null) Face(target.transform.position, 60f);
-                if (Elapsed >= StateLength) Enter(State.Chase, 0f);
+                // Sale mirando a su presa y, si la tiene a tiro, muerde sin pausa al terminar de salir.
+                if (hasGoal) Face(goal, 220f);
+                if (Elapsed >= StateLength * .8f)
+                {
+                    if (hasGoal && dist <= grabStartRange && Runner.SimulationTime >= NextGrabAt) Enter(State.Grab, GrabTime);
+                    else Enter(State.Chase, 0f);
+                }
                 break;
 
             case State.Chase:
-                if (target == null || dist > detectionRange * 1.6f)
+                if (!hasGoal || (!hunting && dist > detectionRange * 1.6f))
                 {
                     Enter(State.Idle, Random.Range(hiddenSeconds.x, hiddenSeconds.y));
                     break;
                 }
-                Face(target.transform.position, turnDegreesPerSecond);
+                Face(goal, turnDegreesPerSecond);
                 if (dist <= grabStartRange && Runner.SimulationTime >= NextGrabAt) { Enter(State.Grab, GrabTime); break; }
+                // Si la presa se le escapa, no se arrastra detrás: se vuelve a enterrar para emboscarla.
+                if (dist > emergeDistance * (shipMode ? 2.5f : 4f) && Elapsed > 1.5f) { Enter(State.Burrow, BurrowTime); break; }
                 // Avanza a empujones al ritmo de la onda del cuerpo (dos impulsos por ciclo del clip Slither de 0.8 s).
                 float surge = .7f + .45f * Mathf.Max(0f, Mathf.Sin(Elapsed * Mathf.PI * 2f / .8f * 2f));
                 Vector3 ahead = OnGround(transform.position + transform.forward
                     * Mathf.Min(chaseSpeed * surge * Runner.DeltaTime, Mathf.Max(0f, dist - grabStartRange * .7f)));
-                if (Flat(ahead - home).magnitude < territoryRadius) transform.position = ahead;
+                if (wave || Flat(ahead - home).magnitude < territoryRadius) transform.position = ahead;
                 else Enter(State.Burrow, BurrowTime);
                 break;
 
             case State.Grab:
-                if (Elapsed < BiteTime * .8f && target != null) Face(target.transform.position, 200f);
+                if (Elapsed < BiteTime * .8f && hasGoal) Face(goal, 200f);
                 if (!biteDone && Elapsed >= BiteTime)
                 {
                     biteDone = true;
-                    Bite(target);
+                    RPC_ActionSound(EnemyActionAudio.Cue.WormBite, head != null ? head.position : transform.position);
+                    if (shipMode) GameJam.Waves.EnemyAggro.Ship.Damage(biteDamage * 1.5f, MouthCenter);
+                    else Bite(target);
                 }
                 if (Elapsed >= StateLength)
                 {
                     if (GrabbedPlayer != PlayerRef.None) Enter(State.Hold, holdSeconds);
                     else
                     {
-                        NextGrabAt = Runner.SimulationTime + 1.2f;
+                        NextGrabAt = Runner.SimulationTime + .4f;   // falló: reintenta casi enseguida
                         Enter(State.Chase, 0f);
                     }
                 }
@@ -226,7 +242,11 @@ public sealed class GusanoMarteFusion : NetworkBehaviour, ITakeDamage
                 break;
 
             case State.Release:
-                if (GrabbedPlayer != PlayerRef.None && Elapsed >= .2f) GrabbedPlayer = PlayerRef.None;
+                if (GrabbedPlayer != PlayerRef.None && Elapsed >= .2f)
+                {
+                    GrabbedPlayer = PlayerRef.None;
+                    RPC_ActionSound(EnemyActionAudio.Cue.WormRelease, head != null ? head.position : transform.position);
+                }
                 if (Elapsed >= StateLength)
                 {
                     NextGrabAt = Runner.SimulationTime + regrabCooldown;
@@ -247,6 +267,10 @@ public sealed class GusanoMarteFusion : NetworkBehaviour, ITakeDamage
         biteDone = false;
     }
 
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All, Channel = RpcChannel.Unreliable)]
+    private void RPC_ActionSound(EnemyActionAudio.Cue cue, Vector3 point)
+        => EnemyActionAudio.Play(cue, point, gameObject.scene);
+
     void Bite(MarsFusionAvatar target)
     {
         if (target == null || !target.IsAlive) return;
@@ -260,6 +284,20 @@ public sealed class GusanoMarteFusion : NetworkBehaviour, ITakeDamage
             FreeHits = 0;
             nextHoldDamage = Runner.SimulationTime + holdDamageInterval;
         }
+    }
+
+    MarsFusionAvatar aggroTarget;
+    float aggroUntil;
+
+    // Quien le disparo manda; en oleada solo lo distrae un jugador muy cerca; si no, el de su territorio.
+    MarsFusionAvatar PickTarget()
+    {
+        if (aggroTarget != null && aggroTarget.Object != null && aggroTarget.Object.IsValid && aggroTarget.IsAlive
+            && Runner.SimulationTime < aggroUntil) return aggroTarget;
+        aggroTarget = null;
+        if (GameJam.Waves.EnemyAggro.WantsShip(Object))
+            return GameJam.Waves.EnemyAggro.NearestPlayer(Runner, transform.position, GameJam.Waves.EnemyAggro.ShipDistraction);
+        return NearestPlayer();
     }
 
     MarsFusionAvatar NearestPlayer()
@@ -287,8 +325,13 @@ public sealed class GusanoMarteFusion : NetworkBehaviour, ITakeDamage
     }
 
     [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
-    void RPC_Shot(int amount)
+    void RPC_Shot(int amount, RpcInfo info = default)
     {
+        if (amount > 0 && Current != State.Death)
+        {
+            var shooter = GameJam.Waves.EnemyAggro.FindShooter(Runner, info.Source, transform.position);
+            if (shooter != null) { aggroTarget = shooter; aggroUntil = Runner.SimulationTime + GameJam.Waves.EnemyAggro.AggroSeconds; }
+        }
         if (amount <= 0 || Health <= 0 || Current == State.Tunnel || Current == State.Death) return;
         int previous = Health;
         Health = Mathf.Max(0, Health - amount);

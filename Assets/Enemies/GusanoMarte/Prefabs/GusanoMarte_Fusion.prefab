@@ -157,11 +157,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::GusanoMarteFusion
   territoryRadius: 55
   detectionRange: 30
-  hiddenSeconds: {x: 3, y: 6}
-  tunnelSpeed: 12
-  emergeDistance: 5
-  chaseSpeed: 6
-  turnDegreesPerSecond: 130
+  hiddenSeconds: {x: 1.2, y: 2.5}
+  tunnelSpeed: 16
+  emergeDistance: 3.5
+  chaseSpeed: 9
+  turnDegreesPerSecond: 240
   chaseSeconds: {x: 7, y: 11}
   grabStartRange: 5.5
   grabRadius: 2.6

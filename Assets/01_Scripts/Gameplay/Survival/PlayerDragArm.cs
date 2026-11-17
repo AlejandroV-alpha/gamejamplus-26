@@ -42,7 +42,16 @@ namespace GameJam.Survival
                 // Elige el brazo del lado donde esta el companero.
                 useRight = Vector3.Dot(grabPoint - transform.position, transform.right) > 0f;
             }
-            weight = Mathf.MoveTowards(weight, target != null ? 1f : 0f, Time.deltaTime * blendSpeed);
+            // Tambien estira el brazo hacia un cadaver de monstruo arrastrado.
+            bool carryingRemains = false;
+            if (target == null && revive.Object != null && revive.Object.IsValid
+                && GameJam.Grinder.MonsterRemains.TryGetCarriedBy(revive.Object, out var remainsPoint))
+            {
+                grabPoint = remainsPoint;
+                useRight = Vector3.Dot(grabPoint - transform.position, transform.right) > 0f;
+                carryingRemains = true;
+            }
+            weight = Mathf.MoveTowards(weight, target != null || carryingRemains ? 1f : 0f, Time.deltaTime * blendSpeed);
             if (weight <= .001f) return;
 
             var upper = animator.GetBoneTransform(useRight ? HumanBodyBones.RightUpperArm : HumanBodyBones.LeftUpperArm);

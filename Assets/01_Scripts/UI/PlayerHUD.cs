@@ -140,6 +140,8 @@ namespace GameJam.UI
             ExpeditionSprites.Skin(equipment.GetComponent<Image>(), "panel");
             LocalLabel(equipment, "hud.equipped", new Vector2(0, 33), new Vector2(198, 30), 17);
             equipped = Label(equipment, "", new Vector2(0,-14), new Vector2(194, 50), 23);
+            // El arma ya se ve en la tarjeta de municion y en la barra de inventario: este cartel sobra.
+            equipment.gameObject.SetActive(false);
             actionBar = CreateBar(hud.transform, Vector2.zero, "hud.collecting", Accent);
             actionIcon = ExpeditionSprites.Icon(actionBar.Root, "collect", new Vector2(-147, 10), new Vector2(24, 24));
             actionBar.Root.sizeDelta = new Vector2(390, 82);

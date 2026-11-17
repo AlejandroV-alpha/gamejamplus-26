@@ -81,6 +81,61 @@ namespace GameJam.PhysicsControl
         private const float RecoveryDuration = 0.40f;
 
         private readonly RaycastHit[] groundHits = new RaycastHit[16];
+        private Vector3[] rbPos;
+        private Quaternion[] rbRot;
+
+        /// <summary>Punto del suelo donde se levanto el cuerpo en el ultimo StandUp.</summary>
+        public Vector3 LastStandPosition { get; private set; }
+
+        /// <summary>Posicion real del cuerpo (caderas en ragdoll, raiz si no).</summary>
+        public Vector3 BodyPosition => IsRagdolled && hipsTransform != null ? hipsTransform.position : transform.position;
+
+        // Mientras el cuerpo rueda, la raiz del jugador (lo que apuntan los monstruos, el daño y la red)
+        // se quedaba donde lo tumbaron. El esqueleto se suelta al mundo durante el ragdoll, asi la raiz
+        // puede seguir a las caderas sin tocar la fisica de los huesos (el ragdoll se mueve igual que antes).
+        private Transform hipsParent;
+        private int hipsSibling;
+        private bool hipsDetached;
+
+        private void FixedUpdate()
+        {
+            if (!IsRagdolled || !hipsDetached || hipsTransform == null) return;
+            Vector3 pivotWorld = cameraPivot != null ? cameraPivot.position : Vector3.zero;
+            transform.position = GroundBelow(hipsTransform.position);
+            if (cameraPivot != null) cameraPivot.position = pivotWorld;
+        }
+
+        private void DetachSkeleton()
+        {
+            if (hipsDetached || hipsTransform == null || hipsTransform.parent == null) return;
+            hipsParent = hipsTransform.parent;
+            hipsSibling = hipsTransform.GetSiblingIndex();
+            hipsTransform.SetParent(null, true);
+            hipsDetached = true;
+        }
+
+        private void ReattachSkeleton()
+        {
+            if (!hipsDetached || hipsTransform == null) return;
+            hipsDetached = false;
+            if (hipsParent == null) return;
+            hipsTransform.SetParent(hipsParent, true);
+            hipsTransform.SetSiblingIndex(hipsSibling);
+        }
+
+        private Vector3 GroundBelow(Vector3 point)
+        {
+            Vector3 ground = point + Vector3.down * .9f;
+            int hits = Physics.RaycastNonAlloc(point + Vector3.up * 1.5f, Vector3.down, groundHits, 4.5f, ~0, QueryTriggerInteraction.Ignore);
+            float highest = float.NegativeInfinity;
+            for (int i = 0; i < hits; i++)
+            {
+                var h = groundHits[i];
+                if (h.collider.transform.IsChildOf(transform)) continue;
+                if (h.point.y > highest) { highest = h.point.y; ground = h.point; }
+            }
+            return ground;
+        }
 
         private void Awake()
         {
@@ -259,6 +314,8 @@ namespace GameJam.PhysicsControl
                 rb.linearVelocity = inheritedVelocity;
             }
 
+            DetachSkeleton();
+
             // Apply punchy impulse to the torso and hips
             if (HipsRigidbody != null)
             {
@@ -281,6 +338,7 @@ namespace GameJam.PhysicsControl
         {
             if (!IsRagdolled) return;
 
+            ReattachSkeleton();
             Vector3 hipsWorldPos = hipsTransform != null ? hipsTransform.position : transform.position;
             Quaternion hipsWorldRot = hipsTransform != null ? hipsTransform.rotation : transform.rotation;
 
@@ -308,19 +366,8 @@ namespace GameJam.PhysicsControl
             foreach (var col in colliders) if (col != null) col.enabled = false;
 
             // Busca el punto de suelo justo debajo de las caderas
-            Vector3 groundPoint = hipsWorldPos;
-            int hits = Physics.RaycastNonAlloc(hipsWorldPos + Vector3.up * 1.5f, Vector3.down, groundHits, 4.5f, ~0, QueryTriggerInteraction.Ignore);
-            float highest = float.NegativeInfinity;
-            for (int i = 0; i < hits; i++)
-            {
-                var h = groundHits[i];
-                if (h.collider.transform.IsChildOf(transform)) continue;
-                if (h.point.y > highest)
-                {
-                    highest = h.point.y;
-                    groundPoint = h.point;
-                }
-            }
+            Vector3 groundPoint = GroundBelow(hipsWorldPos);
+            LastStandPosition = groundPoint + Vector3.up * 0.05f;
 
             // Orientación horizontal biomecánica basada en el torso/cabeza
             Transform spine = animator != null ? animator.GetBoneTransform(HumanBodyBones.Spine) : null;
@@ -338,10 +385,11 @@ namespace GameJam.PhysicsControl
                 facing = Vector3.forward;
             }
 
+            transform.position = LastStandPosition;
             if (kcc != null)
             {
                 kcc.enabled = true;
-                kcc.SetPosition(groundPoint + Vector3.up * 0.05f);
+                kcc.SetPosition(LastStandPosition);
                 kcc.SetLookRotation(Quaternion.LookRotation(facing).eulerAngles);
             }
 
@@ -431,13 +479,20 @@ namespace GameJam.PhysicsControl
 
         private void OnDisable()
         {
-            if (IsRagdolled) StandUp();
+            if (IsRagdolled)
+            {
+                try { StandUp(); }
+                catch (Exception) { if (hipsDetached && hipsTransform != null) Destroy(hipsTransform.gameObject); hipsDetached = false; }
+            }
             IsRecovering = false;
         }
 
         private void OnDestroy()
         {
-            if (IsRagdolled) StandUp();
+            // Si el jugador se destruye con el esqueleto suelto, no dejarlo tirado en la escena.
+            if (hipsDetached && hipsTransform != null) Destroy(hipsTransform.gameObject);
+            hipsDetached = false;
+            if (IsRagdolled) IsRagdolled = false;
             IsRecovering = false;
         }
     }

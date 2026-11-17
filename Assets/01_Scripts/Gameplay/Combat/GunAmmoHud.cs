@@ -63,7 +63,8 @@ namespace GameJam.Combat
             };
             float s = InteractionPromptCard.Scale;
             Rect safe = Screen.safeArea;
-            AmmoHudRenderer.DrawCounter(new Vector2(safe.xMax - 28 * s, Screen.height - safe.yMin - 170 * s), state);
+            // Esquina inferior derecha, a la altura de la barra de inventario: el sitio clasico del arma.
+            AmmoHudRenderer.DrawCounter(new Vector2(safe.xMax - 24 * s, Screen.height - safe.yMin - 18 * s), state);
         }
     }
 }

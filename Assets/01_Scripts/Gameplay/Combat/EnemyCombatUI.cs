@@ -14,13 +14,43 @@ namespace GameJam.Combat
         private RectTransform panel, fill, trail, fillEdge;
         private TabletRoundedPanel impactFlash, healthGraphic, borderGraphic;
         private float lastDamageAtForAnimation = -10f;
-        private TextMeshProUGUI valueLabel;
         private Func<float> readHealth;
         private Func<bool> canShow;
         private float maximum, displayed, delayed, lastDamageAt;
         private Renderer[] visuals;
         private Camera view;
         private int damageSequence;
+        private string title;
+        private bool seenAlive;
+
+        /// <summary>Murio (vida a 0 tras haber estado vivo). Lo usan los restos para copiar su aspecto.</summary>
+        public bool IsDead { get; private set; }
+        /// <summary>Ya hay un cadaver arrastrable que copia a este enemigo.</summary>
+        public bool HasRemains { get; set; }
+
+        /// <summary>Oculta el modelo original cuando el cadaver ya tomo su forma.</summary>
+        public void HideVisuals()
+        {
+            // forceRenderingOff: aunque el script del enemigo vuelva a encender sus renderers
+            // (p. ej. el gusano al enterrarse), el modelo original ya no se ve.
+            foreach (var r in GetComponentsInChildren<Renderer>(true)) if (r != null) r.forceRenderingOff = true;
+        }
+
+        // Al morir, la autoridad del enemigo crea los restos arrastrables para la trituradora.
+        private void Update()
+        {
+            if (IsDead || readHealth == null) return;
+            float health;
+            try { health = readHealth(); } catch (Exception) { return; }   // estado de red aun no listo
+            if (health > 0) { seenAlive = true; return; }
+            if (!seenAlive) return;
+            IsDead = true;
+            // El cuerpo se queda en el suelo como ragdoll (en cada cliente) en vez de hundirse.
+            GameJam.Grinder.CorpseRagdoll.Create(this);
+            var net = GetComponentInParent<Fusion.NetworkObject>();
+            if (net != null && net.IsValid && net.HasStateAuthority && net.Runner != null)
+                GameJam.Grinder.MonsterRemains.SpawnFor(net.Runner, this, title, maximum);
+        }
 
         public static EnemyCombatUI Attach(GameObject enemy, string title, Func<float> health,
             float maxHealth, Func<bool> visible = null)
@@ -33,6 +63,7 @@ namespace GameJam.Combat
             ui.maximum = Mathf.Max(1, maxHealth);
             ui.displayed = ui.delayed = 1;
             ui.visuals = enemy.GetComponentsInChildren<Renderer>(true);
+            ui.title = title;
             ui.Build(title);
             return ui;
         }
@@ -87,24 +118,25 @@ namespace GameJam.Combat
 
         private void Build(string title)
         {
-            panel = Box("EnemyHealth_" + title, Overlay(), new Vector2(238, 66), Vector2.zero,
+            panel = Box("EnemyHealth_" + title, Overlay(), new Vector2(238, 50), Vector2.zero,
                 new Color(.17f, .24f, .30f, .95f));
             borderGraphic = panel.GetComponent<TabletRoundedPanel>();
             borderGraphic.radius = 7;
-            var body = Box("ArmoredBody", panel, new Vector2(234, 62), Vector2.zero,
+            var body = Box("ArmoredBody", panel, new Vector2(234, 46), Vector2.zero,
                 new Color(.025f, .035f, .055f, .96f));
             body.GetComponent<TabletRoundedPanel>().radius = 6;
             GameJam.UI.ExpeditionSprites.Surface(body, "panel");
-            Box("TopAccent", body, new Vector2(66, 2), new Vector2(-68, 30), new Color(.96f, .2f, .28f));
-            var marker = Box("ThreatMarker", body, new Vector2(7, 7), new Vector2(-102, 16), new Color(1, .24f, .3f));
+            Box("TopAccent", body, new Vector2(66, 2), new Vector2(-68, 22), new Color(.96f, .2f, .28f));
+            var marker = Box("ThreatMarker", body, new Vector2(7, 7), new Vector2(-102, 8), new Color(1, .24f, .3f));
             marker.localRotation = Quaternion.Euler(0, 0, 45);
-            var name = Text("Name", body, new Vector2(192, 23), new Vector2(7, 16), 14);
+            var name = Text("Name", body, new Vector2(192, 23), new Vector2(7, 8), 14);
             name.text = title.ToUpperInvariant();
+            if (GameJam.UI.UiFont.TmpTitle != null) name.font = GameJam.UI.UiFont.TmpTitle;
             name.fontStyle = FontStyles.Bold;
             name.characterSpacing = 1.1f;
             name.alignment = TextAlignmentOptions.Left;
-            Box("TrackRim", body, new Vector2(212, 16), new Vector2(0, -3), new Color(.24f, .12f, .17f));
-            var track = Box("Track", body, new Vector2(208, 12), new Vector2(0, -3), new Color(.07f, .09f, .13f));
+            Box("TrackRim", body, new Vector2(212, 16), new Vector2(0, -11), new Color(.24f, .12f, .17f));
+            var track = Box("Track", body, new Vector2(208, 12), new Vector2(0, -11), new Color(.07f, .09f, .13f));
             trail = Box("DamageTrail", track, new Vector2(208, 12), new Vector2(-104, 0), new Color(1, .55f, .39f));
             fill = Box("Health", track, new Vector2(208, 12), new Vector2(-104, 0), new Color(.92f, .13f, .24f));
             fill.pivot = trail.pivot = new Vector2(0, .5f);
@@ -118,15 +150,6 @@ namespace GameJam.Combat
                 Box("Segment", track, new Vector2(1.5f, 12), new Vector2(-104 + i * 20.8f, 0), new Color(.025f, .035f, .055f, .6f));
             fillEdge = Box("LiveEdge", track, new Vector2(2, 12), new Vector2(103, 0), new Color(1, .77f, .79f, .9f));
             impactFlash = Box("HitFlash", track, new Vector2(208, 12), Vector2.zero, Color.clear).GetComponent<TabletRoundedPanel>();
-            var caption = Text("Caption", body, new Vector2(100, 17), new Vector2(-54, -23), 10);
-            caption.text = "VITALIDAD";
-            caption.characterSpacing = 2;
-            caption.color = new Color(.51f, .63f, .73f);
-            caption.alignment = TextAlignmentOptions.Left;
-            valueLabel = Text("Value", body, new Vector2(108, 18), new Vector2(50, -23), 12);
-            valueLabel.fontStyle = FontStyles.Bold;
-            valueLabel.alignment = TextAlignmentOptions.Right;
-            valueLabel.color = new Color(.87f, .91f, .96f);
             panel.gameObject.SetActive(false);
         }
 
@@ -237,7 +260,6 @@ namespace GameJam.Combat
             fillEdge.anchoredPosition = new Vector2(-104 + 208 * displayed - 1, 0);
             float warning = ratio < .25f ? .16f * (.5f + .5f * Mathf.Sin(Time.unscaledTime * 6f)) : 0;
             healthGraphic.color = Color.Lerp(new Color(.92f, .13f, .24f), new Color(1f, .4f, .35f), warning);
-            valueLabel.text = Mathf.CeilToInt(health) + " / " + Mathf.CeilToInt(maximum);
         }
 
         private void OnDestroy() { if (panel != null) Destroy(panel.gameObject); }
