@@ -406,7 +406,7 @@ namespace GameJam.UI
                 .OnCancel(_ => FinishRebind()).OnComplete(_ =>
                 {
                     string path = action.bindings[binding].effectivePath;
-                    string[] reserved = { "e", "q", "r", "tab", "i", "g", "0", "escape", "f8", "f11", VoicePreferences.TalkKey.ToString().ToLowerInvariant(), "1", "2", "3", "4", "5", "6", "7", "8", "9" };
+                    string[] reserved = { "e", "q", "r", "c", "f", "y", "t", "h", "tab", "i", "g", "0", "escape", "f8", "f11", VoicePreferences.TalkKey.ToString().ToLowerInvariant(), "1", "2", "3", "4", "5", "6", "7", "8", "9" };
                     bool conflict = reserved.Any(key => path.Equals("<Keyboard>/" + key, StringComparison.OrdinalIgnoreCase));
                     foreach (var other in action.actionMap.actions)
                         for (int i = 0; i < other.bindings.Count; i++)

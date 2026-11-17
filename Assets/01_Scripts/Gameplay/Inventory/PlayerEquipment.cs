@@ -36,7 +36,7 @@ namespace GameJam.Inventory
         public bool CanOperate => CanPresentItem && input != null && input.ControlsEnabled
             && !SceneTransitionVideo.IsBlockingInput && !PortalWhiteTransition.IsBlockingInput
             && !LobbyDepartureEffects.IsBlockingInput && !GameJam.Crafting.CraftingBox.IsBlockingInput
-            && !GusanoExcavadorFusion.LocalPlayerHeld;
+            && !GusanoMarteFusion.LocalPlayerHeld;
         public bool IsRadioChannelOpen => Ready && channelOpen && IsRadioEquipped && CanPresentItem;
 
         private void Awake()

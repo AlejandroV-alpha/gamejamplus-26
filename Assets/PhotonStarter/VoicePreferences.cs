@@ -24,6 +24,7 @@ namespace GameJam.Multiplayer
             // These keys already perform a gameplay/menu action outside InputActions.
             if (key == Key.None || key == Key.Escape || key == Key.Tab || key == Key.E || key == Key.Q ||
                 key == Key.R || key == Key.G || key == Key.Digit0 || key == Key.I || key == Key.W || key == Key.A || key == Key.S || key == Key.D ||
+                key == Key.C || key == Key.F || key == Key.Y || key == Key.T || key == Key.H ||
                 key == Key.Space || key == Key.LeftShift || key == Key.F8 || key == Key.F11 ||
                 (key >= Key.Digit1 && key <= Key.Digit9)) return false;
             var local = MarsFusionAvatar.Local;

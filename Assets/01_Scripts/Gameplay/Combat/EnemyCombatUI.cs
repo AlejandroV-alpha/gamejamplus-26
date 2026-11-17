@@ -146,6 +146,47 @@ namespace GameJam.Combat
 
         public Vector3 DamagePosition => BodyBounds().center + Vector3.up * .3f;
 
+        private float nextExposureCheck;
+        private bool exposed = true;
+
+        /// <summary>
+        /// Oculta el panel cuando el monstruo esta bajo tierra (p. ej. Rek'Sai o Jungle Nightmare
+        /// excavando) o cuando el terreno lo tapa respecto a la camara.
+        /// </summary>
+        private bool IsBodyExposed(Bounds bounds)
+        {
+            if (Time.unscaledTime < nextExposureCheck) return exposed;
+            nextExposureCheck = Time.unscaledTime + .1f;
+
+            bool anyRenderer = false;
+            foreach (var r in visuals)
+                if (r != null && r.enabled && r.gameObject.activeInHierarchy && (r is SkinnedMeshRenderer || r is MeshRenderer)) { anyRenderer = true; break; }
+            if (!anyRenderer) return exposed = false;
+
+            // Bajo el suelo: la parte mas alta del cuerpo no supera el terreno.
+            Vector3 top = new Vector3(bounds.center.x, bounds.max.y, bounds.center.z);
+            Terrain terrain = null;
+            foreach (var t in Terrain.activeTerrains)
+            {
+                Vector3 p = t.GetPosition(), size = t.terrainData.size;
+                if (top.x >= p.x && top.x <= p.x + size.x && top.z >= p.z && top.z <= p.z + size.z) { terrain = t; break; }
+            }
+            if (terrain != null)
+            {
+                float ground = terrain.SampleHeight(top) + terrain.GetPosition().y;
+                if (top.y < ground + .25f) return exposed = false;
+            }
+            else if (Physics.Raycast(top + Vector3.up * 30f, Vector3.down, out var down, 30f, ~0, QueryTriggerInteraction.Ignore)
+                     && down.collider is TerrainCollider && down.point.y > top.y + .25f)
+                return exposed = false;
+
+            // Tapado por el terreno respecto a la camara.
+            Vector3 eye = view.transform.position;
+            foreach (var hit in Physics.RaycastAll(eye, (top - eye).normalized, Vector3.Distance(eye, top), ~0, QueryTriggerInteraction.Ignore))
+                if (hit.collider is TerrainCollider) return exposed = false;
+            return exposed = true;
+        }
+
         public void Damage(float amount) => Damage(amount, DamageKind.Normal, false);
 
         public void Damage(float amount, DamageKind kind, bool critical = false)
@@ -176,7 +217,7 @@ namespace GameJam.Combat
             var bounds = BodyBounds();
             var screen = view.WorldToScreenPoint(new Vector3(bounds.center.x, bounds.max.y + .45f, bounds.center.z));
             visible = health > 0 && screen.z > 0 && screen.x > 0 && screen.x < Screen.width
-                && screen.y > 0 && screen.y < Screen.height;
+                && screen.y > 0 && screen.y < Screen.height && IsBodyExposed(bounds);
             panel.gameObject.SetActive(visible);
             if (!visible) return;
             RectTransformUtility.ScreenPointToLocalPointInRectangle(overlay, screen, null, out var point);
@@ -367,10 +408,8 @@ namespace GameJam.Combat
         {
             if (numberFont == null)
             {
-                // Silkscreen (SIL OFL) lives in Resources/UI/Fonts; built as a dynamic TMP font at runtime.
-                var source = Resources.Load<Font>("UI/Fonts/Silkscreen-Bold");
-                if (source != null) numberFont = TMP_FontAsset.CreateFontAsset(source, 96, 12,
-                    UnityEngine.TextCore.LowLevel.GlyphRenderMode.SDFAA, 1024, 1024);
+                // Misma tipografia que el resto del juego (GameJam.UI.UiFont).
+                numberFont = GameJam.UI.UiFont.TmpTitle;
             }
             if (numberFont != null) text.font = numberFont;
             if (numberMaterial == null)

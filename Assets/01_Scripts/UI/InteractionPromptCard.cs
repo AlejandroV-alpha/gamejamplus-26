@@ -37,10 +37,10 @@ namespace GameJam.UI
             if (alpha <= .01f || screenPoint.z <= 0f || rows == null || rows.Length == 0) return;
             Setup();
             float s = Scale;
-            headerStyle.fontSize = Mathf.RoundToInt(11 * s);
-            nameStyle.fontSize = Mathf.RoundToInt(19 * s);
-            actionStyle.fontSize = Mathf.RoundToInt(16 * s);
-            tagStyle.fontSize = Mathf.RoundToInt(10 * s);
+            headerStyle.fontSize = GameJam.UI.UiFont.Px(11 * s);
+            nameStyle.fontSize = GameJam.UI.UiFont.Px(19 * s);
+            actionStyle.fontSize = GameJam.UI.UiFont.Px(16 * s);
+            tagStyle.fontSize = GameJam.UI.UiFont.Px(10 * s);
 
             float pad = 16 * s, gap = 12 * s, rowH = 32 * s, rowGap = 8 * s;
             Texture icon = iconTexture != null ? iconTexture : iconSprite != null && ExpeditionSprites.Get(iconSprite) != null ? ExpeditionSprites.Get(iconSprite).texture : null;
@@ -133,7 +133,7 @@ namespace GameJam.UI
         {
             Setup();
             if (key == MouseLeft) return 26 * s;
-            keyStyle.fontSize = Mathf.RoundToInt(14 * s);
+            keyStyle.fontSize = GameJam.UI.UiFont.Px(14 * s);
             return Mathf.Max(30 * s, keyStyle.CalcSize(new GUIContent(key)).x + 18 * s);
         }
 
@@ -152,7 +152,7 @@ namespace GameJam.UI
                 Fill(new Rect(inner.center.x - .75f * s, inner.y + 2 * s, 1.5f * s, inner.height * .38f), enabled ? KeyFill : TextOff, alpha * .6f, 0);
                 return;
             }
-            keyStyle.fontSize = Mathf.RoundToInt(14 * s);
+            keyStyle.fontSize = GameJam.UI.UiFont.Px(14 * s);
             Fill(new Rect(rect.x, rect.y + 2 * s, rect.width, rect.height), enabled ? KeyShadow : new Color32(40, 52, 62, 255), alpha, 6 * s);
             Fill(new Rect(rect.x, rect.y, rect.width, rect.height - 2 * s), enabled ? KeyFill : new Color32(70, 88, 102, 255), alpha, 6 * s);
             keyStyle.normal.textColor = Fade(enabled ? KeyText : TextOn, alpha);
@@ -194,11 +194,13 @@ namespace GameJam.UI
         private static void Setup()
         {
             if (headerStyle != null) return;
-            headerStyle = new GUIStyle(GUI.skin.label) { fontStyle = FontStyle.Bold, alignment = TextAnchor.MiddleLeft, wordWrap = false, padding = new RectOffset(), margin = new RectOffset() };
+            headerStyle = new GUIStyle(GameJam.UI.UiFont.Label()) { fontStyle = FontStyle.Bold, alignment = TextAnchor.MiddleLeft, wordWrap = false, padding = new RectOffset(), margin = new RectOffset() };
             nameStyle = new GUIStyle(headerStyle);
             keyStyle = new GUIStyle(headerStyle) { alignment = TextAnchor.MiddleCenter };
             actionStyle = new GUIStyle(headerStyle) { fontStyle = FontStyle.Normal };
             tagStyle = new GUIStyle(headerStyle) { alignment = TextAnchor.MiddleCenter };
+            // Orbitron en encabezados, teclas y etiquetas; Exo 2 en nombres y acciones.
+            headerStyle.font = keyStyle.font = tagStyle.font = UiFont.TitleFont;
         }
 
         internal static Color Fade(Color c, float a) { c.a *= a; return c; }

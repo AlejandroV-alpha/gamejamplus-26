@@ -114,8 +114,7 @@ public static class GusanoMarteSetup
         foreach (var g in scene.GetRootGameObjects().ToArray())
         {
             if (g == null) continue;
-            bool isOld = g.GetComponentInChildren<GusanoExcavadorFusion>(true) != null
-                || (oldPrefab && PrefabUtility.GetCorrespondingObjectFromOriginalSource(g) == oldPrefab);
+            bool isOld = oldPrefab && PrefabUtility.GetCorrespondingObjectFromOriginalSource(g) == oldPrefab;
             if (!isOld) continue;
             pos = g.transform.position;
             rot = g.transform.rotation;

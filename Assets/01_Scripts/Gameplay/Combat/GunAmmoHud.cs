@@ -64,7 +64,6 @@ namespace GameJam.Combat
             float s = InteractionPromptCard.Scale;
             Rect safe = Screen.safeArea;
             AmmoHudRenderer.DrawCounter(new Vector2(safe.xMax - 28 * s, Screen.height - safe.yMin - 170 * s), state);
-            AmmoHudRenderer.DrawCenter(new Vector2(Screen.width * .5f, Screen.height * .5f), state);
         }
     }
 }

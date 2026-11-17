@@ -325,11 +325,7 @@ MonoBehaviour:
   hitStopTime: 0.12
   deathEffect: {fileID: 7226888052703040409, guid: 7ec363c8df426644ea85f8d6d570561c, type: 3}
   deathEffectScale: 1.6
-  loot:
-  - material: {fileID: 11400000, guid: 6453654fe44ffdc429c6fff7b65ceb59, type: 2}
-    amount: {x: 1, y: 2}
-  - material: {fileID: 11400000, guid: 7ec212f3fbb1eef4f9d6494a2b8d86a0, type: 2}
-    amount: {x: 1, y: 3}
+  loot: []
   orbMaterial: {fileID: 2100000, guid: ddabc74f93488364fb4940db345ab258, type: 2}
   orbColor: {r: 0.55, g: 1, b: 0.3, a: 1}
 --- !u!1 &3616014880490220560

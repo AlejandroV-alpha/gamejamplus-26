@@ -66,7 +66,7 @@ namespace GameJam.Multiplayer
             if (RestartPhase == 0)
             {
                 RestartPhase = 1;
-                RestartDeadline = TickTimer.CreateFromSeconds(Runner, 3f);
+                RestartDeadline = TickTimer.CreateFromSeconds(Runner, RestartSeconds);
                 Debug.Log("[Mission] Todo el equipo ha caído. Reiniciando el nivel en 3 segundos.", this);
             }
             else if (RestartDeadline.Expired(Runner))
@@ -95,11 +95,14 @@ namespace GameJam.Multiplayer
 
         private void OnGUI()
         {
-            if (Object == null || !Object.IsValid || RestartPhase != 1) return;
-            var style = new GUIStyle(GUI.skin.box) { fontSize = 20, alignment = TextAnchor.MiddleCenter };
-            GUI.Box(new Rect(Screen.width * .5f - 290f, Screen.height * .4f, 580f, 90f),
-                "TODO EL EQUIPO HA CAÍDO\nReiniciando este nivel en "
-                + Mathf.CeilToInt(RestartDeadline.RemainingTime(Runner).GetValueOrDefault()) + " s…", style);
+            if (Object == null || !Object.IsValid || RestartPhase != 1) { wipeShownAt = -1f; return; }
+            if (wipeShownAt < 0f) wipeShownAt = Time.unscaledTime;
+            GUI.depth = -100;
+            GameJam.UI.TeamWipeScreen.Draw(RestartDeadline.RemainingTime(Runner).GetValueOrDefault(), RestartSeconds,
+                Time.unscaledTime - wipeShownAt);
         }
+
+        private const float RestartSeconds = 3f;
+        private float wipeShownAt = -1f;
     }
 }

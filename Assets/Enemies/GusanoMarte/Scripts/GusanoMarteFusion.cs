@@ -5,26 +5,26 @@ using UnityEngine;
 using UnityEngine.Rendering;
 
 /// <summary>
-/// Gusano de Marte (reemplaza al Gusano Excavador). La autoridad de Fusion decide; todos lo ven igual.
-/// Enterrado -> viaja bajo tierra hasta un jugador (montículo de polvo) -> EMERGE -> lo persigue reptando
-/// -> lo MUERDE y lo atrapa entre los dientes (lo mastica) -> 10 balazos de los compañeros lo hacen SOLTARLO
-/// -> se vuelve a enterrar.
+/// Gusano de Marte (version de "Pruebas de Animacion" adaptada a red). La autoridad de Fusion decide; todos lo ven igual.
+///  Reposo (alzado) -> al detectar a un jugador se ENTIERRA -> avanza bajo tierra (monticulo de polvo)
+///  -> EMERGE a su lado -> lo PERSIGUE reptando -> lo MUERDE y lo atrapa en la boca (lo mastica)
+///  -> con 10 balazos de los compañeros lo SUELTA -> se vuelve a enterrar.
 /// </summary>
 public sealed class GusanoMarteFusion : NetworkBehaviour, ITakeDamage
 {
-    public enum State { Hidden, Tunnel, Emerge, Chase, Grab, Hold, Release, Burrow, Death }
+    public enum State { Idle, Burrow, Tunnel, Emerge, Chase, Grab, Hold, Release, Death }
 
     [Header("Territorio y detección")]
     [SerializeField, Min(5f)] float territoryRadius = 55f;
     [SerializeField, Min(5f)] float detectionRange = 30f;
-    [SerializeField] Vector2 hiddenSeconds = new Vector2(3f, 6f);
+    [SerializeField, Tooltip("Segundos minimos en reposo antes de volver a atacar.")] Vector2 hiddenSeconds = new Vector2(3f, 6f);
 
     [Header("Movimiento")]
     [SerializeField, Min(1f)] float tunnelSpeed = 12f;
     [SerializeField, Min(1f), Tooltip("Sale a esta distancia del jugador.")] float emergeDistance = 5f;
     [SerializeField, Min(.5f)] float chaseSpeed = 6f;
     [SerializeField, Min(10f)] float turnDegreesPerSecond = 130f;
-    [SerializeField] Vector2 chaseSeconds = new Vector2(7f, 11f);
+    [SerializeField, Tooltip("Ya no se usa: persigue mientras el jugador siga cerca.")] Vector2 chaseSeconds = new Vector2(7f, 11f);
 
     [Header("Mordida y agarre")]
     [SerializeField, Min(1f)] float grabStartRange = 5.5f;
@@ -34,6 +34,7 @@ public sealed class GusanoMarteFusion : NetworkBehaviour, ITakeDamage
     [SerializeField, Min(1f), Tooltip("Segundos máximos que retiene al jugador.")] float holdSeconds = 15f;
     [SerializeField, Min(0)] int holdDamage = 4;
     [SerializeField, Min(.2f)] float holdDamageInterval = 1f;
+    [SerializeField, Min(0f), Tooltip("Pausa tras soltar a alguien antes de poder morder otra vez.")] float regrabCooldown = 5f;
 
     [Header("Vida")]
     [SerializeField, Min(1)] int maxHealth = 260;
@@ -51,15 +52,18 @@ public sealed class GusanoMarteFusion : NetworkBehaviour, ITakeDamage
     [Networked] Quaternion SyncedRotation { get; set; }
     [Networked] PlayerRef GrabbedPlayer { get; set; }
     [Networked] int FreeHits { get; set; }
+    [Networked] float NextGrabAt { get; set; }
     [Networked] public int Health { get; private set; }
 
     /// <summary>Verdadero en el cliente cuyo astronauta está atrapado: el avatar bloquea sus controles.</summary>
     public static bool LocalPlayerHeld { get; private set; }
     static GusanoMarteFusion holder;
 
-    public State CurrentState => Object != null && Object.IsValid ? Current : State.Hidden;
+    public State CurrentState => Object != null && Object.IsValid ? Current : State.Idle;
     float Elapsed => Runner.SimulationTime - StateStart;
     float Size => Mathf.Max(.1f, transform.localScale.x);
+    // El polvo escala con el tamaño del gusano (2.6 es el tamaño de referencia).
+    float DustScale => Mathf.Max(.5f, Size / 2.6f);
 
     Animator animator;
     Renderer[] renderers;
@@ -67,11 +71,11 @@ public sealed class GusanoMarteFusion : NetworkBehaviour, ITakeDamage
     Transform[] jaws;
     Transform head;
     Vector3 home;
-    bool biteDone, dropped;
-    float nextHoldDamage, dustAt;
+    bool biteDone, dropped, burrowBurst;
+    float nextHoldDamage, dustAt, shownAt;
     State shown = (State)(-1);
-    AudioSource voice;
-    ParticleSystem dust;
+    AudioSource voice, crawl, digVoice, emergeVoice, tunnelVoice;
+    ParticleSystem dust, debris, cubes;
 
     public Vector3 MouthCenter => jaws != null && jaws.Length > 0
         ? jaws.Aggregate(Vector3.zero, (s, j) => s + j.position) / jaws.Length
@@ -79,19 +83,12 @@ public sealed class GusanoMarteFusion : NetworkBehaviour, ITakeDamage
 
     public override void Spawned()
     {
-        var voiceClip = Resources.Load<AudioClip>("Audio/Monsters/GusanoExcavador");
-        if (voiceClip != null)
-        {
-            voice = gameObject.AddComponent<AudioSource>();
-            voice.playOnAwake = false;
-            voice.clip = voiceClip;
-            voice.volume = .7f;
-            voice.spatialBlend = 1f;
-            voice.rolloffMode = AudioRolloffMode.Linear;
-            voice.minDistance = 4f;
-            voice.maxDistance = 45f;
-            voice.dopplerLevel = 0f;
-        }
+        voice = MakeAudio("GusanoExcavador", .7f, 4f, 45f, false);       // rugido al emerger y morder
+        crawl = MakeAudio("GusanoArrastrandose", .8f, 4f, 40f, true);    // en bucle mientras persigue
+        digVoice = MakeAudio("GusanoEnterrandose", 1f, 5f, 50f, false);  // al empezar a enterrarse
+        emergeVoice = MakeAudio("GusanoSaliendo", 1f, 5f, 50f, false);   // al salir de la tierra
+        tunnelVoice = MakeAudio("GusanoBajoTierra", 1f, 5f, 50f, true);  // en bucle viajando bajo tierra
+
         animator = GetComponentInChildren<Animator>();
         if (animator != null) animator.applyRootMotion = false;
         renderers = GetComponentsInChildren<Renderer>();
@@ -101,15 +98,34 @@ public sealed class GusanoMarteFusion : NetworkBehaviour, ITakeDamage
         head = all.FirstOrDefault(t => t.name == "Head");
         home = transform.position;
         dust = BuildDust();
+        debris = BuildDebris();
+        cubes = BuildCubes();
         if (HasStateAuthority)
         {
             Health = maxHealth;
             transform.position = OnGround(transform.position);
-            Enter(State.Hidden, Random.Range(hiddenSeconds.x, hiddenSeconds.y));
+            Enter(State.Idle, Random.Range(hiddenSeconds.x, hiddenSeconds.y));
         }
         GameJam.Combat.EnemyCombatUI.Attach(gameObject, "GUSANO DE MARTE", () => Health, maxHealth,
             () => Object != null && Object.IsValid && StateBufferIsValid
-                && Current != State.Hidden && Current != State.Tunnel && Current != State.Burrow && Current != State.Death);
+                && Current != State.Tunnel && Current != State.Death);
+    }
+
+    AudioSource MakeAudio(string clipName, float volume, float min, float max, bool loop)
+    {
+        var clip = Resources.Load<AudioClip>("Audio/Monsters/" + clipName);
+        if (clip == null) return null;
+        var a = gameObject.AddComponent<AudioSource>();
+        a.playOnAwake = false;
+        a.clip = clip;
+        a.loop = loop;
+        a.volume = volume;
+        a.spatialBlend = 1f;
+        a.rolloffMode = AudioRolloffMode.Linear;
+        a.minDistance = min;
+        a.maxDistance = max;
+        a.dopplerLevel = 0f;
+        return a;
     }
 
     // ------------------------------------------------------------------ IA (autoridad)
@@ -128,18 +144,27 @@ public sealed class GusanoMarteFusion : NetworkBehaviour, ITakeDamage
 
         switch (Current)
         {
-            case State.Hidden:
-                if (Elapsed >= StateLength && target != null && dist <= detectionRange) Enter(State.Tunnel, 6f);
+            case State.Idle:
+                // Alzado esperando. Al detectar a un jugador se entierra para ir a por él.
+                if (Elapsed >= StateLength && target != null && dist <= detectionRange) Enter(State.Burrow, BurrowTime);
+                break;
+
+            case State.Burrow:
+                if (Elapsed >= StateLength) Enter(State.Tunnel, 6f);
                 break;
 
             case State.Tunnel:
                 // Bajo tierra: avanza hacia el jugador; solo se ve el montículo de polvo.
-                if (target == null) { Enter(State.Hidden, hiddenSeconds.x); break; }
+                if (target == null)
+                {
+                    if (Elapsed > 2f) Enter(State.Emerge, EmergeTime);
+                    break;
+                }
                 Face(target.transform.position, 400f);
-                float step = Mathf.Min(tunnelSpeed * Runner.DeltaTime, Mathf.Max(0f, dist - emergeDistance));
+                float step = Mathf.Min(tunnelSpeed * Runner.DeltaTime, Mathf.Max(0f, dist - emergeDistance * .8f));
                 Vector3 next = OnGround(transform.position + to.normalized * step);
                 if (Flat(next - home).magnitude < territoryRadius) transform.position = next;
-                if (dist <= emergeDistance + .2f || Elapsed >= StateLength)
+                if ((dist <= emergeDistance && Elapsed > .6f) || Elapsed >= StateLength)
                 {
                     Face(target.transform.position, 9999f);
                     Enter(State.Emerge, EmergeTime);
@@ -148,19 +173,23 @@ public sealed class GusanoMarteFusion : NetworkBehaviour, ITakeDamage
 
             case State.Emerge:
                 if (target != null) Face(target.transform.position, 60f);
-                if (Elapsed >= StateLength) Enter(State.Chase, Random.Range(chaseSeconds.x, chaseSeconds.y));
+                if (Elapsed >= StateLength) Enter(State.Chase, 0f);
                 break;
 
             case State.Chase:
-                if (target == null || Elapsed >= StateLength) { Enter(State.Burrow, BurrowTime); break; }
+                if (target == null || dist > detectionRange * 1.6f)
+                {
+                    Enter(State.Idle, Random.Range(hiddenSeconds.x, hiddenSeconds.y));
+                    break;
+                }
                 Face(target.transform.position, turnDegreesPerSecond);
-                if (dist <= grabStartRange) { Enter(State.Grab, GrabTime); break; }
-                // Avanza a empujones al ritmo de la onda del cuerpo (clip Slither de 0.8 s).
+                if (dist <= grabStartRange && Runner.SimulationTime >= NextGrabAt) { Enter(State.Grab, GrabTime); break; }
+                // Avanza a empujones al ritmo de la onda del cuerpo (dos impulsos por ciclo del clip Slither de 0.8 s).
                 float surge = .7f + .45f * Mathf.Max(0f, Mathf.Sin(Elapsed * Mathf.PI * 2f / .8f * 2f));
                 Vector3 ahead = OnGround(transform.position + transform.forward
                     * Mathf.Min(chaseSpeed * surge * Runner.DeltaTime, Mathf.Max(0f, dist - grabStartRange * .7f)));
                 if (Flat(ahead - home).magnitude < territoryRadius) transform.position = ahead;
-                else { Enter(State.Burrow, BurrowTime); }
+                else Enter(State.Burrow, BurrowTime);
                 break;
 
             case State.Grab:
@@ -173,7 +202,11 @@ public sealed class GusanoMarteFusion : NetworkBehaviour, ITakeDamage
                 if (Elapsed >= StateLength)
                 {
                     if (GrabbedPlayer != PlayerRef.None) Enter(State.Hold, holdSeconds);
-                    else Enter(State.Chase, Random.Range(chaseSeconds.x, chaseSeconds.y) * .5f);
+                    else
+                    {
+                        NextGrabAt = Runner.SimulationTime + 1.2f;
+                        Enter(State.Chase, 0f);
+                    }
                 }
                 break;
 
@@ -194,11 +227,11 @@ public sealed class GusanoMarteFusion : NetworkBehaviour, ITakeDamage
 
             case State.Release:
                 if (GrabbedPlayer != PlayerRef.None && Elapsed >= .2f) GrabbedPlayer = PlayerRef.None;
-                if (Elapsed >= StateLength) Enter(State.Burrow, BurrowTime);
-                break;
-
-            case State.Burrow:
-                if (Elapsed >= StateLength) Enter(State.Hidden, Random.Range(hiddenSeconds.x, hiddenSeconds.y));
+                if (Elapsed >= StateLength)
+                {
+                    NextGrabAt = Runner.SimulationTime + regrabCooldown;
+                    Enter(State.Burrow, BurrowTime);
+                }
                 break;
         }
 
@@ -256,8 +289,7 @@ public sealed class GusanoMarteFusion : NetworkBehaviour, ITakeDamage
     [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
     void RPC_Shot(int amount)
     {
-        if (amount <= 0 || Health <= 0 || Current == State.Hidden || Current == State.Tunnel
-            || Current == State.Burrow || Current == State.Death) return;
+        if (amount <= 0 || Health <= 0 || Current == State.Tunnel || Current == State.Death) return;
         int previous = Health;
         Health = Mathf.Max(0, Health - amount);
         RPC_CombatDamage(previous - Health);
@@ -272,6 +304,7 @@ public sealed class GusanoMarteFusion : NetworkBehaviour, ITakeDamage
     [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
     void RPC_CombatDamage(int actualDamage)
     {
+        flinch = 1f;
         GetComponent<GameJam.Combat.EnemyCombatUI>()?.Damage(actualDamage);
         var blood = GetComponent<GameJam.Combat.EnemyBloodFx>();
         if (blood != null && head != null) blood.Bleed(head.position, transform.forward);
@@ -279,49 +312,93 @@ public sealed class GusanoMarteFusion : NetworkBehaviour, ITakeDamage
 
     // ------------------------------------------------------------------ visual (todos)
 
+    float flinch;
+
     public override void Render()
     {
         if (!HasStateAuthority)
         {
-            float k = Current == State.Hidden ? 1f : 1f - Mathf.Exp(-12f * Time.deltaTime);
+            float k = Current == State.Tunnel ? 1f : 1f - Mathf.Exp(-12f * Time.deltaTime);
             transform.position = Vector3.Lerp(transform.position, SyncedPosition, k);
             transform.rotation = Quaternion.Slerp(transform.rotation, SyncedRotation, k);
         }
+        flinch = Mathf.MoveTowards(flinch, 0f, Time.deltaTime * 4f);
         UpdateHeldPlayer();
 
-        bool underground = Current == State.Hidden || Current == State.Tunnel;
+        bool underground = Current == State.Tunnel;
         foreach (var r in renderers) if (r != null && r.enabled == underground) r.enabled = !underground;
         foreach (var c in colliders) if (c != null) c.enabled = !underground && Current != State.Death;
 
-        if (Current == State.Tunnel && Time.time >= dustAt)
-        {
-            dustAt = Time.time + .09f;
-            Puff(transform.position + transform.forward * Size * .6f, 4, .6f);
-        }
+        if (shown != Current) OnStateShown();
+        float t = Time.time - shownAt;
 
-        if (animator == null || shown == Current) return;
+        // Polvo continuo mientras se hunde, viaja bajo tierra o sale.
+        if (Current == State.Burrow || Current == State.Death)
+        {
+            if (!burrowBurst && t > .55f) { burrowBurst = true; DirtBurst(transform.position + transform.forward * 1.5f * DustScale, 1.8f); }
+            if (t < BurrowTime * .9f && Time.time >= dustAt) { dustAt = Time.time + .05f; DirtPuff(transform.position + transform.forward * .8f * DustScale, 1.7f); }
+        }
+        else if (Current == State.Tunnel && Time.time >= dustAt)
+        {
+            dustAt = Time.time + .05f;
+            DirtPuff(transform.position + transform.forward * DustScale, 1.5f);
+        }
+        else if (Current == State.Emerge && t < .9f && Time.time >= dustAt)
+        {
+            dustAt = Time.time + .05f;
+            DirtPuff(transform.position, 2f);
+        }
+    }
+
+    void OnStateShown()
+    {
         var prev = shown;
         shown = Current;
-        if (voice != null)
-        {
-            if (underground || Current == State.Burrow || Current == State.Death) voice.Stop();
-            else if ((Current == State.Emerge || Current == State.Grab) && !voice.isPlaying && !SceneTransitionVideo.IsPresent) voice.Play();
-        }
-        if (Current == State.Emerge) Puff(transform.position + transform.forward * Size * .4f, 55, 1.6f);
-        if (Current == State.Burrow) Puff(transform.position + transform.forward * Size * .6f, 30, 1f);
+        shownAt = Time.time;
+        burrowBurst = false;
+        UpdateVoices();
 
+        if (Current == State.Burrow || Current == State.Death) DirtBurst(transform.position + transform.forward * .8f * DustScale, .9f);
+        if (Current == State.Emerge) DirtBurst(transform.position, 2.4f);
+
+        if (animator == null) return;
         string clip = ClipFor(Current);
         if (clip == null) return;
         float len = ClipLength(Current);
-        float offset = Current == State.Chase || Current == State.Hold ? 0f : Mathf.Clamp(Elapsed, 0f, Mathf.Max(0f, len - .02f));
-        if (Current == State.Emerge || prev == State.Tunnel || prev == State.Hidden) animator.PlayInFixedTime(clip, 0, offset);
-        else animator.CrossFadeInFixedTime(clip, Current == State.Grab ? .08f : .2f, 0, offset);
+        float offset = Current == State.Chase || Current == State.Hold || Current == State.Idle
+            ? 0f : Mathf.Clamp(Elapsed, 0f, Mathf.Max(0f, len - .02f));
+        if (Current == State.Emerge || prev == State.Tunnel) animator.PlayInFixedTime(clip, 0, offset);
+        else animator.CrossFadeInFixedTime(clip, Current == State.Grab ? .08f : Current == State.Idle ? .3f : .2f, 0, offset);
+    }
+
+    void UpdateVoices()
+    {
+        bool silent = SceneTransitionVideo.IsPresent;
+        if (tunnelVoice != null)
+        {
+            if (Current == State.Tunnel && !silent) { if (!tunnelVoice.isPlaying) tunnelVoice.Play(); }
+            else if (tunnelVoice.isPlaying) tunnelVoice.Stop();
+        }
+        if (crawl != null)
+        {
+            if (Current == State.Chase && !silent) { if (!crawl.isPlaying) crawl.Play(); }
+            else if (crawl.isPlaying) crawl.Stop();
+        }
+        if (silent) return;
+        if (Current == State.Emerge && emergeVoice != null) emergeVoice.Play();
+        if ((Current == State.Burrow || Current == State.Death) && digVoice != null) digVoice.Play();
+        if (voice != null)
+        {
+            if (Current == State.Burrow || Current == State.Tunnel || Current == State.Death) voice.Stop();
+            else if ((Current == State.Emerge || Current == State.Grab) && !voice.isPlaying) voice.Play();
+        }
     }
 
     static string ClipFor(State s)
     {
         switch (s)
         {
+            case State.Idle: return "Idle";
             case State.Emerge: return "Emerge";
             case State.Chase: return "Slither";
             case State.Grab: return "Grab";
@@ -360,14 +437,15 @@ public sealed class GusanoMarteFusion : NetworkBehaviour, ITakeDamage
             var player = me != null ? me.GetComponent<Starter.ThirdPersonCharacter.Player>() : null;
             if (player != null && player.KCC != null)
             {
-                // Centro de la boca (promedio de las 3 mandíbulas); los pies bajan para que el cuerpo quede adentro.
-                Vector3 grip = MouthCenter - Vector3.up * .9f + Mathf.Sin(Time.time * 9f) * .08f * transform.right;
+                // Centro de la boca (promedio de las 3 mandíbulas); se sacude un poco al recibir balazos.
+                Vector3 grip = MouthCenter - Vector3.up * .9f + Mathf.Sin(Time.time * 9f) * .08f * transform.right
+                    + Random.insideUnitSphere * .06f * flinch;
                 player.KCC.SetPosition(grip);
             }
         }
         else if (holder == this)
         {
-            // Al soltarlo: lo deja en el suelo delante de la boca.
+            // Al soltarlo: lo deja en el suelo delante de la boca y lo lanza un poco.
             if (!dropped)
             {
                 dropped = true;
@@ -389,12 +467,10 @@ public sealed class GusanoMarteFusion : NetworkBehaviour, ITakeDamage
     {
         if (Object == null || !Object.IsValid || Current != State.Hold || GrabbedPlayer == PlayerRef.None) return;
         bool mine = GrabbedPlayer == Runner.LocalPlayer;
-        string text = mine
-            ? $"¡EL GUSANO TE ATRAPÓ!  Que tus compañeros le disparen para soltarte ({FreeHits}/{hitsToFree})"
-            : $"¡El gusano atrapó a un compañero!  Dispárale para liberarlo ({FreeHits}/{hitsToFree})";
-        var style = new GUIStyle(GUI.skin.box) { fontSize = 24, alignment = TextAnchor.MiddleCenter };
-        style.normal.textColor = new Color(1f, .55f, .3f);
-        GUI.Box(new Rect(Screen.width * .5f - 440f, Screen.height * .18f, 880f, 56f), text, style);
+        GameJam.UI.GameplayFeedbackPanel.Draw(
+            mine ? "¡El gusano te atrapó!" : "¡El gusano atrapó a un compañero!",
+            mine ? "Tus compañeros deben dispararle para soltarte" : "Dispárale con [@LMB] para liberarlo",
+            new Color(1f, .45f, .3f), Mathf.Clamp01(FreeHits / (float)hitsToFree), top: true, icon: "danger0");
     }
 
     void OnDisable()
@@ -405,9 +481,11 @@ public sealed class GusanoMarteFusion : NetworkBehaviour, ITakeDamage
     void OnDestroy()
     {
         if (dust != null) Destroy(dust.gameObject);
+        if (debris != null) Destroy(debris.gameObject);
+        if (cubes != null) Destroy(cubes.gameObject);
     }
 
-    // ------------------------------------------------------------------ polvo
+    // ------------------------------------------------------------------ polvo / tierra
 
     ParticleSystem BuildDust()
     {
@@ -417,39 +495,184 @@ public sealed class GusanoMarteFusion : NetworkBehaviour, ITakeDamage
         var m = ps.main;
         m.playOnAwake = false; m.loop = false;
         m.simulationSpace = ParticleSystemSimulationSpace.World;
-        m.startLifetime = new ParticleSystem.MinMaxCurve(1f, 2.2f);
+        m.startLifetime = new ParticleSystem.MinMaxCurve(1.4f, 3f);
+        m.startSize = new ParticleSystem.MinMaxCurve(2f, 4.5f);
         m.startRotation = new ParticleSystem.MinMaxCurve(0f, Mathf.PI * 2f);
-        m.startColor = new ParticleSystem.MinMaxGradient(new Color(.72f, .4f, .24f, .7f), new Color(.55f, .3f, .18f, .55f));
-        m.gravityModifier = .2f;
-        m.maxParticles = 900;
+        m.startColor = new ParticleSystem.MinMaxGradient(new Color(.72f, .46f, .3f, .58f), new Color(.55f, .33f, .2f, .45f));
+        m.gravityModifier = .05f;
+        m.maxParticles = 3000;
         var e = ps.emission; e.rateOverTime = 0f;
         var s = ps.shape; s.enabled = false;
-        var drag = ps.limitVelocityOverLifetime; drag.enabled = true; drag.drag = 2f;
+        // Sin multiplicar por el tamaño: con particulas grandes el freno seria enorme y la columna no subiria.
+        var drag = ps.limitVelocityOverLifetime; drag.enabled = true; drag.drag = 1.7f;
+        drag.multiplyDragByParticleSize = false; drag.multiplyDragByParticleVelocity = false;
         var col = ps.colorOverLifetime; col.enabled = true;
         var g = new Gradient();
         g.SetKeys(new[] { new GradientColorKey(Color.white, 0f), new GradientColorKey(Color.white, 1f) },
-                  new[] { new GradientAlphaKey(0f, 0f), new GradientAlphaKey(1f, .1f), new GradientAlphaKey(0f, 1f) });
+                  new[] { new GradientAlphaKey(0f, 0f), new GradientAlphaKey(1f, .08f), new GradientAlphaKey(.55f, .55f), new GradientAlphaKey(0f, 1f) });
         col.color = g;
-        var sz = ps.sizeOverLifetime; sz.enabled = true; sz.size = new ParticleSystem.MinMaxCurve(1f, AnimationCurve.Linear(0f, .6f, 1f, 1.8f));
+        var sz = ps.sizeOverLifetime; sz.enabled = true; sz.size = new ParticleSystem.MinMaxCurve(1f, AnimationCurve.Linear(0f, .45f, 1f, 1.7f));
+        // Giran y se arremolinan: se ve como una nube densa, no como bolitas.
+        var rot = ps.rotationOverLifetime; rot.enabled = true; rot.z = new ParticleSystem.MinMaxCurve(-.7f, .7f);
+        var noise = ps.noise; noise.enabled = true; noise.strength = .9f; noise.frequency = .3f; noise.scrollSpeed = .35f; noise.damping = true;
         var r = go.GetComponent<ParticleSystemRenderer>();
         r.sharedMaterial = dustMaterial;
         r.shadowCastingMode = ShadowCastingMode.Off;
         return ps;
     }
 
-    void Puff(Vector3 at, int count, float power)
+    // Terrones y piedritas que saltan y caen (mas oscuros y alargados que el polvo).
+    ParticleSystem BuildDebris()
     {
-        if (dust == null || dustMaterial == null) return;
-        at = OnGround(at) + Vector3.up * .1f;
+        var go = new GameObject("EscombrosGusanoMarte");
+        var ps = go.AddComponent<ParticleSystem>();
+        ps.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+        var m = ps.main;
+        m.playOnAwake = false; m.loop = false;
+        m.simulationSpace = ParticleSystemSimulationSpace.World;
+        m.startLifetime = new ParticleSystem.MinMaxCurve(1f, 1.9f);
+        m.startSize = new ParticleSystem.MinMaxCurve(.15f, .42f);
+        m.startColor = new ParticleSystem.MinMaxGradient(new Color(.32f, .19f, .12f, 1f), new Color(.22f, .13f, .08f, 1f));
+        m.gravityModifier = 2.6f;
+        m.maxParticles = 600;
+        var e = ps.emission; e.rateOverTime = 0f;
+        var s = ps.shape; s.enabled = false;
+        var col = ps.colorOverLifetime; col.enabled = true;
+        var g = new Gradient();
+        g.SetKeys(new[] { new GradientColorKey(Color.white, 0f), new GradientColorKey(Color.white, 1f) },
+                  new[] { new GradientAlphaKey(1f, 0f), new GradientAlphaKey(1f, .7f), new GradientAlphaKey(0f, 1f) });
+        col.color = g;
+        var c = ps.collision; c.enabled = true; c.type = ParticleSystemCollisionType.World; c.bounce = .15f; c.lifetimeLoss = .35f;
+        var r = go.GetComponent<ParticleSystemRenderer>();
+        r.sharedMaterial = dustMaterial;
+        r.renderMode = ParticleSystemRenderMode.Stretch; r.velocityScale = .05f; r.lengthScale = 1.5f;
+        r.shadowCastingMode = ShadowCastingMode.Off;
+        return ps;
+    }
+
+    // Cubitos solidos de tierra: giran en el aire, rebotan en el suelo y se encogen hasta desaparecer.
+    ParticleSystem BuildCubes()
+    {
+        var go = new GameObject("CubosTierraGusanoMarte");
+        var ps = go.AddComponent<ParticleSystem>();
+        ps.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+        var m = ps.main;
+        m.playOnAwake = false; m.loop = false;
+        m.simulationSpace = ParticleSystemSimulationSpace.World;
+        m.startLifetime = new ParticleSystem.MinMaxCurve(1.8f, 3f);
+        m.startSize = new ParticleSystem.MinMaxCurve(.22f, .6f);
+        m.startRotation3D = true;
+        m.startColor = new ParticleSystem.MinMaxGradient(new Color(.55f, .33f, .21f, 1f), new Color(.33f, .19f, .12f, 1f));
+        m.gravityModifier = 3f;
+        m.maxParticles = 400;
+        var e = ps.emission; e.rateOverTime = 0f;
+        var s = ps.shape; s.enabled = false;
+        // Los ultimos instantes se encogen (el material es opaco, no admite desvanecer por transparencia).
+        var sz = ps.sizeOverLifetime; sz.enabled = true;
+        sz.size = new ParticleSystem.MinMaxCurve(1f, new AnimationCurve(new Keyframe(0f, 1f), new Keyframe(.72f, 1f), new Keyframe(1f, 0f)));
+        var c = ps.collision; c.enabled = true; c.type = ParticleSystemCollisionType.World; c.bounce = .3f; c.dampen = .35f; c.lifetimeLoss = 0f; c.radiusScale = .7f;
+        var r = go.GetComponent<ParticleSystemRenderer>();
+        r.renderMode = ParticleSystemRenderMode.Mesh;
+        var prim = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        r.mesh = prim.GetComponent<MeshFilter>().sharedMesh;
+        Destroy(prim);
+        r.sharedMaterial = CubeMaterial();
+        r.shadowCastingMode = ShadowCastingMode.On;
+        r.receiveShadows = true;
+        return ps;
+    }
+
+    static Material cubeMat;
+    static Material CubeMaterial()
+    {
+        if (cubeMat != null) return cubeMat;
+        var sh = Shader.Find("Universal Render Pipeline/Particles/Lit");
+        if (sh == null || !sh.isSupported) sh = Shader.Find("Universal Render Pipeline/Particles/Unlit");
+        cubeMat = new Material(sh) { name = "M_CuboTierra" };
+        cubeMat.SetColor("_BaseColor", Color.white);
+        if (cubeMat.HasProperty("_Smoothness")) cubeMat.SetFloat("_Smoothness", .05f);
+        if (cubeMat.HasProperty("_Metallic")) cubeMat.SetFloat("_Metallic", 0f);
+        return cubeMat;
+    }
+
+    void EmitCubes(Vector3 at, int count, float k, float outward, float up)
+    {
+        if (cubes == null) return;
         var p = new ParticleSystem.EmitParams();
         for (int i = 0; i < count; i++)
         {
-            var d = Random.insideUnitCircle;
-            var dir = new Vector3(d.x, 0f, d.y);
-            p.position = at + dir * Size * .5f;
-            p.velocity = dir.normalized * Random.Range(1f, 4f) * power + Vector3.up * Random.Range(.8f, 4f) * power;
-            p.startSize = Random.Range(.7f, 1.6f) * power;
+            var d = Random.insideUnitCircle.normalized;
+            p.position = at + new Vector3(d.x, 0f, d.y) * Random.Range(.2f, 1f) * k + Vector3.up * .3f;
+            p.velocity = new Vector3(d.x, 0f, d.y) * Random.Range(.4f, 1f) * outward * k + Vector3.up * Random.Range(.5f, 1f) * up;
+            p.startSize = Random.Range(.22f, .6f) * k;
+            p.rotation3D = Random.insideUnitSphere * 360f;
+            p.angularVelocity3D = Random.insideUnitSphere * 520f;
+            cubes.Emit(p, 1);
+        }
+    }
+
+    // Explosion grande: anillo de polvo a ras de suelo, columna que sube y terrones que saltan.
+    void DirtBurst(Vector3 at, float power)
+    {
+        if (dust == null || dustMaterial == null) return;
+        float k = DustScale;
+        at = OnGround(at) + Vector3.up * .1f;
+        var p = new ParticleSystem.EmitParams();
+        int ring = Mathf.RoundToInt(70 * power);
+        for (int i = 0; i < ring; i++)
+        {
+            var d = Random.insideUnitCircle.normalized;
+            p.position = at + new Vector3(d.x, 0f, d.y) * Random.Range(.3f, 1.3f) * k;
+            p.velocity = new Vector3(d.x, 0f, d.y) * Random.Range(4f, 10f) * k + Vector3.up * Random.Range(.4f, 2.2f);
+            p.startSize = Random.Range(2.2f, 4.8f) * k;
             dust.Emit(p, 1);
+        }
+        int column = Mathf.RoundToInt(50 * power);
+        for (int i = 0; i < column; i++)
+        {
+            var d = Random.insideUnitCircle;
+            p.position = at + new Vector3(d.x, 0f, d.y) * .9f * k;
+            p.velocity = new Vector3(d.x, 0f, d.y) * Random.Range(.5f, 3f) + Vector3.up * Random.Range(8f, 16f) * Mathf.Sqrt(power);
+            p.startSize = Random.Range(1.8f, 4f) * k;
+            dust.Emit(p, 1);
+        }
+        EmitCubes(at, Mathf.RoundToInt(24 * power), k, 9f, 13f);
+        if (debris == null) return;
+        int chunks = Mathf.RoundToInt(35 * power);
+        for (int i = 0; i < chunks; i++)
+        {
+            var d = Random.insideUnitCircle.normalized;
+            p.position = at + new Vector3(d.x, 0f, d.y) * Random.Range(.2f, 1f) * k + Vector3.up * .2f;
+            p.velocity = new Vector3(d.x, 0f, d.y) * Random.Range(2f, 7f) * k + Vector3.up * Random.Range(4f, 12f);
+            p.startSize = Random.Range(.15f, .42f) * k;
+            debris.Emit(p, 1);
+        }
+    }
+
+    // Bocanadas de polvo seguidas: se usan mientras se hunde, sale o viaja bajo tierra.
+    void DirtPuff(Vector3 at, float power = 1f)
+    {
+        if (dust == null || dustMaterial == null) return;
+        float k = DustScale;
+        at = OnGround(at) + Vector3.up * .05f;
+        var p = new ParticleSystem.EmitParams();
+        int n = Mathf.RoundToInt(6 * power);
+        for (int i = 0; i < n; i++)
+        {
+            var d = Random.insideUnitCircle;
+            p.position = at + new Vector3(d.x, 0f, d.y) * 1.1f * k;
+            p.velocity = new Vector3(d.x, 0f, d.y) * Random.Range(1.5f, 4f) * k + Vector3.up * Random.Range(1f, 3.5f);
+            p.startSize = Random.Range(1.6f, 3.4f) * k;
+            dust.Emit(p, 1);
+        }
+        if (Random.value < .45f) EmitCubes(at, 1, k, 5f, 7f);
+        if (debris != null && Random.value < .35f)
+        {
+            var d = Random.insideUnitCircle;
+            p.position = at + new Vector3(d.x, 0f, d.y) * .8f * k + Vector3.up * .2f;
+            p.velocity = new Vector3(d.x, 0f, d.y) * Random.Range(1f, 3f) + Vector3.up * Random.Range(3f, 6f);
+            p.startSize = Random.Range(.15f, .35f) * k;
+            debris.Emit(p, 1);
         }
     }
 

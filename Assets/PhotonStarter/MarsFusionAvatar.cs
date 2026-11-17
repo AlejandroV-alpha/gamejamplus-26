@@ -155,6 +155,7 @@ namespace GameJam.Multiplayer
                 Local = this;
                 LocalHud = new GameObject("Local Player HUD").AddComponent<GameJam.UI.PlayerHUD>();
                 LocalHud.Build(this);
+                if (GetComponent<GameJam.UI.MechanicsCoach>() == null) gameObject.AddComponent<GameJam.UI.MechanicsCoach>();
             }
         }
 
@@ -303,10 +304,24 @@ namespace GameJam.Multiplayer
             RPC_RequestRagdollKnockdown(impulse, duration);
         }
 
+        // Derribos: tiempo maximo en el suelo, levantarse a mano y proteccion al ponerse de pie.
+        private const float MaxKnockdownSeconds = 2.2f;
+        private const float ManualGetUpAfter = .7f;
+        private const float GetUpProtectionSeconds = 2.5f;
+        [Networked] private TickTimer knockdownProtection { get; set; }
+        /// <summary>Segundos que quedan para levantarse solo (para el HUD local).</summary>
+        public float KnockdownRemaining => IsNetworkReady && IsRagdoll ? ragdollTimer.RemainingTime(Runner).GetValueOrDefault() : 0f;
+        public bool CanGetUpManually => ragdoll != null && Time.time > ragdoll.RagdollStartTime + ManualGetUpAfter;
+
         [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
         private void RPC_RequestRagdollKnockdown(Vector3 impulse, float duration)
         {
             if (!IsAlive || ragdoll == null) return;
+            // Ya en el suelo: un golpe nuevo no reinicia el tiempo (antes podia encadenar derribos sin fin).
+            if (IsRagdoll || ragdoll.IsRagdolled) return;
+            // Recien levantado: unos segundos sin poder ser derribado otra vez.
+            if (knockdownProtection.IsRunning && !knockdownProtection.Expired(Runner)) return;
+            duration = Mathf.Min(duration, MaxKnockdownSeconds);
             IsRagdoll = true;
             ragdollTimer = TickTimer.CreateFromSeconds(Runner, duration);
             ragdoll.GoRagdoll(impulse, duration);
@@ -569,16 +584,47 @@ namespace GameJam.Multiplayer
             if (!IsAlive) TabletOpen = false;
             if (IsRagdoll && ragdoll != null)
             {
-                bool wantsRecover = input != null && (input.CurrentInput.Jump || input.CurrentInput.MoveDirection.sqrMagnitude > 0.1f);
-                if (ragdollTimer.Expired(Runner) || (wantsRecover && Time.time > ragdoll.RagdollStartTime + ragdoll.MinRagdollDuration))
+                // Los controles estan desactivados en ragdoll, asi que se lee el teclado directamente.
+                var kb = Keyboard.current;
+                bool menuOpen = (session != null && session.MenuOpen) || GameJam.Crafting.CraftingBox.IsBlockingInput;
+                bool wantsRecover = IsAlive && !menuOpen && Application.isFocused && kb != null && !VoicePreferences.InputSuspended
+                    && (kb.spaceKey.isPressed || kb.yKey.isPressed || kb.wKey.isPressed || kb.aKey.isPressed || kb.sKey.isPressed || kb.dKey.isPressed);
+                if (ragdollTimer.Expired(Runner) || (wantsRecover && CanGetUpManually))
                 {
                     IsRagdoll = false;
-                    ragdoll.StandUp();
+                    knockdownProtection = TickTimer.CreateFromSeconds(Runner, GetUpProtectionSeconds);
+                    StandUpWhereLanded();
                     RPC_SyncRagdoll(false, Vector3.zero);
                     EnemyDamagePopup.ShowCallout(transform.position + Vector3.up * 1.6f, "¡DE PIE!", "", Color.green, 1.2f);
                 }
             }
+            HoldLandedPosition();
             UpdateStamina();
+        }
+
+        // ── Levantarse donde cayo el cuerpo ──
+        // Durante el ragdoll la KCC esta apagada; al reactivarla recuperaba su ultima posicion
+        // de red (donde te golpearon). Se fija la posicion del cuerpo unos ticks tras levantarse.
+        private Vector3 landedPosition;
+        private int landedHoldTicks;
+
+        private void StandUpWhereLanded()
+        {
+            if (ragdoll == null) return;
+            ragdoll.StandUp();
+            var kcc = GetComponent<Fusion.Addons.SimpleKCC.SimpleKCC>();
+            if (kcc == null) return;
+            landedPosition = kcc.Position;
+            landedHoldTicks = 10;
+        }
+
+        private void HoldLandedPosition()
+        {
+            if (landedHoldTicks <= 0) return;
+            var kcc = GetComponent<Fusion.Addons.SimpleKCC.SimpleKCC>();
+            if (kcc == null || !kcc.enabled || IsRagdoll || !IsAlive) { landedHoldTicks = 0; return; }
+            kcc.SetPosition(landedPosition);
+            landedHoldTicks--;
         }
 
         /// <summary>
@@ -630,7 +676,7 @@ namespace GameJam.Multiplayer
                         else if (ragdoll != null && Time.time > ragdoll.RagdollStartTime + 0.6f)
                         {
                             IsRagdoll = false;
-                            ragdoll.StandUp();
+                            StandUpWhereLanded();
                             RPC_SyncRagdoll(false, Vector3.zero);
                         }
                     }
@@ -662,7 +708,7 @@ namespace GameJam.Multiplayer
             }
             bool tabletVisible = TabletOpen || (ui != null && ui.IsVisible);
             bool inventoryVisible = LocalHud != null && LocalHud.IsInventoryOpen;
-            input.ControlsEnabled = !(GetComponent<GameJam.Survival.SurvivalRevive>()?.IsRecovering ?? false) && !menu && !tabletVisible && !inventoryVisible && IsAlive && !(GetComponent<GameJam.Environment.Mars.PlayerSandstorm>()?.IsDowned ?? false) && !SceneTransitionVideo.IsBlockingInput && !LobbyDepartureEffects.IsBlockingInput && !PortalWhiteTransition.IsBlockingInput && !(GetComponent<PlayerInteractionAction>()?.IsBusy ?? false) && !(GetComponent<GameJam.Combat.PlayerHurtReaction>()?.IsReacting ?? false) && !GusanoExcavadorFusion.LocalPlayerHeld && !GusanoMarteFusion.LocalPlayerHeld;
+            input.ControlsEnabled = !(GetComponent<GameJam.Survival.SurvivalRevive>()?.IsRecovering ?? false) && !menu && !tabletVisible && !inventoryVisible && IsAlive && !(GetComponent<GameJam.Environment.Mars.PlayerSandstorm>()?.IsDowned ?? false) && !SceneTransitionVideo.IsBlockingInput && !LobbyDepartureEffects.IsBlockingInput && !PortalWhiteTransition.IsBlockingInput && !(GetComponent<PlayerInteractionAction>()?.IsBusy ?? false) && !(GetComponent<GameJam.Combat.PlayerHurtReaction>()?.IsReacting ?? false) && !GusanoMarteFusion.LocalPlayerHeld;
             bool cursor = menu || tabletVisible || inventoryVisible || !IsAlive;
             Cursor.lockState = cursor ? CursorLockMode.None : CursorLockMode.Locked;
             Cursor.visible = cursor;

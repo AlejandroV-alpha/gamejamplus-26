@@ -12,7 +12,6 @@ public static class MultiplayerPolishValidation
         string[] enemies = {
             "Assets/02_Prefabs/GiantGolemMars.prefab", "Assets/02_Prefabs/GiantGolemNeptune.prefab",
             "Assets/Enemies/Reksai_Marte/Prefabs/Reksai_Fusion.prefab",
-            "Assets/Enemies/GusanoExcavador/Gusano_Excavador_Fusion.prefab",
             "Assets/Enemies/JungleNightmare/Prefabs/JungleNightmare_Fusion.prefab"
         };
         foreach (string path in enemies)

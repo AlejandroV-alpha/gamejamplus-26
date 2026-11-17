@@ -74,13 +74,16 @@ namespace GameJam.UI
             demoStartTime = Time.time;
 
             // Prioritize crisp vector SDF default font over retro pixel fonts
-            TMP_FontAsset crispFont = TMP_Settings.defaultFontAsset;
+            // Misma fuente pixel que el resto del HUD.
+            TMP_FontAsset crispFont = _ != null ? _ : TMP_Settings.defaultFontAsset;
 
             panel = new GameObject("Mars Walkthrough HUD Pill", typeof(RectTransform)).GetComponent<RectTransform>();
             panel.SetParent(parent, false);
             panel.anchorMin = panel.anchorMax = panel.pivot = new Vector2(0, 1);
             panel.anchoredPosition = new Vector2(24, -20);
             panel.sizeDelta = new Vector2(390, 72);
+            // Mas grande para leerse bien: escala todo el panel (texto incluido) sin rehacer su diseño.
+            panel.localScale = Vector3.one * 1.45f;
 
             background = panel.gameObject.AddComponent<Image>();
             background.color = BgDark;
@@ -434,6 +437,8 @@ namespace GameJam.UI
             }
 
             panel.sizeDelta = new Vector2(390, 72);
+            // Mas grande para leerse bien: escala todo el panel (texto incluido) sin rehacer su diseño.
+            panel.localScale = Vector3.one * 1.45f;
             headerText.gameObject.SetActive(true);
             counterText.gameObject.SetActive(true);
             goalText.gameObject.SetActive(true);

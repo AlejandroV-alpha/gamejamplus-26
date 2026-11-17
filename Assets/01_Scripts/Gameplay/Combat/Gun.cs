@@ -373,7 +373,6 @@ namespace GameJam.Combat
         private bool CanReceiveShotDamage(Collider target)
         {
             if (target.GetComponentInParent<ReksaiFusionEnemy>() != null
-                || target.GetComponentInParent<GusanoExcavadorFusion>() != null
                 || target.GetComponentInParent<GusanoMarteFusion>() != null
                 || target.GetComponentInParent<JungleNightmareFusionEnemy>() != null
                 || target.GetComponentInParent<MarsFusionAvatar>() != null
@@ -410,12 +409,6 @@ namespace GameJam.Combat
             if (enemy != null && enemy.Runner == Runner)
             {
                 enemy.TakeDamage(damage);
-                return true;
-            }
-            var worm = target.GetComponentInParent<GusanoExcavadorFusion>();
-            if (worm != null && worm.Runner == Runner)
-            {
-                worm.TakeDamage(damage);
                 return true;
             }
             var jungle = target.GetComponentInParent<JungleNightmareFusionEnemy>();

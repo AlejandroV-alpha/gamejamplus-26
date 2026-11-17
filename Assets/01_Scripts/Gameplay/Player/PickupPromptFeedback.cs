@@ -152,11 +152,11 @@ namespace GameJam.Gameplay
             float s = InteractionPromptCard.Scale;
             if (toastStyle == null)
             {
-                toastStyle = new GUIStyle(GUI.skin.label) { alignment = TextAnchor.MiddleLeft, padding = new RectOffset(), wordWrap = false };
+                toastStyle = new GUIStyle(GameJam.UI.UiFont.Label()) { alignment = TextAnchor.MiddleLeft, padding = new RectOffset(), wordWrap = false };
                 toastNameStyle = new GUIStyle(toastStyle) { fontStyle = FontStyle.Bold };
             }
-            toastStyle.fontSize = Mathf.RoundToInt(15 * s);
-            toastNameStyle.fontSize = Mathf.RoundToInt(15 * s);
+            toastStyle.fontSize = GameJam.UI.UiFont.Px(17 * s);
+            toastNameStyle.fontSize = GameJam.UI.UiFont.Px(17 * s);
 
             // Entra deslizandose, se queda y se desvanece.
             float a = Mathf.Clamp01(t / .18f) * Mathf.Clamp01((DropToastSeconds - t) / .45f);
@@ -169,11 +169,11 @@ namespace GameJam.Gameplay
             float nameW = toastNameStyle.CalcSize(new GUIContent(dropName)).x;
             float sepW = 22 * s;
             float suffixW = toastStyle.CalcSize(new GUIContent(Suffix.Replace("[", "").Replace("]", ""))).x + 30 * s;
-            float h = 44 * s, padX = 18 * s;
+            float h = 48 * s, padX = 20 * s;
             float w = padX * 2 + iconW + prefixW + nameW + sepW + suffixW;
             Rect safe = Screen.safeArea;
             float x = safe.x + (safe.width - w) * .5f;
-            float y = Screen.height - safe.yMin - 250 * s + rise;
+            float y = Screen.height - safe.yMin - 300 * s + rise;
 
             var previous = GUI.color;
             try

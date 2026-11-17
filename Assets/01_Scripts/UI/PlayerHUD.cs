@@ -20,6 +20,7 @@ namespace GameJam.UI
     public sealed class PlayerHUD : MonoBehaviour
     {
         private static readonly Color Ink = new Color32(13, 23, 29, 235);
+        private RectTransform selectedNamePill;
         private static readonly Color Accent = new Color32(104, 224, 198, 255);
         private static readonly Color Cream = new Color32(239, 228, 200, 255);
         private MarsFusionAvatar avatar;
@@ -111,7 +112,7 @@ namespace GameJam.UI
                 gameObject.AddComponent<LobbyGameplayTutorial>().Build(avatar, safeRoot, font);
             else if (marsEnvironment || UnityEngine.SceneManagement.SceneManager.GetActiveScene().name.Contains("Mars"))
                 gameObject.AddComponent<MarsDemoWalkthroughHUD>().Build(avatar, safeRoot, font);
-            BuildCrewActionsHint();
+            // Panel de controles co-op retirado: saturaba la pantalla. Los controles estan en la guia (F1).
         }
 
         private void BuildHUD()
@@ -150,7 +151,7 @@ namespace GameJam.UI
             actionBar.Root.gameObject.SetActive(false);
             for (int i = 0; i < 3; i++)
             {
-                var row = Panel("Pickup " + i, hud.transform, new Vector2(0, 1), new Vector2(185, -140 - i * 60), new Vector2(320, 50));
+                var row = Panel("Pickup " + i, hud.transform, new Vector2(0, 1), new Vector2(185, -175 - i * 60), new Vector2(320, 50));
                 ExpeditionSprites.Skin(row.GetComponent<Image>(), "panel");
                 var group = row.gameObject.AddComponent<CanvasGroup>();
                 notices.Add(new Notice { Group = group, Text = Label(row, "", Vector2.zero, new Vector2(294, 44), 20) });
@@ -179,8 +180,16 @@ namespace GameJam.UI
             float step = Mathf.Min(92, 680f / count);
             quickbarRoot = Panel("Quickbar", hud.transform, new Vector2(.5f,0), new Vector2(0,91), new Vector2(step*count+20,112));
             ExpeditionSprites.Skin(quickbarRoot.GetComponent<Image>(), "panel");
-            quickbarCaption = Label(quickbarRoot,"",new Vector2(0,-70),new Vector2(720,30),17);
-            selectedName = Label(quickbarRoot,"",new Vector2(0,78),new Vector2(600,32),19);
+            quickbarCaption = Label(quickbarRoot,"",new Vector2(0,-72),new Vector2(760,30),18);
+            quickbarCaption.color = new Color32(168, 188, 204, 255);
+            quickbarCaption.richText = true;
+            // Nombre del objeto en una pastilla que se ajusta a su texto.
+            selectedNamePill = Panel("Selected name", quickbarRoot, new Vector2(.5f,.5f), new Vector2(0,82), new Vector2(240,40));
+            var pillImage = selectedNamePill.GetComponent<Image>();
+            pillImage.color = new Color32(9, 17, 28, 230);
+            ExpeditionSprites.Skin(pillImage, "panel");
+            selectedName = Label(selectedNamePill,"",Vector2.zero,new Vector2(560,34),21);
+            selectedName.fontStyle = FontStyles.Bold;
             carryFeedback = Label(quickbarRoot,"",new Vector2(0,116),new Vector2(720,34),21);
             carryFeedback.color = new Color32(255,178,102,255);
             for (int i=0;i<count;i++)
@@ -189,7 +198,7 @@ namespace GameJam.UI
                 var tile=Panel("Carry slot "+(i+1),quickbarRoot,new Vector2(.5f,.5f),new Vector2((i-(count-1)*.5f)*step,0),new Vector2(step-8,96));
                 var marker=Panel("Selected",tile,new Vector2(.5f,0),new Vector2(0,4),new Vector2(step-16,4));
                 marker.GetComponent<Image>().color=Accent;
-                var slot=new Slot{Background=tile.GetComponent<Image>(),Icon=Icon(tile,new Vector2(0,7),new Vector2(step-24,54)),Name=Label(tile,i==9?"0":(i+1).ToString(),new Vector2(0,-32),new Vector2(step-18,22),16),Selection=marker.gameObject};
+                var slot=new Slot{Background=tile.GetComponent<Image>(),Icon=Icon(tile,new Vector2(0,7),new Vector2(step-24,54)),Name=Label(tile,i==9?"0":(i+1).ToString(),new Vector2(0,-31),new Vector2(step-18,24),19),Selection=marker.gameObject};
                 slots.Add(slot);
                 Button(tile,()=>{if(CanInteract() && inventory.SelectSlot(index)){RefreshInventory();}});
             }
@@ -331,7 +340,9 @@ namespace GameJam.UI
                 slot.Selection.SetActive(active);
                 slot.Background.color=active?new Color32(37,77,77,255):Ink;
                 ExpeditionSprites.Skin(slot.Background, active ? "slot_active" : "slot");
-                slot.Name.color=active?Accent:Cream;
+                slot.Name.color=active?Accent:new Color(Cream.r,Cream.g,Cream.b,.55f);
+                slot.Background.rectTransform.localScale=Vector3.one*(active?1.06f:1f);
+                slot.Icon.color=slot.Material!=null?Color.white:new Color(1,1,1,0);
             }
             var material=inventory.GetSlotMaterial(selectedSlot);
             var gear=avatar != null ? avatar.GetComponent<PlayerEquipment>() : null;
@@ -339,6 +350,11 @@ namespace GameJam.UI
                 selectedName.text=GameLocalization.Get(gear != null && gear.IsRadioChannelOpen ? "radio.channel_open" : "radio.channel_closed");
             else selectedName.text=material!=null?MaterialName(material):GameLocalization.Get("hud.carry_empty");
             quickbarCaption.text=string.Format(GameLocalization.Get("hud.carry_help"),inventory.UsedSlots,inventory.SlotCount);
+            bool empty = material == null;
+            selectedName.color = empty ? new Color(Cream.r,Cream.g,Cream.b,.6f) : Accent;
+            selectedName.fontStyle = empty ? FontStyles.Italic : FontStyles.Bold;
+            if (selectedNamePill != null)
+                selectedNamePill.sizeDelta = new Vector2(Mathf.Clamp(selectedName.GetPreferredValues(selectedName.text).x + 44, 150, 560), 40);
         }
 
         private void DropSelectedMaterial()

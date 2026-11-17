@@ -23,7 +23,6 @@ namespace GameJam.EditorTools
             "Assets/Enemies/JungleNightmare/Prefabs/JungleNightmare_Fusion.prefab",
             "Assets/Enemies/Reksai_Marte/Prefabs/Reksai_Fusion.prefab",
             "Assets/Enemies/Reksai_Marte/Prefabs/Reksai_Marte.prefab",
-            "Assets/Enemies/GusanoExcavador/Gusano_Excavador_Fusion.prefab",
         };
 
         static EnemyCartoonBloodSetup()

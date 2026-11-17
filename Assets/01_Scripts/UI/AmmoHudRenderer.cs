@@ -47,7 +47,8 @@ namespace GameJam.UI
             Color tone = StateColor(st);
 
             float w = 318 * s, h = 150 * s;
-            float x = bottomRight.x - w, y = bottomRight.y - h + (1f - a) * 14 * s;
+            float dryShake = st.SinceDryFire < .4f ? Mathf.Sin(st.SinceDryFire * 70f) * (1f - st.SinceDryFire / .4f) * 6f * s : 0f;
+            float x = bottomRight.x - w + dryShake, y = bottomRight.y - h + (1f - a) * 14 * s;
             var card = new Rect(x, y, w, h);
 
             // Fondo con el marco del equipo (9-slice) + brillo del estado.
@@ -82,7 +83,7 @@ namespace GameJam.UI
 
             // Nombre + estado.
             float tx = iconRect.xMax + 14 * s;
-            label.fontSize = Mathf.RoundToInt(11 * s);
+            label.fontSize = GameJam.UI.UiFont.Px(11 * s);
             label.normal.textColor = InteractionPromptCard.Fade(InteractionPromptCard.TextSoft, a);
             string name = string.IsNullOrEmpty(st.WeaponName) ? "PISTOLA" : st.WeaponName.ToUpperInvariant();
             GUI.Label(new Rect(tx, y + 26 * s, w, 14 * s), name, label);
@@ -100,8 +101,8 @@ namespace GameJam.UI
             }
 
             // Numero grande con cero a la izquierda atenuado: "07".
-            big.fontSize = Mathf.RoundToInt((40 + 6 * punch) * s);
-            small.fontSize = Mathf.RoundToInt(18 * s);
+            big.fontSize = GameJam.UI.UiFont.Px((40 + 6 * punch) * s);
+            small.fontSize = GameJam.UI.UiFont.Px(18 * s);
             int shownAmmo = st.Reloading ? Mathf.FloorToInt(st.ReloadProgress * st.Magazine) : st.Ammo;
             string digits = Mathf.Clamp(shownAmmo, 0, 99).ToString("00");
             bool leadingZero = digits[0] == '0';
@@ -114,8 +115,29 @@ namespace GameJam.UI
             small.normal.textColor = InteractionPromptCard.Fade(InteractionPromptCard.TextSoft, a);
             GUI.Label(new Rect(tx + dw * 2 + 6 * s, ny + 14 * s, 60 * s, 24 * s), "/ " + st.Magazine, small);
 
+            // Anillo de recarga alrededor del icono del arma (fuera del centro de la pantalla).
+            DrawRing(iconRect.center, st, s, iconBox * .5f + 4 * s);
+
+            // Cuenta atras de la recarga donde normalmente va la tecla R.
+            if (st.Reloading)
+            {
+                small.fontSize = GameJam.UI.UiFont.Px(20 * s);
+                small.normal.textColor = InteractionPromptCard.Fade(Cyan, a);
+                small.alignment = TextAnchor.MiddleRight;
+                GUI.Label(new Rect(card.xMax - pad - 70 * s, ny + 6 * s, 70 * s, 32 * s), st.ReloadRemaining.ToString("0.0") + "s", small);
+                small.alignment = TextAnchor.MiddleLeft;
+            }
+            else if (st.SinceReloadDone < .8f)
+            {
+                label.fontSize = GameJam.UI.UiFont.Px(14 * s);
+                label.normal.textColor = InteractionPromptCard.Fade(Green, a * Mathf.Clamp01((.8f - st.SinceReloadDone) / .3f));
+                label.alignment = TextAnchor.MiddleRight;
+                GUI.Label(new Rect(card.xMax - pad - 90 * s, ny + 6 * s, 90 * s, 32 * s), "¡LISTO!", label);
+                label.alignment = TextAnchor.MiddleLeft;
+            }
+
             // Tecla R a la derecha cuando conviene recargar.
-            if (!st.Reloading && st.Ammo < st.Magazine)
+            if (!st.Reloading && st.Ammo < st.Magazine && st.Ammo > 0 && !IsLow(st) && st.SinceReloadDone >= .8f)
             {
                 float kw = InteractionPromptCard.KeyWidth("R", s);
                 var key = new Rect(card.xMax - pad - kw, ny + 8 * s, kw, 28 * s);
@@ -132,6 +154,9 @@ namespace GameJam.UI
                 InteractionPromptCard.Fill(track, new Color(1, 1, 1, .1f), a, 1.5f * s);
                 InteractionPromptCard.Fill(new Rect(track.x, track.y, track.width * st.ReloadProgress, track.height), Cyan, a, 1.5f * s);
             }
+
+            // Aviso "sin municion / municion baja" pegado a la tarjeta, no en el centro.
+            DrawWarning(card, st, s);
         }
 
         /// <summary>Balas dibujadas como cartuchos (vaina de laton + punta de cobre).</summary>
@@ -170,30 +195,19 @@ namespace GameJam.UI
             }
         }
 
-        // ───────────── Centro de pantalla: recarga y avisos ─────────────
+        // ───────────── Anillo de recarga y aviso de municion ─────────────
 
-        public static void DrawCenter(Vector2 c, State st)
-        {
-            if (st.Alpha <= .01f) return;
-            Setup();
-            float s = HudScale;
-            DrawRing(c, st, s);
-            DrawWarning(c, st, s);
-        }
-
-        private static void DrawRing(Vector2 c, State st, float s)
+        private static void DrawRing(Vector2 c, State st, float s, float baseRadius)
         {
             float done = Mathf.Clamp01(1f - st.SinceReloadDone / .6f);
             float a = st.Alpha * (st.Reloading ? 1f : done);
             if (a <= .01f) return;
-            float radius = (40 + 6 * done) * s;
-            float back = radius + 12 * s;
-            InteractionPromptCard.Fill(new Rect(c.x - back, c.y - back, back * 2, back * 2), new Color(0, 0, 0, .28f), a, back);
+            float radius = baseRadius + 3 * done * s;
             float progress = st.Reloading ? st.ReloadProgress : 1f;
             Color tone = st.Reloading ? Cyan : Color.Lerp(Green, Color.white, done * .4f);
             const int Segments = 72;
             float seg = 2f * Mathf.PI * radius / Segments;
-            float thick = 7 * s;
+            float thick = 4 * s;
             Matrix4x4 m = GUI.matrix;
             for (int i = 0; i < Segments; i++)
             {
@@ -215,27 +229,9 @@ namespace GameJam.UI
                 InteractionPromptCard.Fill(new Rect(head.x - 3.5f * s, head.y - 3.5f * s, 7 * s, 7 * s), Color.white, a, 3.5f * s);
             }
 
-            // Pastilla bajo el anillo: "RECARGANDO 0.8s" o "¡LISTO!".
-            string text = st.Reloading ? "RECARGANDO" : "¡LISTO!";
-            string time = st.Reloading ? st.ReloadRemaining.ToString("0.0") + "s" : "";
-            label.fontSize = Mathf.RoundToInt(13 * s);
-            small.fontSize = Mathf.RoundToInt(14 * s);
-            float tw = label.CalcSize(new GUIContent(text)).x;
-            float timeW = time.Length > 0 ? small.CalcSize(new GUIContent("0.0s")).x + 12 * s : 0f;
-            float pw = tw + timeW + 28 * s, ph = 28 * s;
-            var pill = new Rect(c.x - pw * .5f, c.y + back + 8 * s, pw, ph);
-            InteractionPromptCard.Fill(pill, InteractionPromptCard.Panel, a, ph * .5f);
-            label.normal.textColor = InteractionPromptCard.Fade(tone, a);
-            GUI.Label(new Rect(pill.x + 12 * s, pill.y, tw + 2, ph), text, label);
-            if (time.Length > 0)
-            {
-                InteractionPromptCard.Fill(new Rect(pill.x + 12 * s + tw + 6 * s, pill.y + 6 * s, Mathf.Max(1f, s), ph - 12 * s), new Color(1, 1, 1, .2f), a, 0);
-                small.normal.textColor = InteractionPromptCard.Fade(InteractionPromptCard.TextOn, a);
-                GUI.Label(new Rect(pill.xMax - timeW - 6 * s, pill.y, timeW, ph), time, small);
-            }
         }
 
-        private static void DrawWarning(Vector2 c, State st, float s)
+        private static void DrawWarning(Rect anchor, State st, float s)
         {
             if (st.Reloading) return;
             bool empty = st.Ammo == 0;
@@ -247,15 +243,21 @@ namespace GameJam.UI
             float a = st.Alpha;
 
             string title = empty ? "SIN MUNICIÓN" : "MUNICIÓN BAJA";
-            label.fontSize = Mathf.RoundToInt((empty ? 16 : 13) * s);
-            small.fontSize = Mathf.RoundToInt(14 * s);
+            label.fontSize = GameJam.UI.UiFont.Px((empty ? 16 : 13) * s);
+            small.fontSize = GameJam.UI.UiFont.Px(14 * s);
             float iconW = 26 * s;
             float titleW = label.CalcSize(new GUIContent(title)).x;
             float keyW = InteractionPromptCard.KeyWidth("R", s);
             float actW = small.CalcSize(new GUIContent("Recargar")).x;
             float h = (empty ? 48 : 40) * s;
             float w = 18 * s + iconW + 10 * s + titleW + 22 * s + keyW + 8 * s + actW + 18 * s;
-            var card = new Rect(c.x - w * .5f + shake, c.y + 96 * s, w, h);
+            var card = new Rect(anchor.xMax - w + shake, anchor.y - h - 12 * s, w, h);
+            // Flechita que apunta a la tarjeta de municion.
+            Matrix4x4 m0 = GUI.matrix;
+            var tip = new Rect(card.xMax - 44 * s, card.yMax - 6 * s, 12 * s, 12 * s);
+            GUIUtility.RotateAroundPivot(45f, tip.center);
+            InteractionPromptCard.Fill(tip, InteractionPromptCard.Panel, st.Alpha, 2 * s);
+            GUI.matrix = m0;
 
             if (empty)
             {
@@ -288,10 +290,12 @@ namespace GameJam.UI
         private static void Setup()
         {
             if (big != null) return;
-            big = new GUIStyle(GUI.skin.label) { fontStyle = FontStyle.Bold, alignment = TextAnchor.MiddleLeft, padding = new RectOffset(), wordWrap = false };
+            big = new GUIStyle(GameJam.UI.UiFont.Label()) { fontStyle = FontStyle.Bold, alignment = TextAnchor.MiddleLeft, padding = new RectOffset(), wordWrap = false };
             small = new GUIStyle(big) { fontStyle = FontStyle.Normal };
             label = new GUIStyle(big);
             center = new GUIStyle(big) { alignment = TextAnchor.MiddleCenter };
+            // Numeros y etiquetas en Orbitron; texto secundario en Exo 2.
+            big.font = label.font = center.font = UiFont.TitleFont;
         }
     }
 }

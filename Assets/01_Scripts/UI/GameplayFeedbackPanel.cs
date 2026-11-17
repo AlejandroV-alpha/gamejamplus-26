@@ -15,14 +15,15 @@ namespace GameJam.UI
         {
             if (titleStyle == null)
             {
-                titleStyle = new GUIStyle(GUI.skin.label) { alignment = TextAnchor.MiddleLeft, fontStyle = FontStyle.Bold, wordWrap = false, clipping = TextClipping.Clip, padding = new RectOffset() };
-                hintStyle = new GUIStyle(GUI.skin.label) { alignment = TextAnchor.MiddleLeft, wordWrap = false, padding = new RectOffset() };
-                valueStyle = new GUIStyle(GUI.skin.label) { alignment = TextAnchor.MiddleRight, fontStyle = FontStyle.Bold, padding = new RectOffset() };
+                titleStyle = new GUIStyle(GameJam.UI.UiFont.Label()) { alignment = TextAnchor.MiddleLeft, fontStyle = FontStyle.Bold, wordWrap = false, clipping = TextClipping.Clip, padding = new RectOffset() };
+                hintStyle = new GUIStyle(GameJam.UI.UiFont.Label()) { alignment = TextAnchor.MiddleLeft, wordWrap = false, padding = new RectOffset() };
+                valueStyle = new GUIStyle(GameJam.UI.UiFont.Label()) { alignment = TextAnchor.MiddleRight, fontStyle = FontStyle.Bold, padding = new RectOffset() };
+                titleStyle.font = valueStyle.font = UiFont.TitleFont;
             }
             float s = Mathf.Clamp(Screen.height / 1080f, .75f, 1.5f);
-            titleStyle.fontSize = Mathf.RoundToInt(21 * s);
-            hintStyle.fontSize = Mathf.RoundToInt(16 * s);
-            valueStyle.fontSize = Mathf.RoundToInt(20 * s);
+            titleStyle.fontSize = GameJam.UI.UiFont.Px(21 * s);
+            hintStyle.fontSize = GameJam.UI.UiFont.Px(16 * s);
+            valueStyle.fontSize = GameJam.UI.UiFont.Px(20 * s);
             titleStyle.normal.textColor = new Color32(240, 247, 255, 255);
             valueStyle.normal.textColor = accent;
 

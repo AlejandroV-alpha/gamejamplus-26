@@ -14,7 +14,7 @@ namespace GameJam.Localization
             Add("radio.channel_closed", "Radio · Canal cerrado · Clic para hablar", "Radio · Channel closed · Click to talk", "Rádio · Canal fechado · Clique para falar");
             Add("hud.carry_full", "No hay espacio suficiente. Suelta un objeto con G.", "Not enough space. Drop an item with G.", "Sem espaço suficiente. Solte um item com G.");
             Add("hud.carry_empty", "Espacio vacío", "Empty slot", "Espaço vazio");
-            Add("hud.carry_help", "{0}/{1} espacios  ·  Números / rueda: seleccionar  ·  G: soltar", "{0}/{1} slots  ·  Numbers / wheel: select  ·  G: drop", "{0}/{1} espaços  ·  Números / roda: selecionar  ·  G: soltar");
+            Add("hud.carry_help", "<color=#68E0C6><b>{0}</b></color>/{1} espacios     <color=#68E0C6><b>1–6</b></color> / rueda  elegir     <color=#68E0C6><b>G</b></color>  soltar", "<color=#68E0C6><b>{0}</b></color>/{1} slots     <color=#68E0C6><b>1–6</b></color> / wheel  select     <color=#68E0C6><b>G</b></color>  drop", "<color=#68E0C6><b>{0}</b></color>/{1} espaços     <color=#68E0C6><b>1–6</b></color> / roda  selecionar     <color=#68E0C6><b>G</b></color>  soltar");
             Add("hud.carry_drop_blocked", "No hay espacio seguro para soltarlo aquí.", "No safe space to drop the item here.", "Sem espaço seguro para soltar o item aqui.");
             Add("pause.continue", "Continuar misión", "Continue mission", "Continuar missão");
             Add("pause.return", "Volver al lobby", "Return to lobby", "Voltar ao lobby");

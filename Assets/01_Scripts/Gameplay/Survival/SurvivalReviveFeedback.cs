@@ -100,11 +100,12 @@ namespace GameJam.Survival
             float s = GameJam.UI.InteractionPromptCard.Scale;
             if (markerStyle == null)
             {
-                markerStyle = new GUIStyle(GUI.skin.label) { alignment = TextAnchor.MiddleCenter, fontStyle = FontStyle.Bold, padding = new RectOffset() };
+                markerStyle = new GUIStyle(GameJam.UI.UiFont.Label()) { alignment = TextAnchor.MiddleCenter, fontStyle = FontStyle.Bold, padding = new RectOffset() };
                 markerNameStyle = new GUIStyle(markerStyle) { fontStyle = FontStyle.Normal };
+                markerStyle.font = GameJam.UI.UiFont.TitleFont;
             }
-            markerStyle.fontSize = Mathf.RoundToInt(13 * s);
-            markerNameStyle.fontSize = Mathf.RoundToInt(11 * s);
+            markerStyle.fontSize = GameJam.UI.UiFont.Px(13 * s);
+            markerNameStyle.fontSize = GameJam.UI.UiFont.Px(11 * s);
             var accent = new Color(.25f, 1f, .75f);
             var icon = GameJam.UI.ExpeditionSprites.Get("revive");
             Vector3 me = revive.BodyPosition;
@@ -193,6 +194,16 @@ namespace GameJam.Survival
                 progress = revive.ReviveProgress;
                 title = "Te están reanimando";
                 hint = "Tu compañero está ayudándote";
+            }
+            else if (avatar.IsAlive && avatar.IsRagdoll)
+            {
+                // Derribado por un golpe: se puede levantar a mano o espera a que se acabe el tiempo.
+                progress = -1f;
+                title = "¡Derribado!";
+                hint = avatar.CanGetUpManually
+                    ? "Pulsa [Espacio] para levantarte"
+                    : "Recuperándote…";
+                color = new Color(1f, .68f, .25f);
             }
             else if (revive.IsRecovering)
             {

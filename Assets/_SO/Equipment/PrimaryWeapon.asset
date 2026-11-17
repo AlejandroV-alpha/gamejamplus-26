@@ -16,5 +16,5 @@ MonoBehaviour:
   kind: 1
   materialName: Arma principal
   description: Equipa para apuntar y disparar. Ocupa un espacio.
-  icon: {fileID: 21300000, guid: 33a35527e3112004383639b9202bc26c, type: 3}
+  icon: {fileID: 21300000, guid: 056ba8ed47ac1484992abdfa42066811, type: 3}
   prefab: {fileID: 6167645723484758439, guid: e0c7007c63bcbea458f3f97cf1b6de8d, type: 3}

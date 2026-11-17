@@ -37,9 +37,8 @@ namespace GameJam.EditorTools
         [MenuItem("Tools/GameJam/Game feel en enemigos")]
         public static void Apply()
         {
-            Setup(VenomwingPrefab, "VENOMWING", 1.6f, new Color(.55f, 1f, .3f),
-                ("Assets/_SO/Materials/EnergyCrystal.asset", 1, 2),
-                ("Assets/_SO/Materials/RedMineral.asset", 1, 3));
+            // Sin loot: el Venomwing muere y no suelta materiales.
+            Setup(VenomwingPrefab, "VENOMWING", 1.6f, new Color(.55f, 1f, .3f));
             AssetDatabase.SaveAssets();
         }
 
