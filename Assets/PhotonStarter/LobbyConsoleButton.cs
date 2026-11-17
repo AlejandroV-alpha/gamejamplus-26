@@ -14,7 +14,7 @@ namespace GameJam.Multiplayer
 
         public ButtonAction action;
         public string title = "COMENZAR PARTIDA";
-        public string missionScenePath = "Assets/00_Scenes/Mars.unity";
+        public string missionScenePath = "Assets/00_Scenes/s_Mars.unity";
         public Transform cap;
         public TextMeshPro label;
         public float interactRange = 2.2f;

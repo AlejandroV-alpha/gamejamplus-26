@@ -73,9 +73,10 @@ namespace GameJam.UI
             sandstorm = source.GetComponent<PlayerSandstorm>();
             demoStartTime = Time.time;
 
-            // Prioritize crisp vector SDF default font over retro pixel fonts
-            // Misma fuente pixel que el resto del HUD.
-            TMP_FontAsset crispFont = _ != null ? _ : TMP_Settings.defaultFontAsset;
+            // Prioritize crisp modern SDF font (Exo 2 / Orbitron)
+            TMP_FontAsset crispFont = Resources.Load<TMP_FontAsset>("UI/Fonts/Exo2 SDF");
+            if (crispFont == null) crispFont = Resources.Load<TMP_FontAsset>("UI/Fonts/Orbitron SDF");
+            if (crispFont == null) crispFont = _ != null ? _ : TMP_Settings.defaultFontAsset;
 
             panel = new GameObject("Mars Walkthrough HUD Pill", typeof(RectTransform)).GetComponent<RectTransform>();
             panel.SetParent(parent, false);
@@ -272,6 +273,10 @@ namespace GameJam.UI
                 if (shipRepaired || timeSurvived)
                 {
                     SetPhase(DemoPhase.EvacuationVictory);
+                    if (tracker != null && tracker.Station != null && !tracker.Station.IsRepaired())
+                    {
+                        tracker.Station.TriggerEmergencyEvacuation();
+                    }
                 }
             }
         }
@@ -413,11 +418,11 @@ namespace GameJam.UI
 
                 case DemoPhase.EvacuationVictory:
                     phaseColor = GreenAccent;
-                    headerStr = "FASE 5/5 · ¡MISIÓN SUPERADA!";
-                    counterStr = "[ÉXITO]";
+                    headerStr = "FASE 5/5 · ¡DESPEGUE DE MARTE!";
+                    counterStr = "[SALIDA]";
                     counterColor = GreenAccent;
-                    goalStr = "¡Reactor online! Sube a la nave";
-                    hintStr = "¡Demostración completada con éxito!";
+                    goalStr = "¡Reactor online! Despegue de la nave";
+                    hintStr = "Salida del planeta en curso · ¡Misión completada!";
                     break;
             }
 

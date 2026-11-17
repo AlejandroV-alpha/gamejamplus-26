@@ -1637,14 +1637,14 @@ MonoBehaviour:
   detectionSphere: {fileID: 5918237461029384805}
   swipeSphere: {fileID: 5918237461029384815}
   detectionRange: 28
-  attackRange: 6
-  swipeRange: 3.5
-  throwRange: 16
-  attackDamage: 20
-  superDamage: 40
+  attackRange: 4.8
+  swipeRange: 5.2
+  throwRange: 22
+  attackDamage: 25
+  superDamage: 45
   superChance: 0.65
   superCooldown: 5
-  throwDamage: 14
+  throwDamage: 18
   throwInterval: 10
   attackDuration: 2.67
   superDuration: 3.7
@@ -1656,13 +1656,13 @@ MonoBehaviour:
   rockGroundClip: {fileID: 8300000, guid: adead20f45ec28c46b964bdb0a24f9f1, type: 3}
   rockImpactClip: {fileID: 8300000, guid: 6fe679beee827d0448f5dfab198e19d0, type: 3}
   walkSpeed: 2.4
-  chaseSpeed: 3.6
+  chaseSpeed: 3.8
   patrolRadius: 22
   patrolWholeTerrain: 1
   maximumPatrolSlope: 35
   restDuration: 4
-  arriveDistance: 2
-  turnSpeed: 70
+  arriveDistance: 3.2
+  turnSpeed: 85
   bodyRadius: 1.2
   stepShake: {fileID: 11400000, guid: fd1250282c8f2e841ac602704e5efc0c, type: 2}
   stepClips:
@@ -1916,7 +1916,7 @@ SphereCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Radius: 3.5
+  m_Radius: 5.2
   m_Center: {x: 0, y: 0, z: 0}
 --- !u!1 &5928000373209940373
 GameObject:

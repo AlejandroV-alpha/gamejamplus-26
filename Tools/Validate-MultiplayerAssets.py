@@ -9,7 +9,7 @@ WORLD = [
     'Assets/02_Prefabs/GiantGolemMars.prefab',
     'Assets/02_Prefabs/GiantGolemNeptune.prefab',
     'Assets/Enemies/Reksai_Marte/Prefabs/Reksai_Fusion.prefab',
-    'Assets/Enemies/GusanoExcavador/Gusano_Excavador_Fusion.prefab',
+    'Assets/Enemies/GusanoMarte/Prefabs/GusanoMarte_Fusion.prefab',
     'Assets/Enemies/JungleNightmare/Prefabs/JungleNightmare_Fusion.prefab',
 ]
 errors = []

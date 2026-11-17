@@ -77,6 +77,7 @@ public static class StormRecoveryClipSetup
             {
                 var serialized = new SerializedObject(storm);
                 var property = serialized.FindProperty("standUpClip");
+                if (property == null) continue;
                 if (property.objectReferenceValue == clip) continue;
                 property.objectReferenceValue = clip;
                 serialized.ApplyModifiedPropertiesWithoutUndo();

@@ -100,7 +100,8 @@ namespace GameJam.Multiplayer
             if (!HasStateAuthority) return;
             if (DeparturePhase == 0 && LobbyConsoleButton.AllPlayersReady(Runner))
             {
-                int missionIndex = UnityEngine.SceneManagement.SceneUtility.GetBuildIndexByScenePath("Assets/00_Scenes/Mars.unity");
+                int missionIndex = UnityEngine.SceneManagement.SceneUtility.GetBuildIndexByScenePath("Assets/00_Scenes/s_Mars.unity");
+                if (missionIndex < 0) missionIndex = UnityEngine.SceneManagement.SceneUtility.GetBuildIndexByScenePath("Assets/00_Scenes/Mars.unity");
                 if (missionIndex < 0) missionIndex = UnityEngine.SceneManagement.SceneUtility.GetBuildIndexByScenePath("Assets/00_Scenes/j_MarsFusion.unity");
                 if (missionIndex < 0)
                 {

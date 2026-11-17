@@ -38,7 +38,7 @@ namespace GameJam.Ship
         public GameJam.Crafting.RecipeData GetComponentRecipe(int index) => craftingTable != null ? craftingTable.GetRecipe(index) : null;
         public bool IsComponentInstalled(int index) => IsReady() && index >= 0 && index < 3 && (installedComponents & (1 << index)) != 0;
         public int InstalledCount => !IsReady() ? 0 : ((installedComponents & 1) != 0 ? 1 : 0) + ((installedComponents & 2) != 0 ? 1 : 0) + ((installedComponents & 4) != 0 ? 1 : 0);
-        public string ProgressLabel => "Instaladas " + InstalledCount + "/3 · Faltan " + (3 - InstalledCount);
+        public string ProgressLabel => "Instaladas " + InstalledCount + "/3 Â· Faltan " + (3 - InstalledCount);
         private int NextReadyComponent()
         {
             if (!IsReady() || craftingTable == null || craftingTable.Runner != Runner) return -1;
@@ -173,31 +173,33 @@ namespace GameJam.Ship
             }
         }
 
+        [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
+        public void RpcTriggerEmergencyEvacuation()
+        {
+            if (!HasStateAuthority || Repaired) return;
+            Repaired = true;
+            ReturnToLobbyTimer = TickTimer.CreateFromSeconds(Runner, 6f);
+        }
+
+        public void TriggerEmergencyEvacuation()
+        {
+            if (!IsReady() || Repaired) return;
+            RpcTriggerEmergencyEvacuation();
+        }
+
         public override void FixedUpdateNetwork()
         {
             if (!HasStateAuthority || !Repaired) return;
             if (TravelPhase == 0 && ReturnToLobbyTimer.Expired(Runner))
             {
-                if (!IsNeptune && NextPlanetIndex < 0)
-                {
-                    Debug.LogError("[Campaign] Falta b_NeptuneExploration en Build Settings.", this);
-                    ReturnToLobbyTimer = TickTimer.CreateFromSeconds(Runner, 8f);
-                    return;
-                }
                 ReturnToLobbyTimer = TickTimer.None;
                 TravelPhase = 1;
             }
             if (TravelPhase != 1 || !Runner.ActivePlayers.Any()
                 || !Runner.ActivePlayers.All(p => travelFinished.Contains(p))) return;
-            if (IsNeptune)
-            {
-                TravelPhase = 3;
-            }
-            else if (Runner.IsSceneAuthority)
-            {
-                TravelPhase = 2;
-                Runner.LoadScene(SceneRef.FromIndex(NextPlanetIndex));
-            }
+
+            // Mars demo ends with the planet departure video, then credits/return to lobby
+            TravelPhase = 3;
         }
 
         private void Update()
@@ -208,8 +210,8 @@ namespace GameJam.Ship
                 if (!localTravelStarted)
                     localTravelStarted = SceneTransitionVideo.PlaySequence(
                         IsNeptune ? new[] { "EscapandoDeNeptuno1" }
-                            : new[] { "NAVE_Despegandon_Marte (1)", "LLEGANDO_Neptuno" },
-                        IsNeptune ? -1 : NextPlanetIndex, () => localTravelFinished = true);
+                            : new[] { "NAVE_Despegandon_Marte (1)" },
+                        -1, () => localTravelFinished = true);
                 if (localTravelFinished && Time.realtimeSinceStartup >= nextTravelAck)
                 {
                     nextTravelAck = Time.realtimeSinceStartup + 1f;
