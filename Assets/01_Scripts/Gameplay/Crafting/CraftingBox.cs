@@ -20,6 +20,9 @@ namespace GameJam.Crafting
         /// Verdadero mientras la interfaz esta abierta: el avatar libera el cursor y bloquea el movimiento.
         /// </summary>
         public static bool IsBlockingInput { get; private set; }
+        private static int escapeFrame = -1;
+        public static bool BlocksPause => IsBlockingInput || escapeFrame == Time.frameCount;
+        private MarsFusionSession session;
 
         [SerializeField] private Animator lidAnimator;
         [SerializeField] private bool smoothLidAnimation;
@@ -159,8 +162,10 @@ namespace GameJam.Crafting
         private void Update()
         {
             FindLocalPlayer();
+            if (session == null) session = FindAnyObjectByType<MarsFusionSession>();
             bool near = localPlayer != null && localPlayer.IsAlive
-                && (localPlayer.transform.position - transform.position).sqrMagnitude <= interactionDistance * interactionDistance;
+                && (localPlayer.transform.position - transform.position).sqrMagnitude <= interactionDistance * interactionDistance
+                && (session == null || !session.MenuOpen) && !SceneTransitionVideo.IsBlockingInput;
 
             EnsureUI();
             ui.SetPromptVisible(near && !open && !localPlayer.TabletOpen);
@@ -177,12 +182,13 @@ namespace GameJam.Crafting
                 return;
             }
 
-            if (!open && near && !localPlayer.TabletOpen && keyboard.eKey.wasPressedThisFrame)
+            if (!open && !IsBlockingInput && near && !localPlayer.TabletOpen && keyboard.eKey.wasPressedThisFrame)
             {
                 Open();
             }
             else if (open && (keyboard.eKey.wasPressedThisFrame || keyboard.escapeKey.wasPressedThisFrame))
             {
+                if (keyboard.escapeKey.wasPressedThisFrame) escapeFrame = Time.frameCount;
                 Close();
             }
 

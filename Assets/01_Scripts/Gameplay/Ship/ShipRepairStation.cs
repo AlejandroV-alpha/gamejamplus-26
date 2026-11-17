@@ -247,7 +247,8 @@ namespace GameJam.Ship
             GameJam.UI.GameplayFeedbackPanel.Draw(
                 "MISI\u00d3N COMPLETADA - NAVE REPARADA",
                 $"Despegue en {Mathf.CeilToInt(remaining)} s...",
-                new Color(.25f, 1f, .75f), top: true);
+                new Color(.25f, 1f, .75f), top: true,
+                icon: GameJam.UI.ExpeditionSprites.Frame("success", 8f - remaining, .55f, false));
         }
 
 

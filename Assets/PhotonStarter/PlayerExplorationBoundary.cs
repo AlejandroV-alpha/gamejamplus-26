@@ -58,6 +58,10 @@ namespace GameJam.Multiplayer
             GUI.color=new Color(.12f,.025f,.02f,.94f);
             GUI.DrawTexture(new Rect(-270,65,540,150),Texture2D.whiteTexture);
             GUI.color=Color.white;
+            GameJam.UI.ExpeditionSprites.Draw(new Rect(-270,65,540,150), "alert_panel", ScaleMode.StretchToFill);
+            GameJam.UI.ExpeditionSprites.Draw(new Rect(-216,107,42,42), "boundary");
+            GameJam.UI.ExpeditionSprites.Draw(new Rect(174,107,42,42),
+                GameJam.UI.ExpeditionSprites.Frame("danger", Time.unscaledTime, 1.2f, true));
             GUI.Label(new Rect(-260,73,520,34),GameJam.Localization.GameLocalization.Get("hud.return_to_zone"),title);
             GUI.Label(new Rect(-260,108,520,57),Mathf.CeilToInt(Mathf.Max(0,RemainingSeconds)).ToString("00"),countdown);
             GUI.Label(new Rect(-260,171,520,30),GameJam.Localization.GameLocalization.Get("hud.return_before_timeout"),detail);

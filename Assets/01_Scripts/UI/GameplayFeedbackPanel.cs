@@ -7,7 +7,7 @@ namespace GameJam.UI
     {
         private static GUIStyle titleStyle, hintStyle, valueStyle;
 
-        public static void Draw(string title, string hint, Color accent, float progress = -1f, bool top = false)
+        public static void Draw(string title, string hint, Color accent, float progress = -1f, bool top = false, string icon = null)
         {
             if (titleStyle == null)
             {
@@ -33,11 +33,17 @@ namespace GameJam.UI
             try
             {
                 GUI.color = Color.white;
-                Paint(new Rect(x, y, width, height), new Color32(9, 18, 30, 245));
-                Paint(new Rect(x, y, 4 * scale, height), accent);
+                var backdrop = new Rect(x, y, width, height);
+                if (ExpeditionSprites.Get("alert_panel") != null)
+                    ExpeditionSprites.Draw(backdrop, "alert_panel", ScaleMode.StretchToFill);
+                else
+                    Paint(backdrop, new Color32(9, 18, 30, 245));
                 float padding = 24 * scale;
+                if (icon != null)
+                    ExpeditionSprites.Draw(new Rect(x + padding, y + 18 * scale, 30 * scale, 30 * scale), icon);
+                float titleInset = icon != null ? 40 * scale : 0f;
                 float valueWidth = progress >= 0 ? 82 * scale : 0;
-                GUI.Label(new Rect(x + padding, y + 15 * scale, width - 2 * padding - valueWidth, 42 * scale), title, titleStyle);
+                GUI.Label(new Rect(x + padding + titleInset, y + 15 * scale, width - 2 * padding - valueWidth - titleInset, 42 * scale), title, titleStyle);
                 if (progress >= 0)
                 {
                     progress = Mathf.Clamp01(progress);

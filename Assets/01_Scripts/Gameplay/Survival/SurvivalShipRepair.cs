@@ -72,7 +72,7 @@ namespace GameJam.Survival
 
             GameJam.UI.GameplayFeedbackPanel.Draw(
                 GameJam.Localization.GameLocalization.Get("hud.repair_ship"),
-                "[Q]  |  " + promptStation.ProgressLabel, new Color(1f, .65f, .35f));
+                "[Q]  |  " + promptStation.ProgressLabel, new Color(1f, .65f, .35f), icon: "repair");
         }
 
         /// <summary>

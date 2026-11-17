@@ -94,6 +94,7 @@ namespace GameJam.Combat
             var body = Box("ArmoredBody", panel, new Vector2(234, 62), Vector2.zero,
                 new Color(.025f, .035f, .055f, .96f));
             body.GetComponent<TabletRoundedPanel>().radius = 6;
+            GameJam.UI.ExpeditionSprites.Surface(body, "panel");
             Box("TopAccent", body, new Vector2(66, 2), new Vector2(-68, 30), new Color(.96f, .2f, .28f));
             var marker = Box("ThreatMarker", body, new Vector2(7, 7), new Vector2(-102, 16), new Color(1, .24f, .3f));
             marker.localRotation = Quaternion.Euler(0, 0, 45);

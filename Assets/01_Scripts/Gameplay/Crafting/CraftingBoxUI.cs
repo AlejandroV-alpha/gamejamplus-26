@@ -1,6 +1,7 @@
 using GameJam.Localization;
 using System;
 using GameJam.Inventory;
+using GameJam.UI;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -88,8 +89,15 @@ namespace GameJam.Crafting
         {
             if (panel.activeSelf != visible)
             {
+                if (visible) panel.transform.localScale = Vector3.one * .96f;
                 panel.SetActive(visible);
             }
+        }
+
+        private void Update()
+        {
+            if (panel != null && panel.activeSelf)
+                panel.transform.localScale = Vector3.MoveTowards(panel.transform.localScale, Vector3.one, Time.unscaledDeltaTime * .32f);
         }
 
         public void Flash(string message)
@@ -137,6 +145,7 @@ namespace GameJam.Crafting
                     row.slotIcons[s].enabled = row.slotIcons[s].sprite != null;
                     row.slotCounts[s].text = (material != null && material.icon == null ? GameLocalization.Get("material."+material.id+".name",material.materialName) + "\n" : "") + have + "/" + ingredient.amount;
                     row.slotCounts[s].color = have >= ingredient.amount ? Enough : Missing;
+                    ExpeditionSprites.Skin(row.slots[s].GetComponent<Image>(), have >= ingredient.amount ? "slot" : "slot_disabled");
                 }
 
                 bool done = table.IsComponentCompleted(i);
@@ -157,11 +166,14 @@ namespace GameJam.Crafting
             // Aviso inferior "[E] Abrir".
             prompt = Box(transform, "Aviso", new Color(0f, 0f, 0f, 0.6f));
             Place(prompt, new Vector2(0.5f, 0f), new Vector2(0f, 140f), new Vector2(420f, 60f));
-            Localized(Label(prompt.transform, "[E]  Abrir caja de crafteo", 26, Color.white, TextAnchor.MiddleCenter, Vector2.zero, new Vector2(420f, 60f)), "craft.open");
+            ExpeditionSprites.Skin(prompt.GetComponent<Image>(), "button");
+            ExpeditionSprites.Icon(prompt.transform, "craft", new Vector2(-170, 0), new Vector2(28, 28));
+            Localized(Label(prompt.transform, "[E]  Abrir caja de crafteo", 24, Color.white, TextAnchor.MiddleCenter, new Vector2(16, 0), new Vector2(352, 60f)), "craft.open");
             prompt.SetActive(false);
 
             panel = Box(transform, "Panel", PanelColor);
             Place(panel, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(900f, 640f));
+            ExpeditionSprites.Skin(panel.GetComponent<Image>(), "panel");
             Outline(panel, Accent, 3f);
             Localized(Label(panel.transform, title, 40, Accent, TextAnchor.MiddleCenter, new Vector2(0f, 270f), new Vector2(800f, 60f)), "craft.title");
             Localized(Label(panel.transform, "Junta los materiales y fabrica las piezas de la nave", 20, new Color(0.8f, 0.85f, 0.9f), TextAnchor.MiddleCenter, new Vector2(0f, 228f), new Vector2(800f, 30f)), "craft.help");
@@ -176,7 +188,9 @@ namespace GameJam.Crafting
 
             GameObject closeButton = Box(panel.transform, "Cerrar", new Color(0.6f, 0.15f, 0.15f, 1f));
             Place(closeButton, new Vector2(0.5f, 0.5f), new Vector2(400f, 280f), new Vector2(56f, 56f));
-            Label(closeButton.transform, "X", 30, Color.white, TextAnchor.MiddleCenter, Vector2.zero, new Vector2(56f, 56f));
+            ExpeditionSprites.Skin(closeButton.GetComponent<Image>(), "button");
+            if (ExpeditionSprites.Icon(closeButton.transform, "close", Vector2.zero, new Vector2(20, 20)) == null)
+                Label(closeButton.transform, "X", 30, Color.white, TextAnchor.MiddleCenter, Vector2.zero, new Vector2(56f, 56f));
             closeButton.AddComponent<Button>().onClick.AddListener(() => close());
 
             Localized(Label(panel.transform, "[E] o [Esc] para cerrar", 18, new Color(0.7f, 0.75f, 0.8f), TextAnchor.MiddleRight, new Vector2(300f, -300f), new Vector2(260f, 30f)), "craft.close");
@@ -188,6 +202,7 @@ namespace GameJam.Crafting
             RecipeRow row = new RecipeRow();
             row.root = Box(parent, "Receta_" + index, new Color(1f, 1f, 1f, 0.04f));
             Place(row.root, new Vector2(0.5f, 0.5f), position, new Vector2(840f, 135f));
+            ExpeditionSprites.Skin(row.root.GetComponent<Image>(), "panel");
 
             for (int s = 0; s < MaxIngredients; s++)
             {
@@ -199,6 +214,7 @@ namespace GameJam.Crafting
 
             Label(row.root.transform, "→", 56, Accent, TextAnchor.MiddleCenter, new Vector2(18f, 10f), new Vector2(60f, 80f));
             GameObject result = Slot(row.root.transform, new Vector2(100f, 10f), out row.resultIcon);
+            ExpeditionSprites.Skin(result.GetComponent<Image>(), "slot_active");
             Outline(result, Accent, 2f);
 
             row.resultName = Label(row.root.transform, "", 24, Color.white, TextAnchor.UpperLeft, new Vector2(275f, 30f), new Vector2(250f, 34f));
@@ -206,7 +222,9 @@ namespace GameJam.Crafting
 
             GameObject button = Box(row.root.transform, "Fabricar", new Color(0.15f, 0.55f, 0.75f, 1f));
             Place(button, new Vector2(0.5f, 0.5f), new Vector2(275f, -45f), new Vector2(250f, 38f));
+            ExpeditionSprites.Skin(button.GetComponent<Image>(), "button_focus");
             row.button = button.AddComponent<Button>();
+            row.button.targetGraphic = button.GetComponent<Image>();
             ColorBlock colors = row.button.colors;
             colors.disabledColor = new Color(0.35f, 0.35f, 0.4f, 1f);
             row.button.colors = colors;
@@ -220,8 +238,10 @@ namespace GameJam.Crafting
         {
             GameObject border = Box(parent, "Casilla", SlotBorder);
             Place(border, new Vector2(0.5f, 0.5f), position, new Vector2(84f, 84f));
+            ExpeditionSprites.Skin(border.GetComponent<Image>(), "slot");
             GameObject inner = Box(border.transform, "Fondo", SlotColor);
             Place(inner, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(76f, 76f));
+            if (ExpeditionSprites.Get("slot") != null) inner.GetComponent<Image>().enabled = false;
             GameObject iconGo = new GameObject("Icono", typeof(RectTransform));
             iconGo.transform.SetParent(inner.transform, false);
             icon = iconGo.AddComponent<Image>();
