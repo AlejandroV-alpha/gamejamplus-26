@@ -275,6 +275,8 @@ public sealed class JungleNightmareFusionEnemy : NetworkBehaviour, ITakeDamage
         var delta = target.transform.position - transform.position; delta.y = 0;
         if (delta.magnitude > attackRange + .5f || Vector3.Angle(transform.forward, delta) > 80) return;
         target.TakeMonsterDamage(Mathf.CeilToInt(damage));
+        Vector3 pushDir = delta.sqrMagnitude > 0.01f ? delta.normalized : transform.forward;
+        target.RequestRagdollKnockdown(pushDir * 9.5f + Vector3.up * 3.8f, 2.0f);
         // Solo los grandes congelan; los medianos solo hacen dano.
         if (transform.localScale.x >= freezeMinScale) RPC_FrostHit(target.Object);
     }

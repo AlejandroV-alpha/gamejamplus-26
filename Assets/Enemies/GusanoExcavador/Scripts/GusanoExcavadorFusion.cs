@@ -335,6 +335,9 @@ public sealed class GusanoExcavadorFusion : NetworkBehaviour, ITakeDamage
         }
         else if (holder == this)
         {
+            MarsFusionAvatar me = FindObjectsByType<MarsFusionAvatar>(FindObjectsSortMode.None)
+                .FirstOrDefault(a => a.Object != null && a.Object.IsValid && a.Runner == Runner && a.Object.StateAuthority == Runner.LocalPlayer);
+            me?.RequestRagdollKnockdown(transform.forward * 4.5f + Vector3.up * 2f, 1.8f);
             holder = null;
             LocalPlayerHeld = false;
         }

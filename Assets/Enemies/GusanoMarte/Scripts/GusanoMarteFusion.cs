@@ -375,7 +375,10 @@ public sealed class GusanoMarteFusion : NetworkBehaviour, ITakeDamage
                     .FirstOrDefault(a => a.Object != null && a.Object.IsValid && a.Runner == Runner && a.Object.StateAuthority == Runner.LocalPlayer);
                 var player = me != null ? me.GetComponent<Starter.ThirdPersonCharacter.Player>() : null;
                 if (player != null && player.KCC != null)
+                {
                     player.KCC.SetPosition(OnGround(MouthCenter + Flat(transform.forward) * 1.2f * Size / 2.6f) + Vector3.up * .1f);
+                    me?.RequestRagdollKnockdown(transform.forward * 4.5f + Vector3.up * 2f, 1.8f);
+                }
             }
             holder = null;
             LocalPlayerHeld = false;

@@ -264,7 +264,11 @@ public sealed class VenomwingFusionEnemy : NetworkBehaviour, ITakeDamage
                 Vector3 d = target.transform.position - transform.position;
                 bool inFront = Vector3.Angle(transform.forward, Flat(d)) < 70f;
                 if (Flat(d).magnitude <= stingHitRange * Size && Mathf.Abs(d.y) < 4f && inFront)
+                {
                     target.TakeMonsterDamage(Mathf.CeilToInt(stingDamage));
+                    Vector3 pushDir = Flat(d).sqrMagnitude > 0.01f ? Flat(d).normalized : transform.forward;
+                    target.RequestRagdollKnockdown(pushDir * 8f + Vector3.up * 2.5f, 1.8f);
+                }
             }
         }
         if (t >= stingDuration)

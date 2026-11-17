@@ -107,6 +107,8 @@ namespace GameJam.UI
             RefreshLanguage();
             if (SciFiGameMenuManager.IsLobbyScene)
                 gameObject.AddComponent<LobbyGameplayTutorial>().Build(avatar, safeRoot, font);
+            else if (marsEnvironment || UnityEngine.SceneManagement.SceneManager.GetActiveScene().name.Contains("Mars"))
+                gameObject.AddComponent<MarsDemoWalkthroughHUD>().Build(avatar, safeRoot, font);
             BuildCrewActionsHint();
         }
 
