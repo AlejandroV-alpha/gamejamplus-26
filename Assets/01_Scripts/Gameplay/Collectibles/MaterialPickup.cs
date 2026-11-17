@@ -48,11 +48,22 @@ namespace GameJam.Collectibles
         {
             if (HasStateAuthority)
             {
+                SnapToGround();
                 PlacedPosition = transform.position;
                 PlacedRotation = transform.rotation;
                 HasPlacedPose = true;
             }
             ApplyPlacedPose();
+        }
+
+        private void SnapToGround()
+        {
+            // Raycast downward to ensure the item rests cleanly on the ground surface
+            Vector3 origin = transform.position + Vector3.up * 2.5f;
+            if (Physics.Raycast(origin, Vector3.down, out RaycastHit hit, 25f, ~0, QueryTriggerInteraction.Ignore))
+            {
+                transform.position = hit.point + Vector3.up * 0.12f;
+            }
         }
 
         private void ApplyPlacedPose()
