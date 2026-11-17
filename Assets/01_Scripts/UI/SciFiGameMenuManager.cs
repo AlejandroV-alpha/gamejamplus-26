@@ -53,6 +53,7 @@ namespace GameJam.UI
         private Button btnOnlineStart;
         private TextMeshProUGUI statusLabel;
         private TabletRoundedPanel statusDot;
+        private Image connectionSpinner;
 
         // Botones de Idioma Inicio
         private Button btnStartLangEs;
@@ -82,6 +83,9 @@ namespace GameJam.UI
         private GameObject tabContentSettings;
         private GameObject tabContentCrew;
         private string activeTab = "Mission";
+        private TextMeshProUGUI missionStatus, missionProgress;
+        private Image missionSignal;
+        private float nextMissionCheckTime;
 
         // Ajustes de Audio y Voz
         private Slider masterVolumeSlider;
@@ -249,15 +253,24 @@ namespace GameJam.UI
                 SetStartMenuVisible(false);
             if (connectionRegionLabel != null) connectionRegionLabel.text = "REGION: " + MultiplayerConfiguration.SelectedRegion.ToUpperInvariant();
             UpdateResponsiveLayout();
+            Reveal(startMenuGroup);
+            Reveal(pauseMenuGroup);
+            if (pauseMenuGroup != null && pauseMenuGroup.gameObject.activeSelf && activeTab == "Mission"
+                && Time.unscaledTime >= nextMissionCheckTime)
+            {
+                nextMissionCheckTime = Time.unscaledTime + .25f;
+                RefreshMissionSummary();
+            }
 
             // Manejo de tecla Escape para pausar / reanudar
             if (Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame)
             {
                 if (ExpeditionSettingsPanel.ConsumeEscape()) return;
+                if (GameJam.Crafting.CraftingBox.BlocksPause) return;
                 if (MarsFusionAvatar.Local != null && MarsFusionAvatar.Local.LocalHud != null && MarsFusionAvatar.Local.LocalHud.ConsumeEscape()) return;
                 if (session != null && session.Runner != null && session.Runner.IsRunning)
                 {
-                    if (pauseMenuGroup != null && pauseMenuGroup.alpha > 0.5f)
+                    if (pauseMenuGroup != null && pauseMenuGroup.gameObject.activeSelf)
                     {
                         ResumeGame();
                     }
@@ -388,19 +401,22 @@ namespace GameJam.UI
             float langY=portraitLayout?226:144;
             var languages=CreateCard(form,"LanguageCard",new Vector2(600,88),new Vector2(0,langY));
             CreateLabel(languages,"lang.title",16,new Vector2(0,25),new Vector2(560,24),MutedCyan,true);
+            ExpeditionSprites.Icon(languages, "language_chat", new Vector2(-266, 25), new Vector2(23, 23));
             var row=CreateRect("LanguageOptions",languages,new Vector2(.5f,.5f),new Vector2(.5f,.5f),new Vector2(0,-15),new Vector2(560,38));
             btnStartLangEs=CreateDatapadButton(row,"BtnLangES","ES / Español",new Vector2(-190,0),new Vector2(180,38),()=>SelectLanguage(GameLanguage.Spanish),out btnStartLangEsBg);
             btnStartLangEn=CreateDatapadButton(row,"BtnLangEN","EN / English",Vector2.zero,new Vector2(180,38),()=>SelectLanguage(GameLanguage.English),out btnStartLangEnBg);
             btnStartLangPt=CreateDatapadButton(row,"BtnLangPT","PT / Brasil",new Vector2(190,0),new Vector2(180,38),()=>SelectLanguage(GameLanguage.Portuguese),out btnStartLangPtBg);
             float nameY=portraitLayout?112:34, roomY=portraitLayout?-12:-78;
             var nameCard=CreateCard(form,"NameCard",new Vector2(600,100),new Vector2(0,nameY));
-            var nameLabel=CreateLabel(nameCard,"menu.player_name",17,new Vector2(0,28),new Vector2(560,24),MutedCyan,true);nameLabel.alignment=TextAlignmentOptions.Left;
+            ExpeditionSprites.Icon(nameCard, "crew", new Vector2(-269, 28), new Vector2(20, 20));
+            var nameLabel=CreateLabel(nameCard,"menu.player_name",17,new Vector2(28,28),new Vector2(558,24),MutedCyan,true);nameLabel.alignment=TextAlignmentOptions.Left;
             string savedName=PlayerPrefs.GetString("GameJam.PlayerName","Astronauta").Trim();
             playerNameInput=CreateInputField(nameCard,"PlayerNameInput",string.IsNullOrEmpty(savedName)?"Astronauta":savedName,"menu.player_name_placeholder",new Vector2(0,-14),new Vector2(560,48));
             playerNameInput.characterLimit=24;
             playerNameInput.onValueChanged.AddListener(value=>PlayerPrefs.SetString("GameJam.PlayerName",value.Trim()));
             var roomCard=CreateCard(form,"RoomCard",new Vector2(600,100),new Vector2(0,roomY));
-            var roomLabel=CreateLabel(roomCard,"menu.room_code",17,new Vector2(0,28),new Vector2(560,24),MutedCyan,true);roomLabel.alignment=TextAlignmentOptions.Left;
+            ExpeditionSprites.Icon(roomCard, "key_binding", new Vector2(-269, 28), new Vector2(21, 21));
+            var roomLabel=CreateLabel(roomCard,"menu.room_code",17,new Vector2(28,28),new Vector2(558,24),MutedCyan,true);roomLabel.alignment=TextAlignmentOptions.Left;
             string savedRoom=PlayerPrefs.GetString("GameJam.RoomName","MARTE-01").Trim();if(string.IsNullOrEmpty(savedRoom))savedRoom="MARTE-01";
             if(session!=null)session.roomName=savedRoom;
             roomCodeInput=CreateInputField(roomCard,"RoomCodeInput",savedRoom,"menu.room_code_placeholder",new Vector2(0,-14),new Vector2(560,48));
@@ -408,14 +424,22 @@ namespace GameJam.UI
             btnOnlineStart=CreateDatapadButton(form,"BtnOnline","menu.btn_join_online",new Vector2(0,portraitLayout?-128:-170),new Vector2(600,58),OnClickStartOnline,out var onlineBg,true);
             onlineBg.color=new Color(.96f,.56f,.27f);
             var onlineText=btnOnlineStart.GetComponentInChildren<TextMeshProUGUI>();onlineText.fontSize=22;onlineText.color=ChassisBezel;onlineText.fontStyle=FontStyles.Bold;
+            ExpeditionSprites.Surface((RectTransform)btnOnlineStart.transform, "button_focus");
+            ExpeditionSprites.Icon(btnOnlineStart.transform, "online", new Vector2(-262, 0), new Vector2(26, 26));
+            onlineText.color = InkWhite;
 
             var status=CreateRoundedPanel(form,"StatusBox",new Vector2(600,44),10,InsetBg);status.anchoredPosition=new Vector2(0,portraitLayout?-212:-246);
             var dot=CreateRoundedPanel(status,"StatusDot",new Vector2(10,10),5,AmberAccent);dot.anchoredPosition=new Vector2(-276,0);statusDot=dot.GetComponent<TabletRoundedPanel>();
+            connectionSpinner = ExpeditionSprites.Sequence(status, "loading", new Vector2(-276, 0), new Vector2(24, 24), .65f, true);
+            if (connectionSpinner != null) connectionSpinner.gameObject.SetActive(false);
             statusLabel=CreateLabel(status,"menu.status_ready",17,new Vector2(12,0),new Vector2(540,32),InkWhite,true);statusLabel.alignment=TextAlignmentOptions.Left;
             if(portraitLayout)CreateLabel(form,"menu.connection_hint",17,new Vector2(0,-350),new Vector2(580,64),MutedCyan,true);
-            CreateDatapadButton(form,"BtnSystemSettings","pause.tab_settings",new Vector2(0,portraitLayout?-280:-302),new Vector2(600,40),()=>ExpeditionSettingsPanel.Open(fontAsset),out var systemsBg,true);
+            var settingsButton = CreateDatapadButton(form,"BtnSystemSettings","pause.tab_settings",new Vector2(0,portraitLayout?-280:-302),new Vector2(600,40),()=>ExpeditionSettingsPanel.Open(fontAsset),out _,true);
+            ExpeditionSprites.Surface((RectTransform)settingsButton.transform, "button");
+            ExpeditionSprites.Icon(settingsButton.transform, "settings", new Vector2(-262, 0), new Vector2(22, 22));
             connectionRegionLabel = CreateLabel(status,"Region",14,new Vector2(205,0),new Vector2(160,32),MutedCyan);
             connectionRegionLabel.alignment = TextAlignmentOptions.Right;
+            ExpeditionSprites.Icon(status, "server_region", new Vector2(179, 0), new Vector2(18, 18));
             ((RectTransform)statusLabel.transform).sizeDelta = new Vector2(350,32);
             ((RectTransform)statusLabel.transform).anchoredPosition = new Vector2(-85,0);
             UpdateLanguageButtonsHighlight();
@@ -486,6 +510,18 @@ namespace GameJam.UI
 
         private static void AddMenuIcon(Transform parent, MenuSymbolGraphic.Symbol symbol, Vector2 position, float size, Color color)
         {
+            string spriteName = symbol switch
+            {
+                MenuSymbolGraphic.Symbol.Play => "play",
+                MenuSymbolGraphic.Symbol.Home => "home",
+                MenuSymbolGraphic.Symbol.Exit => "exit",
+                MenuSymbolGraphic.Symbol.Mission => "mission_emblem",
+                MenuSymbolGraphic.Symbol.Settings => "settings",
+                MenuSymbolGraphic.Symbol.Crew => "crew",
+                MenuSymbolGraphic.Symbol.Check => "complete",
+                _ => null
+            };
+            if (ExpeditionSprites.Icon(parent, spriteName, position, Vector2.one * size) != null) return;
             var rect = CreateRect("Icon " + symbol, parent, new Vector2(.5f,.5f), new Vector2(.5f,.5f), position, Vector2.one * size);
             var icon = rect.gameObject.AddComponent<MenuSymbolGraphic>();
             icon.symbol = symbol; icon.color = color; icon.raycastTarget = false;
@@ -503,26 +539,66 @@ namespace GameJam.UI
             return button;
         }
 
-        private Button CreatePauseAction(Transform parent, string name, string key, float y, MenuSymbolGraphic.Symbol icon, UnityAction action, Color background, Color foreground, float height)
+        private Button CreatePauseAction(Transform parent, string name, string key, float y, string sprite,
+            UnityAction action, string frame = "button", bool disconnect = false)
         {
-            var button = CreateDatapadButton(parent, name, key, new Vector2(0,y), new Vector2(432,height), action, out var bg, true);
-            button.GetComponent<Outline>().enabled = false; bg.color = background; bg.radius = 10;
+            var button = CreateDatapadButton(parent, name, key, new Vector2(0, y), new Vector2(432, 58), action, out var bg, true);
+            button.GetComponent<Outline>().enabled = false;
+            var face = ExpeditionSprites.Surface((RectTransform)button.transform, frame);
+            if (face != null)
+            {
+                bg.color = Color.clear;
+                button.targetGraphic = face;
+                if (disconnect) face.color = new Color(1f, .72f, .71f);
+            }
             var label = button.GetComponentInChildren<TextMeshProUGUI>();
-            label.rectTransform.anchoredPosition = new Vector2(24,0); label.rectTransform.sizeDelta = new Vector2(326,height-12);
-            label.fontSize = 19; label.alignment = TextAlignmentOptions.Left; label.color = foreground;
+            label.rectTransform.anchoredPosition = new Vector2(15, 0);
+            label.rectTransform.sizeDelta = new Vector2(315, 46);
+            label.alignment = TextAlignmentOptions.Left;
+            label.color = disconnect ? new Color(1f, .72f, .7f) : InkWhite;
+            label.fontStyle = frame == "button_focus" ? FontStyles.Bold : FontStyles.Normal;
             label.enableAutoSizing = true; label.fontSizeMin = 16; label.fontSizeMax = 19;
-            AddMenuIcon(button.transform, icon, new Vector2(-179,0), 26, foreground);
+            ExpeditionSprites.Icon(button.transform, sprite, new Vector2(-181, 0), new Vector2(33, 33));
             return button;
         }
 
         private void BuildMissionTab(Transform parent)
         {
-            var title = CreateLabel(parent, "pause.your_mission", 25, new Vector2(0,145), new Vector2(432,40), InkWhite, true);
-            title.alignment = TextAlignmentOptions.Left;
-            CreatePauseAction(parent, "BtnResume", "pause.continue", 77, MenuSymbolGraphic.Symbol.Play, ResumeGame, new Color(.94f,.62f,.32f), ChassisBezel, 76);
-            var divider = CreateRoundedPanel(parent, "Actions divider", new Vector2(432,1), 0, ChassisRim); divider.anchoredPosition = new Vector2(0,8);
-            CreatePauseAction(parent, "BtnReturnLobby", "pause.return", -46, MenuSymbolGraphic.Symbol.Home, OnClickReturnToLobby, SlotBg, InkWhite, 60);
-            CreatePauseAction(parent, "BtnDisconnect", "pause.disconnect", -118, MenuSymbolGraphic.Symbol.Exit, OnClickDisconnect, new Color(.14f,.075f,.095f), new Color(.96f,.61f,.60f), 56);
+            var summary = CreateCard(parent, "MissionSummary", new Vector2(432, 86), new Vector2(0, 120));
+            ExpeditionSprites.Surface(summary, "panel");
+            ExpeditionSprites.Icon(summary, "mission_objectives", new Vector2(-178, 0), new Vector2(39, 39));
+            missionSignal = ExpeditionSprites.Icon(summary, "mission_beacon", new Vector2(173, 13), new Vector2(27, 27));
+            missionStatus = CreateLabel(summary, "", 23, new Vector2(3, 14), new Vector2(288, 33), InkWhite);
+            missionStatus.alignment = TextAlignmentOptions.Left;
+            missionStatus.fontStyle = FontStyles.Bold;
+            missionProgress = CreateLabel(summary, "", 15, new Vector2(15, -17), new Vector2(312, 26), MutedCyan);
+            missionProgress.alignment = TextAlignmentOptions.Left;
+
+            var resume = CreatePauseAction(parent, "BtnResume", "pause.continue", 36, "mission_resume", ResumeGame, "button_focus");
+            var key = CreateRoundedPanel(resume.transform, "Resume shortcut", new Vector2(43, 24), 4, InsetBg);
+            key.anchoredPosition = new Vector2(176, 0);
+            CreateLabel(key, "ESC", 12, Vector2.zero, new Vector2(43, 24), InkWhite);
+            CreatePauseAction(parent, "BtnReturnLobby", "pause.return", -34, "mission_lobby", OnClickReturnToLobby);
+            CreatePauseAction(parent, "BtnDisconnect", "pause.disconnect", -104, "mission_disconnect", OnClickDisconnect, disconnect: true);
+        }
+
+        private void RefreshMissionSummary()
+        {
+            if (missionStatus == null || missionProgress == null) return;
+            var avatar = MarsFusionAvatar.Local;
+            var tracker = avatar != null && avatar.LocalUI != null ? avatar.LocalUI.Mission : null;
+            bool live = tracker != null && tracker.IsLive;
+            bool repaired = live && tracker.InstalledCount == 3;
+            var status = IsLobbyScene ? "pause.mission.lobby" : repaired ? "pause.mission.repaired" : "pause.mission.active";
+            missionStatus.text = GameLocalization.Get(status);
+            missionProgress.text = live
+                ? string.Format(GameLocalization.Get("pause.mission.progress"), tracker.CraftedCount, tracker.InstalledCount)
+                : GameLocalization.Get(IsLobbyScene ? "pause.mission.waiting" : "pause.mission.sync");
+            if (missionSignal != null)
+            {
+                missionSignal.sprite = ExpeditionSprites.Get(repaired ? "complete" : "mission_beacon");
+                missionSignal.color = new Color(1f, 1f, 1f, IsLobbyScene ? .65f : 1f);
+            }
         }
 
         private void BuildCrewTab(Transform parent)
@@ -796,8 +872,15 @@ namespace GameJam.UI
         private static void SetGroup(CanvasGroup group,bool visible)
         {
             if(group==null)return;
-            group.alpha=visible?1:0;group.blocksRaycasts=visible;group.interactable=visible;
+            if (!visible || !group.gameObject.activeSelf) group.alpha = 0;
+            group.blocksRaycasts=visible;group.interactable=visible;
             group.gameObject.SetActive(visible);
+        }
+
+        private static void Reveal(CanvasGroup group)
+        {
+            if (group != null && group.gameObject.activeSelf)
+                group.alpha = Mathf.MoveTowards(group.alpha, 1f, Time.unscaledDeltaTime / .18f);
         }
         private void SyncCanvasVisibility()
         {
@@ -905,6 +988,10 @@ namespace GameJam.UI
             {
                 UpdateCrewList();
             }
+            else if (tabName == "Mission")
+            {
+                RefreshMissionSummary();
+            }
         }
 
         #endregion
@@ -963,6 +1050,8 @@ namespace GameJam.UI
             if (session == null) return;
 
             bool busy = session.Busy;
+            if (connectionSpinner != null && connectionSpinner.gameObject.activeSelf != busy)
+                connectionSpinner.gameObject.SetActive(busy);
             if (playerNameInput != null) playerNameInput.interactable = !busy;
             if (roomCodeInput != null) roomCodeInput.interactable = !busy;
             if (btnStartLangEs != null) btnStartLangEs.interactable = !busy;
@@ -977,6 +1066,7 @@ namespace GameJam.UI
 
             if (statusDot != null)
             {
+                statusDot.enabled = !busy || connectionSpinner == null;
                 if (session.Busy)
                     statusDot.color = AmberAccent;
                 else if (session.Runner != null && session.Runner.IsRunning)
@@ -1176,8 +1266,8 @@ namespace GameJam.UI
             // Slider de volumen individual
             var sliderRoot = CreateRect("VolumeGroup", rowCard, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(65, -28), new Vector2(210, 40));
 
-            var volLabel = CreateLabel(sliderRoot, "VOL", 10, new Vector2(-76, 0), new Vector2(44, 24), MutedCyan);
-            volLabel.alignment = TextAlignmentOptions.Center;
+            if (ExpeditionSprites.Icon(sliderRoot, "speaker", new Vector2(-76, 0), new Vector2(19, 19)) == null)
+                CreateLabel(sliderRoot, "VOL", 10, new Vector2(-76, 0), new Vector2(44, 24), MutedCyan);
 
             widget.VolumePercentLabel = CreateLabel(sliderRoot, "100%", 10, new Vector2(84, 0), new Vector2(62, 24), CyanAccent);
             widget.VolumePercentLabel.alignment = TextAlignmentOptions.Left;

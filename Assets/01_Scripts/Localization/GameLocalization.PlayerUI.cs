@@ -19,6 +19,12 @@ namespace GameJam.Localization
             Add("pause.continue", "Continuar misión", "Continue mission", "Continuar missão");
             Add("pause.return", "Volver al lobby", "Return to lobby", "Voltar ao lobby");
             Add("pause.disconnect", "Desconectar", "Disconnect", "Desconectar");
+            Add("pause.mission.lobby", "Zona de espera", "Staging area", "Área de espera");
+            Add("pause.mission.active", "Misión en curso", "Mission in progress", "Missão em andamento");
+            Add("pause.mission.repaired", "Nave reparada", "Ship repaired", "Nave reparada");
+            Add("pause.mission.progress", "{0}/3 fabricadas · {1}/3 instaladas", "{0}/3 crafted · {1}/3 installed", "{0}/3 fabricadas · {1}/3 instaladas");
+            Add("pause.mission.waiting", "La expedición aún no ha comenzado", "The expedition has yet to begin", "A expedição ainda não começou");
+            Add("pause.mission.sync", "Sin datos de reparación disponibles", "Repair data unavailable", "Dados de reparo indisponíveis");
             Add("crew.muted", "En espera", "Standby", "Em espera");
             Add("crew.speaking", "Hablando", "Speaking", "Falando");
             Add("crew.silence", "Silenciar", "Mute", "Silenciar");

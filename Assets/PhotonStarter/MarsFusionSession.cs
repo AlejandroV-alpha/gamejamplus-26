@@ -334,16 +334,21 @@ namespace GameJam.Multiplayer
             bool needsStartButtons = Runner == null && !GameJam.UI.SciFiGameMenuManager.IsLobbyScene;
             if (sciFiMenu && !needsStartButtons) return;
             if (!MenuOpen) return;
-            GUILayout.BeginArea(new Rect(20, 20, Mathf.Min(460, Screen.width - 40), 320), GUI.skin.box);
+            var area = new Rect(20, 20, Mathf.Min(460, Screen.width - 40), 300);
+            GameJam.UI.ExpeditionSprites.Draw(area, "panel", ScaleMode.StretchToFill);
+            GUILayout.BeginArea(new Rect(area.x + 20, area.y + 16, area.width - 40, area.height - 32));
             GUILayout.Label(planetLabel + " · PHOTON FUSION");
             GUILayout.Label(Status);
+            if (Busy)
+                GameJam.UI.ExpeditionSprites.Draw(new Rect(area.width - 72, 0, 24, 24),
+                    GameJam.UI.ExpeditionSprites.Frame("loading", Time.unscaledTime, .65f, true));
             GUI.enabled = !Busy;
             if (Runner == null)
             {
                 GUILayout.Label("Nombre de sala (igual en ambos clientes)");
                 roomName = GUILayout.TextField(roomName, 48);
-                if (GUILayout.Button("Prueba local · sin App ID", GUILayout.Height(36))) _ = StartSession(true);
-                if (GUILayout.Button("Crear / entrar a sala online", GUILayout.Height(36))) _ = StartSession(false);
+                if (SessionButton("Prueba local · sin App ID", "local")) _ = StartSession(true);
+                if (SessionButton("Crear / entrar a sala online", "online")) _ = StartSession(false);
             }
             else
             {
@@ -353,6 +358,15 @@ namespace GameJam.Multiplayer
             GUI.enabled = true;
             GUILayout.Label("WASD · Ratón · Espacio · Shift\nTab: tablet  /  Mantener V: hablar  /  H: gesto de dolor\nEsc: menú de conexión");
             GUILayout.EndArea();
+        }
+
+        private static bool SessionButton(string label, string icon)
+        {
+            Rect rect = GUILayoutUtility.GetRect(new GUIContent(label), GUI.skin.button, GUILayout.Height(36), GUILayout.ExpandWidth(true));
+            bool pressed = GUI.Button(rect, label);
+            if (Event.current.type == EventType.Repaint)
+                GameJam.UI.ExpeditionSprites.Draw(new Rect(rect.x + 9, rect.y + 8, 20, 20), icon);
+            return pressed;
         }
 
         private void OnDestroy()

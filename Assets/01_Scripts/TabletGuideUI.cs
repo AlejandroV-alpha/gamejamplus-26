@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using GameJam.UI;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
@@ -19,6 +20,9 @@ namespace GameJam.Tablet
         private TMP_FontAsset tmpFont;
         private TextMeshProUGUI osClockText;
         private float progress;
+        private Image bootDisplay;
+        private float bootStarted;
+        private bool wasTargetOpen;
         private int planetIndex = 0;
         private string page = "Inicio";
         private readonly Stack<string> pageHistory = new();
@@ -150,6 +154,8 @@ namespace GameJam.Tablet
             pageGroup = workspace.gameObject.AddComponent<CanvasGroup>();
             RenderPage();
             BuildMissionFeedback();
+            bootDisplay = ExpeditionSprites.Sequence(screen, "boot", Vector2.zero, new Vector2(244, 164), .28f, false);
+            if (bootDisplay != null) bootDisplay.gameObject.SetActive(false);
         }
 
         private void EnsureInputEventSystem()
@@ -568,7 +574,9 @@ namespace GameJam.Tablet
             shadow.anchoredPosition = new Vector2(0,32);
             var iconPanel = CreateRoundedPanel(tile, "App icon", new Vector2(104,104), 26, tint);
             iconPanel.anchoredPosition = new Vector2(0,38);
-            if (icon != null) CreateIcon(iconPanel, icon, Vector2.zero, new Vector2(54,54), InkWhite);
+            var spriteName = destination == "Recetas" ? "craft" : "mission";
+            icon = ExpeditionSprites.Get(spriteName) ?? icon;
+            if (icon != null) CreateIcon(iconPanel, icon, Vector2.zero, new Vector2(54,54), Color.white);
             else CreateLabel(iconPanel, title.Substring(0,1), 42, Vector2.zero, new Vector2(80,80), InkWhite);
             CreateLabel(tile, title, 23, new Vector2(0,-40), new Vector2(220,38), InkWhite);
             CreateLabel(tile, description, 14, new Vector2(0,-76), new Vector2(220,35), MutedCyan);
@@ -751,6 +759,14 @@ namespace GameJam.Tablet
         {
             UpdateMissionFeedback();
             if (overlay == null || chassis == null) return;
+            if (bootDisplay != null)
+            {
+                if (TargetOpen && !wasTargetOpen) bootStarted = Time.unscaledTime;
+                bool booting = TargetOpen && Time.unscaledTime - bootStarted < .28f;
+                if (bootDisplay.gameObject.activeSelf != booting) bootDisplay.gameObject.SetActive(booting);
+                if (workspace != null) workspace.gameObject.SetActive(!booting);
+                wasTargetOpen = TargetOpen;
+            }
             pageFade = Mathf.MoveTowards(pageFade, 1f, Time.unscaledDeltaTime * 7f);
             if (pageGroup != null) pageGroup.alpha = pageFade;
             string minute = DateTime.Now.ToString("HH:mm");

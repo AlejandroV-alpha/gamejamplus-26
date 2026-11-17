@@ -84,6 +84,7 @@ namespace GameJam.UI
 
             background = panel.gameObject.AddComponent<Image>();
             background.color = BgDark;
+            ExpeditionSprites.Skin(background, "panel");
             background.raycastTarget = false;
 
             outline = panel.gameObject.AddComponent<Outline>();
@@ -391,7 +392,7 @@ namespace GameJam.UI
                         counterStr = $"[{installed}/3]";
                         counterColor = installed >= 3 ? GreenAccent : YellowAccent;
                         goalStr = "Instala los componentes en la nave";
-                        hintStr = "Acércate al núcleo de la nave y mantén [E]";
+                        hintStr = "Acércate al núcleo de la nave y presiona [Q]";
                     }
                     break;
 

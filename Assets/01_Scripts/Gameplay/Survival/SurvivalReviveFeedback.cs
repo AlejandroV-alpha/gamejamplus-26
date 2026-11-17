@@ -125,7 +125,7 @@ namespace GameJam.Survival
             }
             else return;
 
-            GameJam.UI.GameplayFeedbackPanel.Draw(title, hint, color, progress);
+            GameJam.UI.GameplayFeedbackPanel.Draw(title, hint, color, progress, icon: "revive");
         }
 
         private void OnDisable()

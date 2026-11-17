@@ -39,6 +39,7 @@ namespace GameJam.UI
         private int selectedSlot;
         private float carryFeedbackUntil;
         private Bar healthBar, staminaBar, environmentBar, actionBar;
+        private Image actionIcon;
         private TMP_FontAsset font;
         private readonly List<Slot> slots = new List<Slot>();
         private readonly List<Notice> notices = new List<Notice>();
@@ -55,6 +56,7 @@ namespace GameJam.UI
             public RectTransform Root;
             public Image Fill;
             public TMP_Text Label, Value;
+            public float Target = float.NaN;
         }
         private sealed class Slot
         {
@@ -115,12 +117,13 @@ namespace GameJam.UI
         private void BuildHUD()
         {
             var tablet = Panel("Tablet", hud.transform, new Vector2(1, 1), new Vector2(-135, -70), new Vector2(220, 60));
-            var tabletIcon = Panel("Tablet icon", tablet, new Vector2(.5f, .5f), new Vector2(-78, 0), new Vector2(27, 35));
-            Panel("Screen", tabletIcon, new Vector2(.5f, .5f), new Vector2(0, 2), new Vector2(17, 21)).GetComponent<Image>().color = Accent;
+            ExpeditionSprites.Skin(tablet.GetComponent<Image>(), "button");
+            ExpeditionSprites.Icon(tablet, "tablet", new Vector2(-78, 0), new Vector2(32, 32));
             LocalLabel(tablet, "hud.tablet", new Vector2(28, 0), new Vector2(155, 44), 19, "TAB  ·  ");
             Button(tablet, () => { if (CanInteract()) { CloseInventory(); avatar.ToggleTablet(); } });
 
             var status = Panel("Player status", hud.transform, new Vector2(0, 0), new Vector2(285, showEnvironment ? 106 : 90), new Vector2(520, showEnvironment ? 164 : 132));
+            ExpeditionSprites.Skin(status.GetComponent<Image>(), "panel");
             var portrait = Rect("Helmet silhouette", status, new Vector2(.5f, .5f), new Vector2(.5f, .5f), new Vector2(-185, 0), new Vector2(120, 132));
             helmet = portrait.gameObject.AddComponent<PlayerHelmetGraphic>();
             helmet.raycastTarget = false;
@@ -133,18 +136,22 @@ namespace GameJam.UI
             environmentBar.Root.gameObject.SetActive(showEnvironment);
 
             var equipment = Panel("Equipment", hud.transform, new Vector2(1, .5f), new Vector2(-135, 0), new Vector2(220, 112));
+            ExpeditionSprites.Skin(equipment.GetComponent<Image>(), "panel");
             LocalLabel(equipment, "hud.equipped", new Vector2(0, 33), new Vector2(198, 30), 17);
             equipped = Label(equipment, "", new Vector2(0,-14), new Vector2(194, 50), 23);
             actionBar = CreateBar(hud.transform, Vector2.zero, "hud.collecting", Accent);
+            actionIcon = ExpeditionSprites.Icon(actionBar.Root, "collect", new Vector2(-147, 10), new Vector2(24, 24));
             actionBar.Root.sizeDelta = new Vector2(390, 82);
             var actionBackground = actionBar.Root.gameObject.AddComponent<Image>();
             actionBackground.color = Ink;
+            ExpeditionSprites.Skin(actionBackground, "panel");
             actionBackground.raycastTarget = false;
             actionBar.Root.anchorMin = actionBar.Root.anchorMax = new Vector2(.5f, .32f);
             actionBar.Root.gameObject.SetActive(false);
             for (int i = 0; i < 3; i++)
             {
                 var row = Panel("Pickup " + i, hud.transform, new Vector2(0, 1), new Vector2(185, -140 - i * 60), new Vector2(320, 50));
+                ExpeditionSprites.Skin(row.GetComponent<Image>(), "panel");
                 var group = row.gameObject.AddComponent<CanvasGroup>();
                 notices.Add(new Notice { Group = group, Text = Label(row, "", Vector2.zero, new Vector2(294, 44), 20) });
                 Show(group, false);
@@ -154,6 +161,7 @@ namespace GameJam.UI
         private void BuildCrewActionsHint()
         {
             var box = Panel("Crew actions hint", hud.transform, new Vector2(1, 0), new Vector2(-225, 58), new Vector2(410, 82));
+            ExpeditionSprites.Skin(box.GetComponent<Image>(), "panel");
             var title = Label(box, "FÍSICA CO-OP & TROLL (LETHAL / REPO)", new Vector2(0, 24), new Vector2(390, 20), 13);
             title.color = Accent;
             title.fontStyle = FontStyles.Bold;
@@ -170,6 +178,7 @@ namespace GameJam.UI
             int count = inventory != null ? inventory.SlotCount : 6;
             float step = Mathf.Min(92, 680f / count);
             quickbarRoot = Panel("Quickbar", hud.transform, new Vector2(.5f,0), new Vector2(0,91), new Vector2(step*count+20,112));
+            ExpeditionSprites.Skin(quickbarRoot.GetComponent<Image>(), "panel");
             quickbarCaption = Label(quickbarRoot,"",new Vector2(0,-70),new Vector2(720,30),17);
             selectedName = Label(quickbarRoot,"",new Vector2(0,78),new Vector2(600,32),19);
             carryFeedback = Label(quickbarRoot,"",new Vector2(0,116),new Vector2(720,34),21);
@@ -196,6 +205,12 @@ namespace GameJam.UI
                 LobbyDepartureEffects.IsBlockingInput || GameJam.Crafting.CraftingBox.IsBlockingInput;
             if (blocked || !avatar.IsAlive || avatar.TabletOpen) CloseInventory();
             Show(hud, !blocked && !avatar.TabletOpen);
+            foreach (var slot in slots)
+                slot.Icon.rectTransform.localScale = Vector3.MoveTowards(slot.Icon.rectTransform.localScale, Vector3.one, Time.unscaledDeltaTime * 2.5f);
+            AnimateBar(healthBar);
+            AnimateBar(staminaBar);
+            AnimateBar(environmentBar);
+            AnimateBar(actionBar);
             if (!blocked && Keyboard.current != null)
             {
                 if (CanInteract() && !avatar.TabletOpen && !VoicePreferences.CapturingBinding)
@@ -246,6 +261,7 @@ namespace GameJam.UI
             actionBar.Root.gameObject.SetActive(busy && hud.alpha > 0);
             if (busy)
             {
+                if (actionIcon != null) actionIcon.sprite = ExpeditionSprites.Get(action.ActionKind == 1 ? "collect" : "repair");
                 actionBar.Label.text = GameLocalization.Get(action.ActionKind == 1 ? "hud.collecting" : "hud.repairing");
                 SetBar(actionBar, action.Progress, $"{action.Progress * 100:0}%");
             }
@@ -308,10 +324,13 @@ namespace GameJam.UI
             for(int i=0;i<slots.Count;i++)
             {
                 var slot=slots[i];slot.Material=inventory.GetSlotMaterial(i);
-                SetIcon(slot.Icon,slot.Material!=null?slot.Material.icon:null);
+                var icon = slot.Material != null ? slot.Material.icon : null;
+                if (icon != null && icon != slot.Icon.sprite) slot.Icon.rectTransform.localScale = Vector3.one * 1.18f;
+                SetIcon(slot.Icon, icon);
                 bool active=i==selectedSlot;
                 slot.Selection.SetActive(active);
                 slot.Background.color=active?new Color32(37,77,77,255):Ink;
+                ExpeditionSprites.Skin(slot.Background, active ? "slot_active" : "slot");
                 slot.Name.color=active?Accent:Cream;
             }
             var material=inventory.GetSlotMaterial(selectedSlot);
@@ -344,10 +363,18 @@ namespace GameJam.UI
         {
             var root = Rect("Status bar", parent, new Vector2(.5f, .5f), new Vector2(.5f, .5f), position, new Vector2(344, 42));
             var track = Panel("Track", root, new Vector2(.5f, .5f), new Vector2(0, -13), new Vector2(320, 10));
+            ExpeditionSprites.Skin(track.GetComponent<Image>(), "bar_track");
             var fill = Rect("Fill", track, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero).gameObject.AddComponent<Image>();
             fill.raycastTarget = false;
             fill.color = color;
-            var label = LocalLabel(root, key, new Vector2(-68, 10), new Vector2(184, 24), 17);
+            if (key == "hud.stamina")
+            {
+                ExpeditionSprites.Skin(fill, "bar_fill");
+                fill.type = Image.Type.Simple;
+            }
+            var iconName = key == "hud.health" ? "health" : key == "hud.stamina" ? "stamina" : null;
+            ExpeditionSprites.Icon(root, iconName, new Vector2(-147, 10), new Vector2(24, 24));
+            var label = LocalLabel(root, key, new Vector2(-43, 10), new Vector2(166, 24), 17);
             label.alignment = TextAlignmentOptions.Left;
             var value = Label(root, "", new Vector2(114, 10), new Vector2(92, 24), 18);
             value.alignment = TextAlignmentOptions.Right;
@@ -357,11 +384,19 @@ namespace GameJam.UI
 
         private static void SetBar(Bar bar, float fraction, string value)
         {
+            bool firstSample = float.IsNaN(bar.Target);
+            bar.Target = Mathf.Clamp01(fraction);
+            if (firstSample) AnimateBar(bar, 1f);
+            if (bar.Value.text != value) bar.Value.text = value;
+        }
+
+        private static void AnimateBar(Bar bar, float maximumDelta = -1f)
+        {
+            if (float.IsNaN(bar.Target)) return;
             var rect = bar.Fill.rectTransform;
             var anchor = rect.anchorMax;
-            anchor.x = Mathf.Clamp01(fraction);
+            anchor.x = Mathf.MoveTowards(anchor.x, bar.Target, maximumDelta < 0 ? Time.unscaledDeltaTime * 4f : maximumDelta);
             rect.anchorMax = anchor;
-            if (bar.Value.text != value) bar.Value.text = value;
         }
 
         private static RectTransform Rect(string name, Transform parent, Vector2 min, Vector2 max, Vector2 pos, Vector2 size)

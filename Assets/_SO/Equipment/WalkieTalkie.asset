@@ -16,5 +16,5 @@ MonoBehaviour:
   kind: 2
   materialName: Walkie-talkie
   description: Lleva para recibir radio; equipa y abre el canal para transmitir.
-  icon: {fileID: 21300000, guid: 5d8db30a34b49324f9f96e866ff20b88, type: 3}
+  icon: {fileID: 21300000, guid: 62b058a7ef4d5eb186da10191d54c717, type: 3}
   prefab: {fileID: 3826805259097142500, guid: a0b3b3440a119e444bb23b17b2f9d23d, type: 3}
